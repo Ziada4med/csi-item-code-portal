@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CSI Item Code Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -2415,7 +2416,7 @@ function renderAttributes() {
         let html = `
             <div class="drag-handle ${!canReorder ? 'disabled' : ''}" 
                  ${!canReorder ? 'title="Reordering is locked due to pending requests"' : 'title="Drag to reorder"'}>
-                â˜°
+                ☰
             </div>
             <div class="flex-1">
                 <div class="mb-2">
@@ -5012,15 +5013,12 @@ let allApprovedCodes = [];
 let searchHierarchyView = true;
 
 
-// Load all approved item codes
-// Load all approved item codes
-// Load all approved item codes
-// Load all approved item codes
-// Load all approved item codes
+
+
 // Load all approved item codes
 async function loadAllApprovedCodes() {
     try {
-        console.log('Starting to load approved codes...');
+        console.log('Starting to load ONLY approved codes...');
         
         // Show loading state
         const loadingState = document.getElementById('search-loading');
@@ -5033,118 +5031,52 @@ async function loadAllApprovedCodes() {
         if (hierarchyView) hierarchyView.classList.add('hidden');
         if (listView) listView.classList.add('hidden');
         
-        // First, let's check what statuses exist in the item_codes table
-        const { data: statusCheck, error: statusError } = await supabase
+        // CRITICAL FIX: Load ONLY approved item codes
+        const { data: approvedCodes, error } = await supabase
             .from('item_codes')
-            .select('status')
-            .limit(10);
-        
-        if (statusCheck && statusCheck.length > 0) {
-            console.log('Available statuses in item_codes:', [...new Set(statusCheck.map(s => s.status))]);
-        }
-        
-        // Try multiple possible status values for approved codes
-        const possibleStatuses = ['approved', 'admin_approved', 'active'];
-        let allData = [];
-        
-        for (const status of possibleStatuses) {
-            const { data, error } = await supabase
-                .from('item_codes')
-                .select(`
+            .select(`
+                id,
+                item_code,
+                description1,
+                description2,
+                uom,
+                country_of_origin,
+                model_number,
+                unit_price,
+                currency_code,
+                manufacturer,
+                created_at,
+                project_id,
+                status,
+                erp_integrated,
+                erp_integrated_at,
+                erp_integrated_by,
+                created_by_user:users!item_codes_created_by_fkey(username, email),
+                classification_projects!inner (
                     id,
+                    project_name,
+                    division_code,
+                    section_code,
+                    detailed_section_code,
                     item_code,
-                    description1,
-                    description2,
-                    uom,
-                    country_of_origin,
-                    model_number,
-                    unit_price,
-                    currency_code,
-                    manufacturer,
-                    created_at,
-                    project_id,
-                    status,
-                    erp_integrated,
-                    erp_integrated_at,
-                    erp_integrated_by,
-                    created_by_user:users!item_codes_created_by_fkey(username, email),
-                    classification_projects!inner (
-                        id,
-                        project_name,
-                        division_code,
-                        section_code,
-                        detailed_section_code,
-                        item_code,
-                        additional_level_name,
-                        additional_level_value
-                    )
-                `)
-                .eq('status', status)
-                .order('created_at', { ascending: false });
-            
-            if (!error && data && data.length > 0) {
-                console.log(`Found ${data.length} codes with status '${status}'`);
-                allData = [...allData, ...data];
-            }
-        }
+                    additional_level_name,
+                    additional_level_value
+                )
+            `)
+            .eq('status', 'approved')  // CRITICAL: Only load approved codes
+            .order('created_at', { ascending: false });
         
-        // If no approved codes found, try getting all codes to see what's available
-        if (allData.length === 0) {
-            console.log('No approved codes found, checking all item codes...');
-            
-            const { data: allCodes, error: allError } = await supabase
-                .from('item_codes')
-                .select(`
-                    id,
-                    item_code,
-                    description1,
-                    description2,
-                    uom,
-                    country_of_origin,
-                    model_number,
-                    unit_price,
-                    currency_code,
-                    manufacturer,
-                    created_at,
-                    project_id,
-                    status,
-                    erp_integrated,
-                    erp_integrated_at,
-                    erp_integrated_by,
-                    created_by_user:users!item_codes_created_by_fkey(username, email),
-                    classification_projects!inner (
-                        id,
-                        project_name,
-                        division_code,
-                        section_code,
-                        detailed_section_code,
-                        item_code,
-                        additional_level_name,
-                        additional_level_value
-                    )
-                `)
-                .order('created_at', { ascending: false })
-                .limit(50);
-            
-            if (!allError && allCodes) {
-                console.log('All item codes found:', allCodes.length);
-                console.log('Statuses found:', [...new Set(allCodes.map(c => c.status))]);
-                
-                // For now, let's show all codes regardless of status so user can see something
-                allData = allCodes;
-            }
-        }
+        if (error) throw error;
         
-        allApprovedCodes = allData || [];
-        console.log('Total codes loaded:', allApprovedCodes.length);
-        console.log('ERP status check - first code:', allApprovedCodes[0]?.erp_integrated, allApprovedCodes[0]?.erp_integrated_at);
+        allApprovedCodes = approvedCodes || [];
+        console.log('✅ ONLY approved codes loaded:', allApprovedCodes.length);
         
-        // Hide loading state FIRST
+        // Hide loading state
         if (loadingState) loadingState.classList.add('hidden');
         
         // Show appropriate state
         if (allApprovedCodes.length === 0) {
-            showEmptyState();
+            showEmptyStateApproved();
         } else {
             displaySearchResults(allApprovedCodes);
         }
@@ -5152,11 +5084,11 @@ async function loadAllApprovedCodes() {
     } catch (error) {
         console.error('Error loading approved codes:', error);
         
-        // Hide loading state on error too
+        // Hide loading state on error
         const loadingState = document.getElementById('search-loading');
         if (loadingState) loadingState.classList.add('hidden');
         
-        showEmptyState();
+        showEmptyStateApproved();
     }
 }
 // Show empty state with helpful message
@@ -5188,6 +5120,37 @@ function showEmptyState() {
     `;
     
     emptyState.classList.remove('hidden');
+}
+// Show empty state specifically for approved codes
+function showEmptyStateApproved() {
+    const hierarchyView = document.getElementById('hierarchy-view');
+    const listView = document.getElementById('list-view');
+    const summary = document.getElementById('search-summary');
+    const emptyState = document.getElementById('search-empty');
+    
+    // Hide other views
+    if (hierarchyView) hierarchyView.classList.add('hidden');
+    if (listView) listView.classList.add('hidden');
+    if (summary) summary.classList.add('hidden');
+    
+    // Update empty state message
+    if (emptyState) {
+        emptyState.innerHTML = `
+            <div class="text-center py-12 text-gray-500">
+                <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <p class="text-lg font-medium mb-2">No approved item codes found</p>
+                <p class="text-sm mb-4">There are currently no approved item codes in the system.</p>
+                <div class="text-xs text-gray-400 space-y-1">
+                    <p>• Item codes must be approved by an admin before appearing here</p>
+                    <p>• Only codes with status 'approved' are shown</p>
+                    <p>• Check with admin if codes are missing</p>
+                </div>
+            </div>
+        `;
+        emptyState.classList.remove('hidden');
+    }
 }
 function setupSearchCodesTab() {
     const refreshBtn = document.getElementById('refresh-search-btn');
@@ -5418,6 +5381,8 @@ function displayHierarchyView(codes) {
     `).join('');
 }
 function createSearchCodeCard(item) {
+    const isAdmin = currentUser && currentUser.role === 'admin';
+    
     return `
         <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow">
             <div class="flex justify-between items-start mb-4">
@@ -5429,60 +5394,100 @@ function createSearchCodeCard(item) {
                     <span class="px-3 py-1 text-xs rounded-full ${getStatusColor(item.status)}">
                         ${item.status ? item.status.toUpperCase() : 'UNKNOWN'}
                     </span>
+                    ${item.erp_integrated ? 
+                        '<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">ERP ✓</span>' : 
+                        '<span class="px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-800">ERP ✗</span>'
+                    }
                 </div>
             </div>
             
             <!-- Enhanced Information Grid -->
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm mb-4">
                 <div>
-                    <p class="text-gray-600">Created by:</p>
-                    <p class="font-medium">${item.created_by_user?.username || 'Unknown'}</p>
-                    ${item.created_by_user?.email ? `<p class="text-xs text-gray-500">${item.created_by_user.email}</p>` : ''}
+                    <span class="font-medium text-gray-700">Created by:</span>
+                    <div class="text-gray-900">${item.created_by_user?.username || 'Unknown'}</div>
+                    ${item.created_by_user?.email ? `<div class="text-xs text-gray-500">${item.created_by_user.email}</div>` : ''}
                 </div>
                 <div>
-                    <p class="text-gray-600">Unit Price:</p>
-                    <p class="font-medium font-mono">${item.unit_price ? `${item.unit_price} ${item.currency_code || ''}` : 'Not specified'}</p>
+                    <span class="font-medium text-gray-700">Unit Price:</span>
+                    <div class="font-mono bg-green-50 px-2 py-1 rounded text-green-800">
+                        ${item.unit_price ? `${item.unit_price} ${item.currency_code || ''}` : 'Not specified'}
+                    </div>
                 </div>
                 <div>
-                    <p class="text-gray-600">Manufacturer:</p>
-                    <p class="font-medium">${item.manufacturer || 'Not specified'}</p>
+                    <span class="font-medium text-gray-700">Manufacturer:</span>
+                    <div class="text-gray-900">${item.manufacturer || 'Not specified'}</div>
                 </div>
                 <div>
-                    <p class="text-gray-600">UOM:</p>
-                    <p class="font-medium">${item.uom || '-'}</p>
+                    <span class="font-medium text-gray-700">UOM:</span>
+                    <div class="text-gray-900">${item.uom || 'Not specified'}</div>
                 </div>
                 <div>
-                    <p class="text-gray-600">Country:</p>
-                    <p class="font-medium">${item.country_of_origin || '-'}</p>
+                    <span class="font-medium text-gray-700">Country:</span>
+                    <div class="text-gray-900">${item.country_of_origin || 'Not specified'}</div>
                 </div>
                 <div>
-                    <p class="text-gray-600">Model:</p>
-                    <p class="font-medium">${item.model_number || '-'}</p>
+                    <span class="font-medium text-gray-700">Model:</span>
+                    <div class="text-gray-900">${item.model_number || 'Not specified'}</div>
                 </div>
             </div>
             
+            <!-- Description Section -->
             <div class="mb-4">
-                <p class="text-gray-600 text-sm">Description:</p>
-                <p class="text-gray-900">${item.description1 || 'No description available'}</p>
+                <span class="font-medium text-gray-700">Description 1:</span>
+                <div class="text-gray-900 mt-1">${item.description1 || 'No description available'}</div>
             </div>
-
+            
+            ${item.description2 ? `
+            <div class="mb-4">
+                <span class="font-medium text-gray-700">Description 2:</span>
+                <div class="text-gray-900 mt-1">${item.description2}</div>
+            </div>
+            ` : ''}
+            
+            <!-- ERP Integration Status Section -->
+            <div class="border-t pt-4 mb-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <span class="font-medium text-gray-700">ERP Integration Status:</span>
+                        <div class="mt-1">
+                            ${item.erp_integrated ? 
+                                `<span class="text-green-700 text-sm">✓ Integrated on ${item.erp_integrated_at ? formatDate(item.erp_integrated_at) : 'Unknown date'}</span>` :
+                                '<span class="text-orange-700 text-sm">✗ Not integrated with ERP system</span>'
+                            }
+                        </div>
+                    </div>
+                    ${isAdmin ? `
+                        <div class="ml-4">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" 
+                                       ${item.erp_integrated ? 'checked' : ''} 
+                                       onchange="toggleERPStatus(${item.id}, this.checked)"
+                                       class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <span class="text-sm font-medium text-gray-700">
+                                    ${item.erp_integrated ? 'Mark as not integrated' : 'Mark as integrated'}
+                                </span>
+                            </label>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+            
             <!-- Action Buttons -->
-            <div class="flex justify-end gap-2 pt-4 border-t">
-                ${['approved', 'reviewer_approved', 'admin_approved'].includes(item.status) ? `
-                    <button onclick="exportItemToPDF(${item.id}, '${item.source || 'approved'}')" 
-                            class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded">
-                        ðŸ“„ PDF
-                    </button>
-                    <button onclick="exportItemToExcel(${item.id}, '${item.source || 'approved'}')" 
-                            class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded">
-                        ðŸ“Š Excel
-                    </button>
-                ` : ''}
+            <div class="flex flex-wrap gap-2 pt-4 border-t">
+                <button onclick="viewCodeDetails(${item.id})" class="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded hover:bg-blue-200 transition-colors">
+                    👁️ View Details
+                </button>
+                <button onclick="exportItemToPDF(${item.id}, 'approved')" class="text-xs bg-red-100 text-red-800 px-3 py-1 rounded hover:bg-red-200 transition-colors">
+                    📄 Export PDF
+                </button>
+                <button onclick="exportItemToExcel(${item.id}, 'approved')" class="text-xs bg-green-100 text-green-800 px-3 py-1 rounded hover:bg-green-200 transition-colors">
+                    📊 Export Excel
+                </button>
             </div>
         </div>
     `;
 }
-
 // Export individual request to PDF
 async function exportRequestToPDF(requestId) {
     try {
@@ -5608,19 +5613,19 @@ function generateSingleRequestPDF(item) {
     
     const details = [
         ['Item Code:', item.item_code || 'N/A'],
-        ['Request ID:', item.id ? `#${item.id}` : 'N/A'],
-        ['Status:', item.status || 'N/A'],
-        ['Created by:', item.created_by_user?.username || 'Unknown'],
-        ['Creator Email:', item.created_by_user?.email || 'N/A'],
+        ['Description 1:', item.description1 || 'N/A'],
+        ['Description 2:', item.description2 || 'N/A'],
         ['Unit Price:', item.unit_price ? `${item.unit_price} ${item.currency_code || ''}` : 'Not specified'],
-        ['Manufacturer:', item.manufacturer || 'Not specified'],
-        ['CSI Code:', item.csi_division_code || 'N/A'],
-        ['Additional Level:', item.additional_level || 'N/A'],
         ['UOM:', item.uom || 'N/A'],
         ['Country of Origin:', item.country_of_origin || 'N/A'],
         ['Model Number:', item.model_number || 'N/A'],
-        ['Description 1:', item.description1 || 'N/A'],
-        ['Description 2:', item.description2 || 'N/A'],
+        ['Manufacturer:', item.manufacturer || 'Not specified'],
+        ['Request ID:', item.id ? `#${item.id}` : 'N/A'],
+        ['Status:', item.status || 'N/A'],
+        ['Created by:', item.created_by_user?.username || 'Unknown'],
+        ['Creator Email:', item.created_by_user?.email || 'N/A'],      
+        ['CSI Code:', item.csi_division_code || 'N/A'],
+        ['Additional Level:', item.additional_level || 'N/A'],
         ['Created Date:', new Date(item.created_at).toLocaleDateString()]
     ];
     
@@ -5891,10 +5896,10 @@ function createHierarchyCard(node, level) {
     };
     
     const levelIcons = {
-        division: 'ðŸ“',
-        section: 'ðŸ“‚',
-        detailed_section: 'ðŸ“„',
-        item: 'ðŸ·ï¸'
+        division: '🏗️',
+        section: '🗃️',
+        detailed_section: '📐',
+        item: '🧱'
     };
     
     let content = `
@@ -5996,10 +6001,10 @@ function createCodeCard(code) {
                     Copy Code
                 </button>
                 <button onclick="exportItemToPDF(${code.id}, 'approved')" class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded hover:bg-red-200">
-                    ðŸ“„ PDF
+                    📄 PDF
                 </button>
                 <button onclick="exportItemToExcel(${code.id}, 'approved')" class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded hover:bg-green-200">
-                    ðŸ“Š Excel
+                    📊 Excel
                 </button>
             </div>
         </div>
@@ -6215,6 +6220,7 @@ Project: ${code.classification_projects?.project_name || 'N/A'}
     
     alert(details);
 }
+
 // Toggle ERP integration status
 async function toggleERPStatus(codeId, isIntegrated) {
     try {
@@ -6252,7 +6258,7 @@ async function toggleERPStatus(codeId, isIntegrated) {
         
     } catch (error) {
         console.error('Error updating ERP status:', error);
-        showNotification('Failed to update ERP status', 'error');
+        showNotification('Failed to update ERP status: ' + error.message, 'error');
         
         // Revert checkbox state
         const checkbox = document.querySelector(`input[onchange*="${codeId}"]`);
@@ -6262,14 +6268,26 @@ async function toggleERPStatus(codeId, isIntegrated) {
     }
 }
 // Show notification to user
+// Show notification to user
 function showNotification(message, type = 'info') {
+    // Remove any existing notifications
+    const existingNotifications = document.querySelectorAll('.notification-toast');
+    existingNotifications.forEach(notification => notification.remove());
+    
     const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 px-4 py-2 rounded shadow-lg z-50 ${
+    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 notification-toast ${
         type === 'success' ? 'bg-green-500 text-white' : 
         type === 'error' ? 'bg-red-500 text-white' : 
         'bg-blue-500 text-white'
     }`;
-    notification.textContent = message;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <span class="mr-2">
+                ${type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ'}
+            </span>
+            <span>${message}</span>
+        </div>
+    `;
     
     document.body.appendChild(notification);
     
@@ -6277,7 +6295,7 @@ function showNotification(message, type = 'info') {
         if (notification.parentNode) {
             notification.parentNode.removeChild(notification);
         }
-    }, 3000);
+    }, 4000);
 }
 // Show notification to user
 function showNotification(message, type = 'info') {
@@ -6637,7 +6655,7 @@ function renderRequestsCards() {
                 ${['reviewer_approved', 'admin_approved', 'approved'].includes(request.status) ? `
                     <button onclick="exportRequestToPDF(${request.id})" 
                             class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded">
-                        ðŸ“„ PDF
+                        “„ PDF
                     </button>
                     <button onclick="exportRequestToExcel(${request.id})" 
                             class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded">
