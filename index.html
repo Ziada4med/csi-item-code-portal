@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- This file now includes proper additional level sequencing -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -272,7 +272,7 @@
                     + Add Standard Value
                 </button>
                 <div id="reorder-lock-indicator" class="text-green-600 text-sm">
-    ✓ Attribute ordering is always available (order-independent duplicate detection)
+    âœ“ Attribute ordering is always available (order-independent duplicate detection)
 </div>
             </div>
         </div>
@@ -1060,6 +1060,21 @@ async function initializeApp() {
         console.log('Initializing app for user:', currentUser);
         
         document.getElementById('user-info').textContent = `${currentUser.username} (${currentUser.role})`;
+        
+        // MIGRATION: Run migration for additional level ordering (only for admin)
+        if (currentUser.role === 'admin') {
+            console.log('Running additional level migration for admin user...');
+            try {
+                const { data: migrationResult, error: migrationError } = await supabase.rpc('migrate_existing_additional_levels');
+                if (migrationError) {
+                    console.warn('Migration warning:', migrationError);
+                } else {
+                    console.log('Migration completed successfully:', migrationResult);
+                }
+            } catch (migrationError) {
+                console.warn('Migration failed (non-critical):', migrationError);
+            }
+        }
         
         // Show admin tab if admin
 if (currentUser.role === 'admin') {
@@ -1877,7 +1892,7 @@ function setupProjectSearch() {
         resultsDropdown.innerHTML = projects.map(project => {
           // Format: Only show additional level value if it exists, avoid duplication
 let displayText = project.additional_level_value && project.additional_level_value.trim() !== '' 
-    ? `${project.item_code} → ${project.additional_level_value}`
+    ? `${project.item_code} â†’ ${project.additional_level_value}`
     : `${project.item_code} - ${project.item_description || 'No description'}`;
 
 const additionalLevelText = ''; // Remove this since it's now included in displayText
@@ -1919,7 +1934,7 @@ function renderProjectDropdown(projects) {
         
         // Add additional level if exists
         const additionalLevelText = project.additional_level_value && project.additional_level_value.trim() !== ''
-    ? ` → ${project.additional_level_value}`
+    ? ` â†’ ${project.additional_level_value}`
     : '';
             
         return `
@@ -2063,7 +2078,7 @@ if (currentProject.attributes && Array.isArray(currentProject.attributes)) {
     
     // Format display text correctly - avoid duplication
 let displayText = project.additional_level_value && project.additional_level_value.trim() !== '' 
-    ? `${project.item_code} → ${project.additional_level_value}`
+    ? `${project.item_code} â†’ ${project.additional_level_value}`
     : `${project.item_code} - ${project.item_description || 'No description'}`;
     
     selectedInfo.innerHTML = `
@@ -2400,7 +2415,7 @@ function renderAttributes() {
         let html = `
             <div class="drag-handle ${!canReorder ? 'disabled' : ''}" 
                  ${!canReorder ? 'title="Reordering is locked due to pending requests"' : 'title="Drag to reorder"'}>
-                ☰
+                â˜°
             </div>
             <div class="flex-1">
                 <div class="mb-2">
@@ -2789,7 +2804,7 @@ function updateManualAttributeValue(attrId, value, unitSelectId) {
     }
     
     attributeSelections[attrId] = { 
-        value: formattedValue,  // ← FIXED: Include unit in formatted value
+        value: formattedValue,  // â† FIXED: Include unit in formatted value
         index: index,
         rawValue: value,
         unit: unit || ''
@@ -2836,11 +2851,23 @@ async function checkBlockedCombination(projectId, combinationSignature) {
                                   currentProject.additional_level_value.trim() !== '';
         const hasModelNumber = document.getElementById('model-number').value.trim();
         
+        let additionalLevelOrder = null;
+        
+        // Get proper additional level order if exists
+        if (hasAdditionalLevel) {
+            additionalLevelOrder = await getAdditionalLevelOrder(
+                currentProject.division_code,
+                currentProject.section_code,
+                currentProject.detailed_section_code,
+                currentProject.item_code,
+                currentProject.additional_level_value
+            );
+            console.log('Additional level order for', currentProject.additional_level_value, ':', additionalLevelOrder);
+        }
+        
         if (hasAdditionalLevel && hasModelNumber) {
-            const additionalLevelOrder = 1;
             code += `-${additionalLevelOrder}-n-${String(correctSerial).padStart(5, '0')}`;
         } else if (hasAdditionalLevel) {
-            const additionalLevelOrder = 1;
             code += `-${additionalLevelOrder}-${String(correctSerial).padStart(5, '0')}`;
         } else if (hasModelNumber) {
             code += `-n-${String(correctSerial).padStart(5, '0')}`;
@@ -2854,6 +2881,36 @@ async function checkBlockedCombination(projectId, combinationSignature) {
         return 'Error generating code';
     }
 }      
+// Get additional level order for proper sequencing
+async function getAdditionalLevelOrder(divisionCode, sectionCode, detailedSectionCode, itemCode, additionalLevelValue) {
+    try {
+        console.log('Getting additional level order for:', {
+            divisionCode,
+            sectionCode, 
+            detailedSectionCode,
+            itemCode,
+            additionalLevelValue
+        });
+        
+        const { data, error } = await supabase.rpc('get_additional_level_order', {
+            division_code_param: divisionCode,
+            section_code_param: sectionCode,
+            detailed_section_code_param: detailedSectionCode,
+            item_code_param: itemCode,
+            additional_level_value_param: additionalLevelValue
+        });
+        
+        if (error) throw error;
+        
+        console.log('Additional level order received:', data);
+        return data;
+    } catch (error) {
+        console.error('Error getting additional level order:', error);
+        // Fallback to 1 if error occurs
+        return 1;
+    }
+}
+
 // Update preview
 async function updatePreview() {
     const code = await generateItemCode(); // FIXED: Added await here
@@ -5123,9 +5180,9 @@ function showEmptyState() {
             <p class="text-lg font-medium mb-2">No approved item codes found</p>
             <p class="text-sm mb-4">There are currently no approved item codes in the system.</p>
             <div class="text-xs text-gray-400 space-y-1">
-                <p>• Item codes need to be generated and approved first</p>
-                <p>• Check the "Generate Codes" tab to create new item codes</p>
-                <p>• Admins can approve codes in the approval portal</p>
+                <p>â€¢ Item codes need to be generated and approved first</p>
+                <p>â€¢ Check the "Generate Codes" tab to create new item codes</p>
+                <p>â€¢ Admins can approve codes in the approval portal</p>
             </div>
         </div>
     `;
@@ -5414,11 +5471,11 @@ function createSearchCodeCard(item) {
                 ${['approved', 'reviewer_approved', 'admin_approved'].includes(item.status) ? `
                     <button onclick="exportItemToPDF(${item.id}, '${item.source || 'approved'}')" 
                             class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded">
-                        📄 PDF
+                        ðŸ“„ PDF
                     </button>
                     <button onclick="exportItemToExcel(${item.id}, '${item.source || 'approved'}')" 
                             class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded">
-                        📊 Excel
+                        ðŸ“Š Excel
                     </button>
                 ` : ''}
             </div>
@@ -5557,7 +5614,7 @@ function generateSingleRequestPDF(item) {
         ['Creator Email:', item.created_by_user?.email || 'N/A'],
         ['Unit Price:', item.unit_price ? `${item.unit_price} ${item.currency_code || ''}` : 'Not specified'],
         ['Manufacturer:', item.manufacturer || 'Not specified'],
-        ['Division Code:', item.csi_base_code || item.project_division || 'N/A'],
+        ['CSI Code:', item.csi_division_code || 'N/A'],
         ['Additional Level:', item.additional_level || 'N/A'],
         ['UOM:', item.uom || 'N/A'],
         ['Country of Origin:', item.country_of_origin || 'N/A'],
@@ -5566,18 +5623,6 @@ function generateSingleRequestPDF(item) {
         ['Description 2:', item.description2 || 'N/A'],
         ['Created Date:', new Date(item.created_at).toLocaleDateString()]
     ];
-    
-    // Add reviewer info if available
-    if (item.reviewed_by || item.reviewer_name || item.reviewed_by_name) {
-        const reviewerName = item.reviewer_name || item.reviewed_by_name || `User ID: ${item.reviewed_by}`;
-        details.push(['Reviewed By:', reviewerName]);
-    }
-    
-    // Add admin info if available  
-    if (item.admin_reviewed_by || item.admin_name || item.admin_reviewed_by_name) {
-        const adminName = item.admin_name || item.admin_reviewed_by_name || `User ID: ${item.admin_reviewed_by}`;
-        details.push(['Admin Reviewed By:', adminName]);
-    }
     
     details.forEach(([label, value]) => {
         doc.setFont(undefined, 'bold');
@@ -5710,7 +5755,7 @@ function generateSingleRequestPDF(item) {
             yPos += 5;
             
             // Create approval summary with names and dates
-            let approvalText = 'STATUS: APPROVED ✓';
+            let approvalText = 'STATUS: APPROVED âœ“';
             let approvalDetails = [];
             
             // Always show reviewer info for approved items
@@ -5846,10 +5891,10 @@ function createHierarchyCard(node, level) {
     };
     
     const levelIcons = {
-        division: '📁',
-        section: '📂',
-        detailed_section: '📄',
-        item: '🏷️'
+        division: 'ðŸ“',
+        section: 'ðŸ“‚',
+        detailed_section: 'ðŸ“„',
+        item: 'ðŸ·ï¸'
     };
     
     let content = `
@@ -5951,10 +5996,10 @@ function createCodeCard(code) {
                     Copy Code
                 </button>
                 <button onclick="exportItemToPDF(${code.id}, 'approved')" class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded hover:bg-red-200">
-                    📄 PDF
+                    ðŸ“„ PDF
                 </button>
                 <button onclick="exportItemToExcel(${code.id}, 'approved')" class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded hover:bg-green-200">
-                    📊 Excel
+                    ðŸ“Š Excel
                 </button>
             </div>
         </div>
@@ -6527,7 +6572,7 @@ function renderRequestsCards() {
                 <h3 class="text-lg font-semibold text-gray-900">${request.item_code || 'No Code'}</h3>
                 <p class="text-sm text-gray-600">${request.csi_division_code || 'No CSI Code'}</p>
                 ${(request.status === 'rejected' || request.status === 'reviewer_rejected' || request.status === 'admin_rejected') ? `
-                    <p class="text-xs text-red-600 font-medium mt-1">⚠ This item code is obsolete due to rejection</p>
+                    <p class="text-xs text-red-600 font-medium mt-1">âš  This item code is obsolete due to rejection</p>
                 ` : ''}
             </div>
             <div class="flex items-center gap-2">
@@ -6592,11 +6637,11 @@ function renderRequestsCards() {
                 ${['reviewer_approved', 'admin_approved', 'approved'].includes(request.status) ? `
                     <button onclick="exportRequestToPDF(${request.id})" 
                             class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded">
-                        📄 PDF
+                        ðŸ“„ PDF
                     </button>
                     <button onclick="exportRequestToExcel(${request.id})" 
                             class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded">
-                        📊 Excel
+                        ðŸ“Š Excel
                     </button>
                 ` : ''}
             </div>
@@ -6604,7 +6649,7 @@ function renderRequestsCards() {
             ${(request.status === 'rejected' || request.status === 'reviewer_rejected' || request.status === 'admin_rejected') ? `
                 <button onclick="regenerateFromRejected(${index}, 'requests')" 
                         class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded text-sm font-medium">
-                    🔄 Regenerate New Request
+                    ðŸ”„ Regenerate New Request
                 </button>
             ` : ''}
         </div>
@@ -6673,7 +6718,7 @@ async function regenerateFromRejected(index, source = 'history') {
                 <h3 class="text-2xl font-bold mb-6 text-gray-900">Regenerate Item Code Request</h3>
                 
                 <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded">
-                    <h4 class="font-semibold text-blue-900 mb-2">📋 What will happen:</h4>
+                    <h4 class="font-semibold text-blue-900 mb-2">ðŸ“‹ What will happen:</h4>
                     <ul class="text-sm text-blue-800 space-y-2 list-disc list-inside">
                         <li>A <strong>new item code request</strong> will be created with a new serial number</li>
                         <li>All your previous selections and data will be pre-filled in the generator</li>
@@ -6683,12 +6728,12 @@ async function regenerateFromRejected(index, source = 'history') {
                 </div>
                 
                 <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded">
-                    <h4 class="font-semibold text-red-900 mb-2">❌ Previous Rejection Reason:</h4>
+                    <h4 class="font-semibold text-red-900 mb-2">âŒ Previous Rejection Reason:</h4>
                     <p class="text-sm text-red-700">${rejectedRequest.review_comments || 'No comments provided'}</p>
                 </div>
                 
                 <div class="mb-6 p-4 bg-gray-50 border border-gray-300 rounded">
-                    <h4 class="font-semibold text-gray-900 mb-3">📦 Data to be copied:</h4>
+                    <h4 class="font-semibold text-gray-900 mb-3">ðŸ“¦ Data to be copied:</h4>
                     <div class="grid grid-cols-2 gap-3 text-sm">
                         <div>
                             <p class="text-gray-600">Project:</p>
@@ -7750,7 +7795,7 @@ function exportToPDF(data, filename, title) {
         
         // Details table
         const tableData = [
-            ['Division Code', item.csi_base_code || item.project_division || currentProject?.division_code || '-'],
+            ['CSI Code', item.csi_division_code || '-'],
             ['Additional Level', item.additional_level || '-'],
             ['Entry Type', item.entry_description || 'Generated'],
             ['Unit of Measurement', item.uom || '-'],
@@ -7763,22 +7808,6 @@ function exportToPDF(data, filename, title) {
         
         if (item.review_comments) {
             tableData.push(['Review Comments', item.review_comments]);
-        }
-        
-        // Reviewer info (if available)
-        if (item.reviewed_by || item.reviewer_name || item.reviewed_by_name) {
-            const reviewerName = item.reviewer_name || item.reviewed_by_name || `User ID: ${item.reviewed_by}`;
-            tableData.push(['Reviewed By', reviewerName]);
-        }
-        
-        // Admin info (if available) 
-        if (item.admin_reviewed_by || item.admin_name || item.admin_reviewed_by_name) {
-            const adminName = item.admin_name || item.admin_reviewed_by_name || `User ID: ${item.admin_reviewed_by}`;
-            tableData.push(['Admin Reviewed By', adminName]);
-        }
-        
-        if (item.admin_comments) {
-            tableData.push(['Admin Comments', item.admin_comments]);
         }
         
         doc.autoTable({
