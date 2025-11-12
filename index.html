@@ -99,6 +99,29 @@
         .project-option:last-child {
             border-bottom: none;
         }
+        
+        /* Enhanced Export Dropdown Styles */
+        #export-dropdown-menu {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        #export-dropdown-menu .export-option {
+            transition: all 0.2s ease;
+        }
+        
+        #export-dropdown-menu button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .export-filter-info {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -356,6 +379,30 @@
             <div id="duplication-message"></div>
         </div>
 
+        <!-- Variation Information Display -->
+        <div id="variation-info" class="mb-4 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg hidden">
+            <h4 class="text-lg font-medium text-blue-800 mb-3 flex items-center">
+                🔄 <span class="ml-2">Variation Preview</span>
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div class="bg-white p-3 rounded border">
+                    <span class="text-blue-600 font-medium block mb-1">Base Item Code:</span>
+                    <span id="base-item-code" class="text-blue-900 font-mono text-lg"></span>
+                </div>
+                <div class="bg-white p-3 rounded border">
+                    <span class="text-blue-600 font-medium block mb-1">This Will Be:</span>
+                    <span id="variation-preview-code" class="text-blue-900 font-mono text-lg font-bold"></span>
+                </div>
+                <div class="bg-white p-3 rounded border">
+                    <span class="text-blue-600 font-medium block mb-1">Existing Variations:</span>
+                    <span id="existing-variations-count" class="text-blue-900 text-lg"></span>
+                </div>
+            </div>
+            <div class="mt-3 p-2 bg-blue-100 rounded text-blue-800 text-sm">
+                <strong>Note:</strong> Same attributes with different UOM/manufacturer/model/country create variations, not new items.
+            </div>
+        </div>
+
         <!-- Code Preview -->
         <div class="bg-gray-800 text-white p-4 rounded-lg mb-4">
             <div class="text-sm text-gray-400 mb-1">Preview:</div>
@@ -565,9 +612,56 @@
                     <button id="toggle-view-btn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-md">
                         Toggle Hierarchy View
                     </button>
-                    <button id="export-search-results-btn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md">
-                        Export Results
+                    <button id="toggle-table-view-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md">
+                        Switch to Table View
                     </button>
+                    <!-- Enhanced Export Controls -->
+                    <div class="relative inline-block">
+                        <button id="export-dropdown-btn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
+                            </svg>
+                            Export Options
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div id="export-dropdown-menu" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                            <div class="p-4">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-3">📊 Export Item Codes</h3>
+                                
+                                <!-- Filter Selection -->
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Status:</label>
+                                    <select id="export-filter-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
+                                        <option value="all">All Approved Item Codes</option>
+                                        <option value="erp_integrated">ERP Integrated Codes Only</option>
+                                        <option value="erp_pending">Pending ERP Integration</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Export Format Options -->
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button id="export-excel-btn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        Excel (.xlsx)
+                                    </button>
+                                    <button id="export-pdf-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        PDF
+                                    </button>
+                                </div>
+                                
+                                <div class="mt-3 text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                                    <p><strong>Note:</strong> PDF exports include automatic text wrapping to ensure all content is clearly visible.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <button id="refresh-search-btn" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-md">
     Refresh Data
 </button>
@@ -595,6 +689,34 @@
             <div id="search-results-container">
     <div id="hierarchy-view" class="space-y-4 hidden"></div>
     <div id="list-view" class="space-y-4"></div>
+    
+    <!-- Table View Container -->
+    <div id="table-view-container" class="hidden">
+        <div class="overflow-x-auto bg-white rounded-lg shadow">
+            <table id="search-codes-table" class="min-w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Item Code</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Project</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Description</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Unit Price</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Manufacturer</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">UOM</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Country</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Model</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Approved By</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Created Date</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b">ERP Status</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-red-600 uppercase tracking-wider border-b bg-yellow-50">🔧 Admin: Mark ERP</th>
+                    </tr>
+                </thead>
+                <tbody id="search-codes-table-body" class="bg-white divide-y divide-gray-200">
+                    <!-- Table rows will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
     <div id="search-empty" class="hidden text-center py-8 text-gray-500">No search results found</div>
     <div id="search-loading" class="hidden text-center py-8">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -878,78 +1000,136 @@ async function getNextSerialNumber() {
     }
 }
 // Function to check if combination already exists
-async function checkCombinationExists(combination, uom, country, modelNumber) {
+// Enhanced duplicate checking with variation support
+async function checkCombinationExists(combination, uom, country, modelNumber, unitPrice, currency, manufacturer) {
+    if (!currentProject) return { exists: false };
+    
     try {
-        // Get the new required fields
-        const unitPrice = document.getElementById('unit-price').value;
-        const currency = document.getElementById('currency-select').value;
-        const manufacturer = document.getElementById('manufacturer-select').value || null;
+        console.log('🔍 Checking duplicates with VARIATION logic...');
         
-        // First check in approved item_codes
-        const { data: approvedItems, error: approvedError } = await supabase
+        const baseSignature = getBaseCombinationSignature();
+        const variationSignature = getVariationFieldsSignature();
+        
+        console.log('🔍 Base signature (attributes):', baseSignature);
+        console.log('🔍 Variation signature (UOM/manufacturer/model/country):', variationSignature);
+        
+        // Check existing approved codes
+        const { data: existingCodes, error: codeError } = await supabase
             .from('item_codes')
-            .select('item_code, status')
-            .eq('project_id', currentProject.project_id)
-            .eq('combination_signature', combination)
-            .eq('uom', uom)
-            .eq('country_of_origin', country)
-            .eq('unit_price', unitPrice ? parseFloat(unitPrice) : null)
-            .eq('currency_code', currency || null)
-            .eq('manufacturer', manufacturer)
+            .select(`
+                id, item_code, base_combination_signature, variation_fields_signature, 
+                is_variation, variation_number, variation_suffix,
+                uom, country_of_origin, model_number, manufacturer
+            `)
+            .eq('project_id', currentProject.id)
             .eq('status', 'approved');
             
-        if (approvedError) {
-            console.error('Error checking approved items:', approvedError);
-            throw approvedError;
+        if (codeError) {
+            console.error('Error checking existing codes:', codeError);
+            return { exists: false, error: codeError.message };
         }
         
-        if (approvedItems && approvedItems.length > 0) {
-            return {
-                exists: true,
-                type: 'approved',
-                code: approvedItems[0].item_code,
-                status: approvedItems[0].status
-            };
+        if (existingCodes && existingCodes.length > 0) {
+            // Check for exact duplicate (same base + same variation)
+            const exactMatch = existingCodes.find(code => {
+                // For existing codes without variation fields, fall back to field comparison
+                if (code.base_combination_signature) {
+                    return code.base_combination_signature === baseSignature && 
+                           code.variation_fields_signature === variationSignature;
+                } else {
+                    // Legacy comparison for existing data
+                    return code.uom === uom && 
+                           code.country_of_origin === country && 
+                           (code.model_number || '') === (modelNumber || '') &&
+                           (code.manufacturer || '') === (manufacturer || '');
+                }
+            });
+            
+            if (exactMatch) {
+                console.log('🚨 EXACT DUPLICATE found:', exactMatch);
+                return { 
+                    exists: true, 
+                    type: 'approved code', 
+                    code: exactMatch.item_code,
+                    isDuplicate: true
+                };
+            }
+            
+            // Check if base combination exists (same attributes)
+            const baseMatches = existingCodes.filter(code => {
+                if (code.base_combination_signature) {
+                    return code.base_combination_signature === baseSignature;
+                } else {
+                    // Legacy: compare by combination signature for old data
+                    return code.item_code && baseSignature; // Basic fallback
+                }
+            });
+            
+            if (baseMatches.length > 0) {
+                // Base combination exists but different variation - can create variation
+                const baseItem = baseMatches.find(code => !code.is_variation) || baseMatches[0];
+                const variationCount = baseMatches.length;
+                
+                console.log('✅ Base combination exists, can create variation');
+                console.log('📊 Existing variations:', variationCount);
+                
+                return { 
+                    exists: false, 
+                    canCreateVariation: true,
+                    baseItemCode: baseItem.item_code,
+                    existingVariations: variationCount,
+                    willBeVariation: true,
+                    nextVariationNumber: variationCount + 1
+                };
+            }
         }
         
-        // Then check in pending item_code_requests
-        const { data: pendingItems, error: pendingError } = await supabase
+        // Check existing requests for conflicts
+        const { data: existingRequests, error: requestError } = await supabase
             .from('item_code_requests')
-            .select('item_code, status')
-            .eq('project_id', currentProject.project_id)
-            .eq('combination_signature', combination)
-            .eq('uom', uom)
-            .eq('country_of_origin', country)
-            .eq('unit_price', unitPrice ? parseFloat(unitPrice) : null)
-            .eq('currency_code', currency || null)
-            .eq('manufacturer', manufacturer)
+            .select(`
+                id, item_code, base_combination_signature, variation_fields_signature,
+                uom, country_of_origin, model_number, manufacturer
+            `)
+            .eq('project_id', currentProject.id)
             .in('status', ['pending', 'reviewer_approved']);
             
-        if (pendingError) {
-            console.error('Error checking pending items:', pendingError);
-            throw pendingError;
+        if (!requestError && existingRequests && existingRequests.length > 0) {
+            const exactRequestMatch = existingRequests.find(request => {
+                if (request.base_combination_signature) {
+                    return request.base_combination_signature === baseSignature && 
+                           request.variation_fields_signature === variationSignature;
+                } else {
+                    // Legacy comparison
+                    return request.uom === uom && 
+                           request.country_of_origin === country && 
+                           (request.model_number || '') === (modelNumber || '') &&
+                           (request.manufacturer || '') === (manufacturer || '');
+                }
+            });
+            
+            if (exactRequestMatch) {
+                console.log('🚨 EXACT DUPLICATE found in requests:', exactRequestMatch);
+                return { 
+                    exists: true, 
+                    type: 'pending request', 
+                    code: exactRequestMatch.item_code,
+                    isDuplicate: true
+                };
+            }
         }
         
-        if (pendingItems && pendingItems.length > 0) {
-            return {
-                exists: true,
-                type: 'pending',
-                code: pendingItems[0].item_code,
-                status: pendingItems[0].status
-            };
-        }
-        
-        // No duplicates found
-        return {
-            exists: false,
-            type: null,
-            code: null,
-            status: null
+        // No conflicts found
+        console.log('✅ No duplicates found - safe to proceed');
+        return { 
+            exists: false, 
+            canCreateVariation: false, 
+            willBeVariation: false 
         };
         
     } catch (error) {
-        console.error('Error in checkCombinationExists:', error);
-        throw error;
+        console.error('Error in enhanced duplicate checking:', error);
+        return { exists: false, error: error.message };
     }
 }
 
@@ -982,6 +1162,114 @@ async function checkFallbackDuplicates(combination, uom, country, modelNumber) {
     
     return { exists: false };
 }
+
+// ===== VARIATION PREVIEW FUNCTIONS =====
+
+// Show variation preview to user
+function showVariationPreview(duplicateCheck) {
+    const variationInfo = document.getElementById('variation-info');
+    const baseItemCode = document.getElementById('base-item-code');
+    const variationPreviewCode = document.getElementById('variation-preview-code');
+    const existingVariationsCount = document.getElementById('existing-variations-count');
+    
+    if (duplicateCheck.willBeVariation && variationInfo) {
+        variationInfo.classList.remove('hidden');
+        
+        if (baseItemCode) baseItemCode.textContent = duplicateCheck.baseItemCode;
+        
+        const nextVariationCode = `${duplicateCheck.baseItemCode}/${duplicateCheck.nextVariationNumber}`;
+        if (variationPreviewCode) variationPreviewCode.textContent = nextVariationCode;
+        
+        if (existingVariationsCount) {
+            existingVariationsCount.textContent = `${duplicateCheck.existingVariations} existing`;
+        }
+        
+        console.log('🔄 Showing variation preview:', {
+            baseCode: duplicateCheck.baseItemCode,
+            variationCode: nextVariationCode,
+            existingCount: duplicateCheck.existingVariations
+        });
+    } else {
+        variationInfo?.classList.add('hidden');
+    }
+}
+
+// Hide variation preview
+function hideVariationPreview() {
+    const variationInfo = document.getElementById('variation-info');
+    variationInfo?.classList.add('hidden');
+}
+
+// Check if this creates a variation and show preview
+async function checkForVariationPreview() {
+    if (!currentProject || !allRequiredFieldsFilled()) {
+        hideVariationPreview();
+        return;
+    }
+    
+    try {
+        const uom = document.getElementById('uom-select')?.value;
+        const country = document.getElementById('country-select')?.value;
+        const modelNumber = document.getElementById('model-number')?.value;
+        const unitPrice = document.getElementById('unit-price')?.value;
+        const currency = document.getElementById('currency-select')?.value;
+        const manufacturer = document.getElementById('manufacturer-select')?.value;
+        
+        if (!uom || !country || !unitPrice || !currency) {
+            hideVariationPreview();
+            return;
+        }
+        
+        const combination = getCombinationSignature();
+        if (!combination) {
+            hideVariationPreview();
+            return;
+        }
+        
+        const duplicateCheck = await checkCombinationExists(
+            combination, uom, country, modelNumber, unitPrice, currency, manufacturer
+        );
+        
+        if (duplicateCheck.willBeVariation) {
+            showVariationPreview(duplicateCheck);
+        } else {
+            hideVariationPreview();
+        }
+    } catch (error) {
+        console.error('Error checking variation preview:', error);
+        hideVariationPreview();
+    }
+}
+
+// Check if all required fields are filled for preview
+function allRequiredFieldsFilled() {
+    if (!currentProject?.attributes) return false;
+    
+    const allMandatory = currentProject.attributes.every(attr => 
+        !attr.is_mandatory || attributeSelections[attr.attribute_id]
+    );
+    
+    const uom = document.getElementById('uom-select')?.value;
+    const country = document.getElementById('country-select')?.value;
+    const unitPrice = document.getElementById('unit-price')?.value;
+    const currency = document.getElementById('currency-select')?.value;
+    
+    return allMandatory && uom && country && unitPrice && currency;
+}
+
+// Setup variation preview listeners
+function setupVariationPreviewListeners() {
+    const fieldsToWatch = ['uom-select', 'manufacturer-select', 'model-number', 'country-select', 'unit-price', 'currency-select'];
+    
+    fieldsToWatch.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('change', debounce(checkForVariationPreview, 300));
+            field.addEventListener('input', debounce(checkForVariationPreview, 500));
+        }
+    });
+}
+
 let draggedItem = null;
         let canReorder = true;
         
@@ -2711,6 +2999,7 @@ function updateManualAttributeValue(attrId, value, unitSelectId) {
     updatePreview();
     checkForDuplicates();
     checkGenerateButton();
+    checkForVariationPreview(); // NEW: Check for variation preview
 }
 // Setup drag events
         function setupDragEvents(element) {
@@ -2881,6 +3170,39 @@ async function checkBlockedCombination(projectId, combinationSignature) {
         console.error('Error generating item code:', error);
         return 'Error generating code';
     }
+}
+
+// NEW: Enhanced item code generation with variation support
+async function generateItemCodeWithVariations() {
+    if (!currentProject) return 'No project selected';
+    
+    try {
+        const uom = document.getElementById('uom-select')?.value;
+        const country = document.getElementById('country-select')?.value;
+        const modelNumber = document.getElementById('model-number')?.value;
+        const manufacturer = document.getElementById('manufacturer-select')?.value;
+        
+        // Check if this will be a variation
+        const combination = getCombinationSignature();
+        const duplicateCheck = await checkCombinationExists(
+            combination, uom, country, modelNumber, null, null, manufacturer
+        );
+        
+        if (duplicateCheck.willBeVariation) {
+            // This will be a variation - use base item code + variation suffix
+            const variationNumber = duplicateCheck.nextVariationNumber;
+            console.log('🔄 Creating variation:', `${duplicateCheck.baseItemCode}/${variationNumber}`);
+            return `${duplicateCheck.baseItemCode}/${variationNumber}`;
+        } else {
+            // This will be a new base item - generate normally
+            console.log('📝 Creating new base item');
+            return await generateItemCode(); // Use existing logic for new items
+        }
+        
+    } catch (error) {
+        console.error('Error generating item code with variations:', error);
+        return await generateItemCode(); // Fallback to original function
+    }
 }      
 // Get additional level order for proper sequencing
 async function getAdditionalLevelOrder(divisionCode, sectionCode, detailedSectionCode, itemCode, additionalLevelValue) {
@@ -2914,7 +3236,7 @@ async function getAdditionalLevelOrder(divisionCode, sectionCode, detailedSectio
 
 // Update preview
 async function updatePreview() {
-    const code = await generateItemCode(); // FIXED: Added await here
+    const code = await generateItemCodeWithVariations(); // Enhanced with variation support
     const desc1 = generateDescription1();
     const desc2 = generateDescription2();
     
@@ -3148,24 +3470,32 @@ function getCombinationSignature() {
         }
         return '_';
     }).join('-');
-}   
+}
 
-// Get combination signature
-      function getCombinationSignature() {
+// NEW: Generate base combination signature (attributes only) for variation system
+function getBaseCombinationSignature() {
     if (!currentProject || !currentProject.attributes) return '';
     
-    return attributeOrder.map(i => {
-        const attr = currentProject.attributes[i];
-        const sel = attributeSelections[attr.attribute_id];
-        if (sel) {
-            if (sel.index === 'manual') {
-                return `manual:${sel.value}`;
-            } else {
-                return sel.index;
-            }
+    let attrString = '';
+    Object.keys(attributeSelections).sort().forEach(key => {
+        const selection = attributeSelections[key];
+        if (selection && selection.value) {
+            attrString += `${key}:${selection.value}|`;
         }
-        return '_';
-    }).join('-');
+    });
+    
+    return md5(attrString);
+}
+
+// NEW: Generate variation fields signature (UOM, manufacturer, model, country)
+function getVariationFieldsSignature() {
+    const uom = document.getElementById('uom-select')?.value || '';
+    const country = document.getElementById('country-select')?.value || '';
+    const model = document.getElementById('model-number')?.value || '';
+    const manufacturer = document.getElementById('manufacturer-select')?.value || '';
+    
+    const variationString = `${uom}|${country}|${model}|${manufacturer}`;
+    return md5(variationString);
 }
 // Check generate button - Admin doesn't need reviewer
         // Enhanced check generate button with duplicate prevention
@@ -3372,8 +3702,8 @@ function getFormattedCombination() {
         const correctSerial = await getNextSerialNumber();
         nextSerial = correctSerial;
         
-        // Generate the item code with correct serial
-        const itemCode = await generateItemCode();
+        // Generate the item code with variation support
+        const itemCode = await generateItemCodeWithVariations();
         const description1 = generateDescription1();
         const description2 = generateDescription2();
         
@@ -3483,7 +3813,13 @@ function getFormattedCombination() {
                         created_by: currentUser.id,
                         status: 'approved',
                         approved_by: currentUser.id,
-                        approved_at: new Date().toISOString()
+                        approved_at: new Date().toISOString(),
+                        // NEW: Variation support fields
+                        base_combination_signature: getBaseCombinationSignature(),
+                        variation_fields_signature: getVariationFieldsSignature(),
+                        variation_suffix: itemCode.includes('/') ? '/' + itemCode.split('/')[1] : '',
+                        variation_number: itemCode.includes('/') ? parseInt(itemCode.split('/')[1]) : 0,
+                        is_variation: itemCode.includes('/')
                     })
                     .select();
 
@@ -3558,7 +3894,13 @@ function getFormattedCombination() {
                         manufacturer: manufacturer,
                         created_by: currentUser.id,
                         reviewed_by: parseInt(reviewerId),
-                        status: 'pending'
+                        status: 'pending',
+                        // NEW: Variation support fields
+                        base_combination_signature: getBaseCombinationSignature(),
+                        variation_fields_signature: getVariationFieldsSignature(),
+                        variation_suffix: itemCode.includes('/') ? '/' + itemCode.split('/')[1] : '',
+                        variation_number: itemCode.includes('/') ? parseInt(itemCode.split('/')[1]) : 0,
+                        is_variation: itemCode.includes('/')
                     })
                     .select();
 
@@ -4851,6 +5193,9 @@ if (modelNumber) {
             document.getElementById('add-value-modal').classList.add('hidden');
         });
     }
+    
+    // Setup variation preview listeners  
+    setupVariationPreviewListeners();
 }       
 
 
@@ -5031,7 +5376,7 @@ async function loadAllApprovedCodes() {
         if (hierarchyView) hierarchyView.classList.add('hidden');
         if (listView) listView.classList.add('hidden');
         
-        // CRITICAL FIX: Load ONLY approved item codes
+        // CRITICAL FIX: Load ONLY items approved by ADMIN
         const { data: approvedCodes, error } = await supabase
             .from('item_codes')
             .select(`
@@ -5048,10 +5393,13 @@ async function loadAllApprovedCodes() {
                 created_at,
                 project_id,
                 status,
+                approved_by,
+                approved_at,
                 erp_integrated,
                 erp_integrated_at,
                 erp_integrated_by,
                 created_by_user:users!item_codes_created_by_fkey(username, email),
+                approved_by_user:users!item_codes_approved_by_fkey(username, email),
                 classification_projects!inner (
                     id,
                     project_name,
@@ -5063,13 +5411,18 @@ async function loadAllApprovedCodes() {
                     additional_level_value
                 )
             `)
-            .eq('status', 'approved')  // CRITICAL: Only load approved codes
+            .eq('status', 'approved')  // Status must be approved
+            .not('approved_by', 'is', null)  // CRITICAL: Must have admin approval
             .order('created_at', { ascending: false });
         
         if (error) throw error;
         
         allApprovedCodes = approvedCodes || [];
-        console.log('✅ ONLY approved codes loaded:', allApprovedCodes.length);
+        console.log('✅ ONLY admin-approved codes loaded:', allApprovedCodes.length);
+        console.log('📊 Approved by admins:', allApprovedCodes.filter(c => c.approved_by).length);
+        if (allApprovedCodes.length > 0) {
+            console.log('👤 First item approved by:', allApprovedCodes[0].approved_by_user?.username);
+        }
         
         // Hide loading state
         if (loadingState) loadingState.classList.add('hidden');
@@ -5161,7 +5514,7 @@ if (refreshBtn) {
     const searchInputs = [
         'search-desc1', 'search-desc2', 'search-item-code', 
         'search-project-name-codes', 'search-csi-path', 'search-country',
-        'search-model', 'search-uom', 'search-attributes'
+        'search-model', 'search-uom', 'search-attributes', 'search-erp-status'
     ];
     
     searchInputs.forEach(inputId => {
@@ -5187,9 +5540,36 @@ if (refreshBtn) {
         toggleViewBtn.addEventListener('click', toggleSearchView);
     }
     
+    // Legacy export button (now triggers dropdown)
     const exportBtn = document.getElementById('export-search-results-btn');
     if (exportBtn) {
         exportBtn.addEventListener('click', exportSearchResults);
+    }
+    
+    // Enhanced export functionality
+    const exportDropdownBtn = document.getElementById('export-dropdown-btn');
+    if (exportDropdownBtn) {
+        exportDropdownBtn.addEventListener('click', toggleExportDropdown);
+    }
+    
+    const exportExcelBtn = document.getElementById('export-excel-btn');
+    if (exportExcelBtn) {
+        exportExcelBtn.addEventListener('click', () => {
+            const filterType = document.getElementById('export-filter-select').value;
+            exportFilteredToExcel(filterType);
+            // Close dropdown after export
+            document.getElementById('export-dropdown-menu').classList.add('hidden');
+        });
+    }
+    
+    const exportPdfBtn = document.getElementById('export-pdf-btn');
+    if (exportPdfBtn) {
+        exportPdfBtn.addEventListener('click', () => {
+            const filterType = document.getElementById('export-filter-select').value;
+            exportFilteredToPDF(filterType);
+            // Close dropdown after export
+            document.getElementById('export-dropdown-menu').classList.add('hidden');
+        });
     }
 }
 
@@ -5204,10 +5584,11 @@ function performCodeSearch() {
         country: document.getElementById('search-country').value.toLowerCase().trim(),
         model: document.getElementById('search-model').value.toLowerCase().trim(),
         uom: document.getElementById('search-uom').value.toLowerCase().trim(),
-        attributes: document.getElementById('search-attributes').value.toLowerCase().trim()
+        attributes: document.getElementById('search-attributes').value.toLowerCase().trim(),
+        erpStatus: document.getElementById('search-erp-status').value
     };
     
-    const hasSearchCriteria = Object.values(criteria).some(value => value.length > 0);
+    const hasSearchCriteria = Object.values(criteria).some(value => value && value.length > 0);
     
     if (!hasSearchCriteria) {
         displaySearchResults(allApprovedCodes);
@@ -5381,107 +5762,130 @@ function displayHierarchyView(codes) {
     `).join('');
 }
 function createSearchCodeCard(item) {
+    console.log('🎯 Creating card for item:', item.id);
+    console.log('👤 Current user:', currentUser);
+    console.log('🔒 User role:', currentUser?.role);
     const isAdmin = currentUser && currentUser.role === 'admin';
+    console.log('✅ Is admin check result:', isAdmin);
     
     return `
         <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow">
             <div class="flex justify-between items-start mb-4">
                 <div class="flex-1">
-                    <h3 class="text-lg font-semibold text-gray-900">${item.item_code || 'No Code'}</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        ${item.item_code || 'No Code'}
+                        ${item.is_variation ? `<span class="text-sm text-blue-600 bg-blue-100 px-2 py-1 rounded">(Variation ${item.variation_number})</span>` : ''}
+                    </h3>
                     <p class="text-sm text-gray-600">${item.classification_projects?.project_name || 'Unknown Project'}</p>
+                    ${item.is_variation ? `<p class="text-xs text-blue-500">Base: ${item.item_code.split('/')[0]}</p>` : ''}
+                    <p class="text-xs text-blue-600">Approved by: ${item.approved_by_user?.username || 'Admin'}</p>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                     <span class="px-3 py-1 text-xs rounded-full ${getStatusColor(item.status)}">
                         ${item.status ? item.status.toUpperCase() : 'UNKNOWN'}
                     </span>
-                    ${item.erp_integrated ? 
-                        '<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">ERP ✓</span>' : 
-                        '<span class="px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-800">ERP ✗</span>'
-                    }
+                    <span class="px-2 py-1 text-xs rounded-full ${item.erp_integrated ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}">
+                        ERP ${item.erp_integrated ? '✓' : '✗'}
+                    </span>
                 </div>
             </div>
             
             <!-- Enhanced Information Grid -->
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm mb-4">
-                <div>
-                    <span class="font-medium text-gray-700">Created by:</span>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm mb-4">
+                <div class="bg-gray-50 p-3 rounded">
+                    <div class="font-medium text-gray-700 mb-1">Created by:</div>
                     <div class="text-gray-900">${item.created_by_user?.username || 'Unknown'}</div>
-                    ${item.created_by_user?.email ? `<div class="text-xs text-gray-500">${item.created_by_user.email}</div>` : ''}
+                    ${item.created_by_user?.email ? `<div class="text-xs text-gray-500 mt-1">${item.created_by_user.email}</div>` : ''}
                 </div>
-                <div>
-                    <span class="font-medium text-gray-700">Unit Price:</span>
-                    <div class="font-mono bg-green-50 px-2 py-1 rounded text-green-800">
+                <div class="bg-gray-50 p-3 rounded">
+                    <div class="font-medium text-gray-700 mb-1">Unit Price:</div>
+                    <div class="font-mono text-green-800">
                         ${item.unit_price ? `${item.unit_price} ${item.currency_code || ''}` : 'Not specified'}
                     </div>
                 </div>
-                <div>
-                    <span class="font-medium text-gray-700">Manufacturer:</span>
+                <div class="bg-gray-50 p-3 rounded">
+                    <div class="font-medium text-gray-700 mb-1">Manufacturer:</div>
                     <div class="text-gray-900">${item.manufacturer || 'Not specified'}</div>
                 </div>
-                <div>
-                    <span class="font-medium text-gray-700">UOM:</span>
+                <div class="bg-gray-50 p-3 rounded">
+                    <div class="font-medium text-gray-700 mb-1">UOM:</div>
                     <div class="text-gray-900">${item.uom || 'Not specified'}</div>
                 </div>
-                <div>
-                    <span class="font-medium text-gray-700">Country:</span>
+                <div class="bg-gray-50 p-3 rounded">
+                    <div class="font-medium text-gray-700 mb-1">Country:</div>
                     <div class="text-gray-900">${item.country_of_origin || 'Not specified'}</div>
                 </div>
-                <div>
-                    <span class="font-medium text-gray-700">Model:</span>
+                <div class="bg-gray-50 p-3 rounded">
+                    <div class="font-medium text-gray-700 mb-1">Model:</div>
                     <div class="text-gray-900">${item.model_number || 'Not specified'}</div>
                 </div>
             </div>
             
             <!-- Description Section -->
-            <div class="mb-4">
-                <span class="font-medium text-gray-700">Description 1:</span>
-                <div class="text-gray-900 mt-1">${item.description1 || 'No description available'}</div>
+            <div class="mb-4 bg-blue-50 p-3 rounded">
+                <div class="font-medium text-gray-700 mb-2">Description:</div>
+                <div class="text-gray-900">${item.description1 || 'No description available'}</div>
+                ${item.description2 ? `<div class="text-gray-700 text-sm mt-2">${item.description2}</div>` : ''}
             </div>
             
-            ${item.description2 ? `
-            <div class="mb-4">
-                <span class="font-medium text-gray-700">Description 2:</span>
-                <div class="text-gray-900 mt-1">${item.description2}</div>
-            </div>
-            ` : ''}
-            
-            <!-- ERP Integration Status Section -->
-            <div class="border-t pt-4 mb-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex-1">
-                        <span class="font-medium text-gray-700">ERP Integration Status:</span>
-                        <div class="mt-1">
-                            ${item.erp_integrated ? 
-                                `<span class="text-green-700 text-sm">✓ Integrated on ${item.erp_integrated_at ? formatDate(item.erp_integrated_at) : 'Unknown date'}</span>` :
-                                '<span class="text-orange-700 text-sm">✗ Not integrated with ERP system</span>'
+            <!-- ADMIN ERP INTEGRATION CONTROL -->
+            ${isAdmin ? `
+                <div class="border-2 border-yellow-400 bg-yellow-50 p-4 rounded-lg mb-4">
+                    <div class="flex items-center mb-3">
+                        <span class="text-lg">🔧</span>
+                        <h4 class="font-bold text-gray-800 ml-2">ADMIN: ERP Integration Control</h4>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="text-sm font-medium">
+                                Current Status: 
+                                <span class="px-2 py-1 rounded text-xs ${item.erp_integrated ? 'bg-green-200 text-green-800' : 'bg-orange-200 text-orange-800'}">
+                                    ${item.erp_integrated ? '✅ INTEGRATED' : '❌ NOT INTEGRATED'}
+                                </span>
+                            </div>
+                            ${item.erp_integrated && item.erp_integrated_at ? 
+                                `<div class="text-xs text-gray-600 mt-1">Integrated on: ${formatDate(item.erp_integrated_at)}</div>` : 
+                                ''
                             }
                         </div>
-                    </div>
-                    ${isAdmin ? `
                         <div class="ml-4">
-                            <label class="flex items-center cursor-pointer">
+                            <label class="flex items-center cursor-pointer bg-white p-3 rounded-lg border-2 border-gray-300 hover:border-blue-400">
                                 <input type="checkbox" 
+                                       id="erp-toggle-${item.id}"
                                        ${item.erp_integrated ? 'checked' : ''} 
                                        onchange="toggleERPStatus(${item.id}, this.checked)"
-                                       class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                                <span class="text-sm font-medium text-gray-700">
-                                    ${item.erp_integrated ? 'Mark as not integrated' : 'Mark as integrated'}
+                                       class="mr-3 h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <span class="text-sm font-bold text-gray-700">
+                                    ${item.erp_integrated ? 'UNMARK FROM ERP' : 'MARK AS INTEGRATED'}
                                 </span>
                             </label>
                         </div>
-                    ` : ''}
+                    </div>
                 </div>
-            </div>
+            ` : `
+                <div class="border border-gray-200 bg-gray-50 p-3 rounded mb-4">
+                    <div class="text-sm text-gray-600">
+                        <strong>ERP Status:</strong> 
+                        <span class="font-medium ${item.erp_integrated ? 'text-green-700' : 'text-orange-700'}">
+                            ${item.erp_integrated ? '✅ Integrated' : '❌ Not Integrated'}
+                        </span>
+                        ${item.erp_integrated && item.erp_integrated_at ? 
+                            `<span class="text-xs text-gray-500 ml-2">(${formatDate(item.erp_integrated_at)})</span>` : 
+                            ''
+                        }
+                    </div>
+                </div>
+            `}
             
             <!-- Action Buttons -->
-            <div class="flex flex-wrap gap-2 pt-4 border-t">
-                <button onclick="viewCodeDetails(${item.id})" class="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded hover:bg-blue-200 transition-colors">
+            <div class="flex flex-wrap gap-2 pt-3 border-t border-gray-200">
+                <button onclick="viewCodeDetails(${item.id})" class="text-xs bg-blue-100 text-blue-800 px-3 py-2 rounded hover:bg-blue-200 transition-colors">
                     👁️ View Details
                 </button>
-                <button onclick="exportItemToPDF(${item.id}, 'approved')" class="text-xs bg-red-100 text-red-800 px-3 py-1 rounded hover:bg-red-200 transition-colors">
+                <button onclick="exportItemToPDF(${item.id}, 'approved')" class="text-xs bg-red-100 text-red-800 px-3 py-2 rounded hover:bg-red-200 transition-colors">
                     📄 Export PDF
                 </button>
-                <button onclick="exportItemToExcel(${item.id}, 'approved')" class="text-xs bg-green-100 text-green-800 px-3 py-1 rounded hover:bg-green-200 transition-colors">
+                <button onclick="exportItemToExcel(${item.id}, 'approved')" class="text-xs bg-green-100 text-green-800 px-3 py-2 rounded hover:bg-green-200 transition-colors">
                     📊 Export Excel
                 </button>
             </div>
@@ -6019,6 +6423,12 @@ function displayListView(codes) {
 
 // Toggle between hierarchy and list view
 function toggleSearchView() {
+    // Don't toggle if we're in table view
+    if (isSearchTableView) {
+        alert('Please exit table view first by clicking "Switch to Card View"');
+        return;
+    }
+    
     searchHierarchyView = !searchHierarchyView;
     const viewDescription = document.getElementById('view-description');
     const toggleBtn = document.getElementById('toggle-view-btn');
@@ -6061,7 +6471,7 @@ function clearCodeSearch() {
     const searchInputs = [
         'search-desc1', 'search-desc2', 'search-item-code', 
         'search-project-name-codes', 'search-csi-path', 'search-country',
-        'search-model', 'search-uom', 'search-attributes'
+        'search-model', 'search-uom', 'search-attributes', 'search-erp-status'
     ];
     
     searchInputs.forEach(inputId => {
@@ -6222,9 +6632,19 @@ Project: ${code.classification_projects?.project_name || 'N/A'}
 }
 
 // Toggle ERP integration status
+// Toggle ERP integration status
 async function toggleERPStatus(codeId, isIntegrated) {
     try {
-        console.log('Toggling ERP status for code:', codeId, 'to:', isIntegrated);
+        console.log('🔄 Toggling ERP status for code:', codeId, 'to:', isIntegrated);
+        console.log('Current user:', currentUser);
+        
+        if (!currentUser || currentUser.role !== 'admin') {
+            alert('Only administrators can change ERP integration status');
+            // Revert checkbox
+            const checkbox = document.getElementById(`erp-toggle-${codeId}`);
+            if (checkbox) checkbox.checked = !isIntegrated;
+            return;
+        }
         
         const updateData = {
             erp_integrated: isIntegrated,
@@ -6232,12 +6652,19 @@ async function toggleERPStatus(codeId, isIntegrated) {
             erp_integrated_at: isIntegrated ? new Date().toISOString() : null
         };
         
+        console.log('Updating with data:', updateData);
+        
         const { error } = await supabase
             .from('item_codes')
             .update(updateData)
             .eq('id', codeId);
         
-        if (error) throw error;
+        if (error) {
+            console.error('Database error:', error);
+            throw error;
+        }
+        
+        console.log('✅ Database updated successfully');
         
         // Update local cache
         const codeIndex = allApprovedCodes.findIndex(c => c.id === codeId);
@@ -6245,25 +6672,28 @@ async function toggleERPStatus(codeId, isIntegrated) {
             allApprovedCodes[codeIndex].erp_integrated = isIntegrated;
             allApprovedCodes[codeIndex].erp_integrated_at = updateData.erp_integrated_at;
             allApprovedCodes[codeIndex].erp_integrated_by = updateData.erp_integrated_by;
+            console.log('✅ Local cache updated');
         }
         
         // Show success notification
         showNotification(
-            `Item code ${isIntegrated ? 'marked as integrated' : 'unmarked from integration'} successfully`,
+            `✅ Item code ${isIntegrated ? 'marked as integrated' : 'unmarked from integration'} successfully`,
             'success'
         );
         
         // Refresh the display
+        console.log('🔄 Refreshing display...');
         displaySearchResults(allApprovedCodes);
         
     } catch (error) {
-        console.error('Error updating ERP status:', error);
-        showNotification('Failed to update ERP status: ' + error.message, 'error');
+        console.error('❌ Error updating ERP status:', error);
+        showNotification('❌ Failed to update ERP status: ' + error.message, 'error');
         
         // Revert checkbox state
-        const checkbox = document.querySelector(`input[onchange*="${codeId}"]`);
+        const checkbox = document.getElementById(`erp-toggle-${codeId}`);
         if (checkbox) {
             checkbox.checked = !isIntegrated;
+            console.log('Reverted checkbox state');
         }
     }
 }
@@ -6335,10 +6765,310 @@ async function copyToClipboard(text) {
     }
 }
 
-// Export search results
+// ===== ENHANCED EXPORT FUNCTIONALITY =====
+
+// Get filtered data based on export selection
+function getFilteredExportData(filterType) {
+    console.log('🔍 Getting filtered data for export, filter type:', filterType);
+    console.log('🔍 allApprovedCodes is array:', Array.isArray(allApprovedCodes));
+    console.log('🔍 allApprovedCodes length:', allApprovedCodes.length);
+    
+    let filteredData = [];
+    
+    switch (filterType) {
+        case 'all':
+            // All approved item codes
+            filteredData = [...allApprovedCodes];
+            break;
+            
+        case 'erp_integrated':
+            // Only ERP integrated codes
+            filteredData = allApprovedCodes.filter(code => code.erp_integrated === true);
+            break;
+            
+        case 'erp_pending':
+            // Only pending ERP integration codes
+            filteredData = allApprovedCodes.filter(code => code.erp_integrated !== true);
+            break;
+            
+        default:
+            filteredData = [...allApprovedCodes];
+    }
+    
+    console.log(`🔍 Filtered data: ${filteredData.length} items for export type '${filterType}'`);
+    console.log('🔍 First filtered item:', filteredData[0]);
+    return filteredData;
+}
+
+// Export to Excel with filtering
+async function exportFilteredToExcel(filterType) {
+    try {
+        console.log('Starting filtered Excel export with filter:', filterType);
+        
+        const exportData = getFilteredExportData(filterType);
+        
+        if (exportData.length === 0) {
+            alert('No data available for export with the selected filter.');
+            return;
+        }
+        
+        // Prepare data for Excel
+        const excelData = exportData.map(item => ({
+            'Item Code': item.item_code || '',
+            'Base Item Code': item.is_variation ? item.item_code.split('/')[0] : item.item_code,
+            'Is Variation': item.is_variation ? 'Yes' : 'No',
+            'Variation Number': item.variation_number || '',
+            'Variation Suffix': item.variation_suffix || '',
+            'Project Name': item.classification_projects?.project_name || '',
+            'Description 1': item.description1 || '',
+            'Description 2': item.description2 || '',
+            'CSI Division': item.classification_projects?.division_code || '',
+            'CSI Section': item.classification_projects?.section_code || '',
+            'CSI Detailed Section': item.classification_projects?.detailed_section_code || '',
+            'CSI Item Code': item.classification_projects?.item_code || '',
+            'Additional Level': item.classification_projects?.additional_level_name || '',
+            'Additional Value': item.classification_projects?.additional_level_value || '',
+            'UOM': item.uom || '',
+            'Country of Origin': item.country_of_origin || '',
+            'Model Number': item.model_number || '',
+            'Unit Price': item.unit_price || '',
+            'Currency': item.currency_code || '',
+            'Manufacturer': item.manufacturer || '',
+            'ERP Integrated': item.erp_integrated ? 'Yes' : 'No',
+            'ERP Integration Date': item.erp_integrated_at ? new Date(item.erp_integrated_at).toLocaleDateString() : '',
+            'Created By': item.created_by_user?.username || '',
+            'Created Date': item.created_at ? new Date(item.created_at).toLocaleDateString() : '',
+            'Status': item.status || '',
+            'Approved By': item.approved_by || '',
+            'Approved Date': item.approved_at ? new Date(item.approved_at).toLocaleDateString() : '',
+            'Attribute Selections': JSON.stringify(item.attribute_selections || {})
+        }));
+        
+        // Create workbook
+        const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        
+        // Auto-adjust column widths
+        const colWidths = [];
+        const headers = Object.keys(excelData[0] || {});
+        headers.forEach((header, index) => {
+            let maxLength = header.length;
+            excelData.forEach(row => {
+                const cellValue = String(row[header] || '');
+                maxLength = Math.max(maxLength, cellValue.length);
+            });
+            colWidths[index] = { width: Math.min(maxLength + 5, 50) }; // Cap at 50 characters
+        });
+        worksheet['!cols'] = colWidths;
+        
+        // Add the worksheet to workbook
+        const filterNames = {
+            'all': 'All_Approved_Codes',
+            'erp_integrated': 'ERP_Integrated_Codes',
+            'erp_pending': 'Pending_ERP_Codes'
+        };
+        
+        XLSX.utils.book_append_sheet(workbook, worksheet, filterNames[filterType] || 'Item_Codes');
+        
+        // Generate filename with timestamp and filter type
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/[:\-T]/g, '');
+        const filename = `ItemCodes_${filterNames[filterType] || 'Export'}_${timestamp}.xlsx`;
+        
+        // Save the file
+        XLSX.writeFile(workbook, filename);
+        
+        console.log(`Excel export completed: ${filename}, ${exportData.length} items`);
+        alert(`Excel export completed successfully!\n\nFile: ${filename}\nItems exported: ${exportData.length}`);
+        
+    } catch (error) {
+        console.error('Error in filtered Excel export:', error);
+        alert('Failed to export to Excel: ' + error.message);
+    }
+}
+
+// Export to PDF with automatic text wrapping
+async function exportFilteredToPDF(filterType) {
+    try {
+        console.log('Starting PDF export with filter:', filterType);
+        
+        const exportData = getFilteredExportData(filterType);
+        
+        if (exportData.length === 0) {
+            alert('No data available for export with the selected filter.');
+            return;
+        }
+        
+        const { jsPDF } = window.jspdf;
+        
+        // Create new PDF with landscape orientation for better table fit
+        const doc = new jsPDF({
+            orientation: 'landscape',
+            unit: 'pt',
+            format: 'a3' // Using A3 for more space
+        });
+        
+        // Set fonts
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(16);
+        
+        // Filter names for title
+        const filterTitles = {
+            'all': 'All Approved Item Codes',
+            'erp_integrated': 'ERP Integrated Item Codes',
+            'erp_pending': 'Pending ERP Integration Item Codes'
+        };
+        
+        const title = filterTitles[filterType] || 'Item Codes Export';
+        
+        // Add title
+        doc.text(title, 40, 40);
+        doc.setFontSize(10);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 40, 60);
+        doc.text(`Total Items: ${exportData.length}`, 40, 75);
+        
+        // Prepare table data with text wrapping consideration
+        const tableHeaders = [
+            'Item Code',
+            'Project Name',
+            'Description 1',
+            'Description 2',
+            'CSI Path',
+            'UOM',
+            'Country',
+            'Model',
+            'Price',
+            'Manufacturer',
+            'ERP Status',
+            'Created By',
+            'Created Date'
+        ];
+        
+        const tableData = exportData.map(item => [
+            item.item_code || '',
+            item.classification_projects?.project_name || '',
+            item.description1 || '',
+            item.description2 || '',
+            `${item.classification_projects?.division_code || ''}-${item.classification_projects?.section_code || ''}-${item.classification_projects?.detailed_section_code || ''}`,
+            item.uom || '',
+            item.country_of_origin || '',
+            item.model_number || '',
+            `${item.unit_price || ''} ${item.currency_code || ''}`.trim(),
+            item.manufacturer || '',
+            item.erp_integrated ? 'Integrated' : 'Pending',
+            item.created_by_user?.username || '',
+            item.created_at ? new Date(item.created_at).toLocaleDateString() : ''
+        ]);
+        
+        // AutoTable configuration with text wrapping
+        const autoTableConfig = {
+            head: [tableHeaders],
+            body: tableData,
+            startY: 100,
+            margin: { left: 20, right: 20 },
+            styles: {
+                fontSize: 7,
+                cellPadding: 3,
+                overflow: 'linebreak', // Enable text wrapping
+                lineColor: [200, 200, 200],
+                lineWidth: 0.5
+            },
+            headStyles: {
+                fillColor: [66, 139, 202], // Blue header
+                textColor: 255,
+                fontSize: 8,
+                fontStyle: 'bold',
+                halign: 'center'
+            },
+            alternateRowStyles: {
+                fillColor: [245, 245, 245]
+            },
+            columnStyles: {
+                0: { cellWidth: 80 },  // Item Code
+                1: { cellWidth: 100 }, // Project Name  
+                2: { cellWidth: 120 }, // Description 1
+                3: { cellWidth: 120 }, // Description 2
+                4: { cellWidth: 80 },  // CSI Path
+                5: { cellWidth: 40 },  // UOM
+                6: { cellWidth: 60 },  // Country
+                7: { cellWidth: 70 },  // Model
+                8: { cellWidth: 60 },  // Price
+                9: { cellWidth: 80 },  // Manufacturer
+                10: { cellWidth: 60 }, // ERP Status
+                11: { cellWidth: 60 }, // Created By
+                12: { cellWidth: 70 }  // Created Date
+            },
+            // Enable automatic row height adjustment for text wrapping
+            didDrawCell: function(data) {
+                // Ensure minimum row height for readability
+                if (data.row.height < 25) {
+                    data.row.height = 25;
+                }
+            }
+        };
+        
+        // Generate the table
+        doc.autoTable(autoTableConfig);
+        
+        // Add page numbers
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.getWidth() - 60, doc.internal.pageSize.getHeight() - 20);
+        }
+        
+        // Generate filename
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/[:\-T]/g, '');
+        const filterNames = {
+            'all': 'All_Approved_Codes',
+            'erp_integrated': 'ERP_Integrated_Codes',
+            'erp_pending': 'Pending_ERP_Codes'
+        };
+        const filename = `ItemCodes_${filterNames[filterType] || 'Export'}_${timestamp}.pdf`;
+        
+        // Save the PDF
+        doc.save(filename);
+        
+        console.log(`PDF export completed: ${filename}, ${exportData.length} items`);
+        alert(`PDF export completed successfully!\n\nFile: ${filename}\nItems exported: ${exportData.length}\nPages: ${pageCount}`);
+        
+    } catch (error) {
+        console.error('Error in PDF export:', error);
+        alert('Failed to export to PDF: ' + error.message);
+    }
+}
+
+// Toggle export dropdown
+function toggleExportDropdown() {
+    const dropdown = document.getElementById('export-dropdown-menu');
+    const isHidden = dropdown.classList.contains('hidden');
+    
+    if (isHidden) {
+        dropdown.classList.remove('hidden');
+        // Close dropdown when clicking outside
+        setTimeout(() => {
+            document.addEventListener('click', closeExportDropdownOnOutsideClick);
+        }, 100);
+    } else {
+        dropdown.classList.add('hidden');
+        document.removeEventListener('click', closeExportDropdownOnOutsideClick);
+    }
+}
+
+// Close dropdown when clicking outside
+function closeExportDropdownOnOutsideClick(event) {
+    const dropdown = document.getElementById('export-dropdown-menu');
+    const button = document.getElementById('export-dropdown-btn');
+    
+    if (!dropdown.contains(event.target) && !button.contains(event.target)) {
+        dropdown.classList.add('hidden');
+        document.removeEventListener('click', closeExportDropdownOnOutsideClick);
+    }
+}
+
+// Legacy export function for compatibility
 function exportSearchResults() {
-    // Implement export functionality as needed
-    alert('Export functionality to be implemented');
+    toggleExportDropdown();
 }
 // Function to modify and resubmit rejected requests
 async function modifyRejectedRequest(requestId) {
@@ -7937,6 +8667,228 @@ window.modifyRejectedRequest = modifyRejectedRequest;
                 alert('Failed to delete item code: ' + error.message);
             }
         }
+
+// ===== TABLE VIEW FUNCTIONALITY FOR SEARCH CODES =====
+
+// Global variable to track search view mode
+let isSearchTableView = false;
+
+// Toggle between card/hierarchy view and table view
+function toggleSearchTableView() {
+    console.log('🔄 Toggling search view mode...');
+    
+    const hierarchyView = document.getElementById('hierarchy-view');
+    const listView = document.getElementById('list-view');
+    const tableView = document.getElementById('table-view-container');
+    const toggleBtn = document.getElementById('toggle-table-view-btn');
+    const viewDescription = document.getElementById('view-description');
+    
+    if (!tableView) {
+        console.error('❌ Table view container not found');
+        return;
+    }
+    
+    isSearchTableView = !isSearchTableView;
+    
+    if (isSearchTableView) {
+        // Switch to table view
+        if (hierarchyView) hierarchyView.classList.add('hidden');
+        if (listView) listView.classList.add('hidden');
+        tableView.classList.remove('hidden');
+        
+        if (toggleBtn) toggleBtn.textContent = 'Switch to Card View';
+        if (viewDescription) viewDescription.textContent = 'Showing table view with ERP integration controls for admins';
+        
+        // Populate table with current data
+        populateSearchTable();
+    } else {
+        // Switch back to card/hierarchy view
+        tableView.classList.add('hidden');
+        if (searchHierarchyView) {
+            if (hierarchyView) hierarchyView.classList.remove('hidden');
+            if (listView) listView.classList.add('hidden');
+        } else {
+            if (hierarchyView) hierarchyView.classList.add('hidden');
+            if (listView) listView.classList.remove('hidden');
+        }
+        
+        if (toggleBtn) toggleBtn.textContent = 'Switch to Table View';
+        if (viewDescription) {
+            viewDescription.textContent = searchHierarchyView ? 
+                'Showing hierarchical WBS view organized by CSI structure' : 
+                'Showing flat list view of all item codes';
+        }
+    }
+    
+    console.log('✅ Switched to', isSearchTableView ? 'table' : 'card', 'view');
+}
+
+// Populate the search table with approved codes
+function populateSearchTable() {
+    console.log('📊 Populating search table...');
+    
+    const tableBody = document.getElementById('search-codes-table-body');
+    if (!tableBody) {
+        console.error('❌ Table body not found');
+        return;
+    }
+    
+    if (!allApprovedCodes || allApprovedCodes.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="12" class="px-4 py-8 text-center text-gray-500">No admin-approved codes found</td></tr>';
+        return;
+    }
+    
+    console.log('📊 Populating table with', allApprovedCodes.length, 'admin-approved items');
+    
+    // Check if user is admin for showing checkboxes
+    const isAdmin = currentUser && currentUser.role === 'admin';
+    
+    tableBody.innerHTML = allApprovedCodes.map((item, index) => `
+        <tr class="hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}">
+            <td class="px-4 py-3 whitespace-nowrap text-sm font-mono font-semibold text-blue-600 border-b">${item.item_code || 'N/A'}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-b">${(item.classification_projects?.project_name || 'Unknown').substring(0, 30)}${(item.classification_projects?.project_name || '').length > 30 ? '...' : ''}</td>
+            <td class="px-4 py-3 text-sm text-gray-900 border-b max-w-xs" title="${item.description1 || ''}">${(item.description1 || 'N/A').substring(0, 40)}${(item.description1 || '').length > 40 ? '...' : ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-green-700 border-b">${item.unit_price ? `${item.unit_price} ${item.currency_code || ''}` : 'Not specified'}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-b">${(item.manufacturer || 'Not specified').substring(0, 20)}${(item.manufacturer || '').length > 20 ? '...' : ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-b">${item.uom || 'N/A'}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-b">${item.country_of_origin || 'N/A'}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-b">${item.model_number || 'N/A'}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-b">${item.approved_by_user?.username || 'Admin'}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-b">${new Date(item.created_at).toLocaleDateString()}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-center border-b">
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.erp_integrated ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                    ${item.erp_integrated ? '✅ INTEGRATED' : '❌ NOT INTEGRATED'}
+                </span>
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap text-center border-b bg-yellow-50">
+                ${isAdmin ? `
+                    <div class="flex items-center justify-center">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" 
+                                   class="erp-checkbox w-5 h-5 text-blue-600 rounded focus:ring-blue-500 focus:ring-2"
+                                   ${item.erp_integrated ? 'checked' : ''} 
+                                   data-item-id="${item.id}"
+                                   data-item-code="${item.item_code}"
+                                   onchange="handleERPToggleFromTable(this, ${item.id})">
+                            <span class="ml-2 text-xs font-medium text-gray-700">
+                                ${item.erp_integrated ? 'Unmark' : 'Mark'}
+                            </span>
+                        </label>
+                    </div>
+                ` : `
+                    <span class="text-xs text-gray-500">Admin Only</span>
+                `}
+            </td>
+        </tr>
+    `).join('');
+    
+    console.log('✅ Table populated with', allApprovedCodes.length, 'rows');
+}
+
+// Handle ERP toggle from table
+async function handleERPToggleFromTable(checkbox, itemId) {
+    console.log('🔄 Table ERP toggle:', itemId, checkbox.checked);
+    
+    try {
+        // Quick admin check
+        if (!currentUser || currentUser.role !== 'admin') {
+            alert('❌ Admin access required');
+            checkbox.checked = !checkbox.checked; // Revert
+            return;
+        }
+        
+        const isIntegrated = checkbox.checked;
+        const itemCode = checkbox.dataset.itemCode;
+        
+        // Show loading state
+        checkbox.disabled = true;
+        const row = checkbox.closest('tr');
+        const originalHTML = row.cells[11].innerHTML; // Save original HTML
+        row.cells[11].innerHTML = '<div class="flex items-center justify-center"><span class="text-xs text-blue-600 animate-pulse">Updating...</span></div>';
+        
+        // Update database
+        const { error } = await supabase
+            .from('item_codes')
+            .update({
+                erp_integrated: isIntegrated,
+                erp_integrated_by: isIntegrated ? currentUser.id : null,
+                erp_integrated_at: isIntegrated ? new Date().toISOString() : null
+            })
+            .eq('id', itemId);
+        
+        if (error) {
+            console.error('❌ Database error:', error);
+            alert('Database update failed: ' + error.message);
+            checkbox.checked = !isIntegrated; // Revert
+            row.cells[11].innerHTML = originalHTML; // Restore
+            return;
+        }
+        
+        // Update local data
+        const item = allApprovedCodes.find(c => c.id == itemId);
+        if (item) {
+            item.erp_integrated = isIntegrated;
+            item.erp_integrated_at = isIntegrated ? new Date().toISOString() : null;
+            item.erp_integrated_by = isIntegrated ? currentUser.id : null;
+        }
+        
+        // Update status column
+        const statusCell = row.cells[10]; // ERP Status column
+        statusCell.innerHTML = `
+            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${isIntegrated ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                ${isIntegrated ? '✅ INTEGRATED' : '❌ NOT INTEGRATED'}
+            </span>
+        `;
+        
+        // Restore admin control column
+        const adminCell = row.cells[11];
+        adminCell.innerHTML = `
+            <div class="flex items-center justify-center">
+                <label class="flex items-center cursor-pointer">
+                    <input type="checkbox" 
+                           class="erp-checkbox w-5 h-5 text-blue-600 rounded focus:ring-blue-500 focus:ring-2"
+                           ${isIntegrated ? 'checked' : ''} 
+                           data-item-id="${itemId}"
+                           data-item-code="${itemCode}"
+                           onchange="handleERPToggleFromTable(this, ${itemId})">
+                    <span class="ml-2 text-xs font-medium text-gray-700">
+                        ${isIntegrated ? 'Unmark' : 'Mark'}
+                    </span>
+                </label>
+            </div>
+        `;
+        
+        // Show success notification
+        showNotification(
+            `✅ ${itemCode} ${isIntegrated ? 'marked as integrated' : 'unmarked from integration'}`,
+            'success'
+        );
+        
+        console.log('✅ ERP status updated successfully');
+        
+    } catch (error) {
+        console.error('❌ Error updating ERP status:', error);
+        alert('Error: ' + error.message);
+        checkbox.checked = !checkbox.checked; // Revert
+        checkbox.disabled = false;
+    }
+}
+
+// Setup table view event listeners
+function setupTableView() {
+    const toggleTableBtn = document.getElementById('toggle-table-view-btn');
+    if (toggleTableBtn) {
+        toggleTableBtn.addEventListener('click', toggleSearchTableView);
+    }
+}
+
+// Initialize table view when app starts
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(setupTableView, 1000); // Wait for DOM to be ready
+});
+
+// ===== END TABLE VIEW FUNCTIONALITY =====
+
     </script>
 </body>
 </html>
