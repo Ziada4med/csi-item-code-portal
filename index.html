@@ -1,4 +1,4 @@
-<!-- This file now includes proper additional level sequencing -->
+<!-- This file now includes proper additional level sequencing and ERP Data Entry role support -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -177,6 +177,9 @@
                 <button id="admin-tab" class="tab-btn py-2 px-1 border-b-2 border-transparent text-gray-500 hidden" data-tab="admin">
                     Admin Panel
                 </button>
+                <button id="erp-tab-button" class="tab-btn py-2 px-1 border-b-2 border-transparent text-gray-500 hidden" data-tab="erp">
+                    ERP Integration
+                </button>
             </nav>
         </div>
 
@@ -296,7 +299,7 @@
                     + Add Standard Value
                 </button>
                 <div id="reorder-lock-indicator" class="text-green-600 text-sm">
-    Ã¢Å“â€œ Attribute ordering is always available (order-independent duplicate detection)
+    ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Attribute ordering is always available (order-independent duplicate detection)
 </div>
             </div>
         </div>
@@ -382,7 +385,7 @@
         <!-- Variation Information Display -->
         <div id="variation-info" class="mb-4 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg hidden">
             <h4 class="text-lg font-medium text-blue-800 mb-3 flex items-center">
-                ðŸ”„ <span class="ml-2">Variation Preview</span>
+                Ã°Å¸â€â€ž <span class="ml-2">Variation Preview</span>
             </h4>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div class="bg-white p-3 rounded border">
@@ -628,7 +631,7 @@
                         </button>
                         <div id="export-dropdown-menu" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                             <div class="p-4">
-                                <h3 class="text-lg font-semibold text-gray-800 mb-3">ðŸ“Š Export Item Codes</h3>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-3">Ã°Å¸â€œÅ  Export Item Codes</h3>
                                 
                                 <!-- Filter Selection -->
                                 <div class="mb-4">
@@ -707,7 +710,7 @@
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Approved By</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Created Date</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b">ERP Status</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-red-600 uppercase tracking-wider border-b bg-yellow-50">ðŸ”§ Admin: Mark ERP</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-red-600 uppercase tracking-wider border-b bg-yellow-50">Ã°Å¸â€Â§ Admin: Mark ERP</th>
                     </tr>
                 </thead>
                 <tbody id="search-codes-table-body" class="bg-white divide-y divide-gray-200">
@@ -748,6 +751,128 @@
                     <div id="pending-values" class="space-y-2">
                         <!-- Pending values will be rendered here -->
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ERP Integration Tab -->
+        <div id="erp-tab" class="tab-content hidden">
+            <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                <h2 class="text-xl font-bold text-blue-800 mb-2">🔧 ERP Integration Dashboard</h2>
+                <p class="text-blue-700">View and manage ERP integration status for approved item codes</p>
+            </div>
+
+            <!-- ERP Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
+                    <div class="flex items-center">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-600">Integrated Items</p>
+                            <p id="erp-integrated-count" class="text-2xl font-bold text-green-600">0</p>
+                        </div>
+                        <div class="text-green-500">✅</div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-orange-500">
+                    <div class="flex items-center">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-600">Pending Integration</p>
+                            <p id="erp-pending-count" class="text-2xl font-bold text-orange-600">0</p>
+                        </div>
+                        <div class="text-orange-500">⏳</div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
+                    <div class="flex items-center">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-600">Total Approved</p>
+                            <p id="erp-total-count" class="text-2xl font-bold text-blue-600">0</p>
+                        </div>
+                        <div class="text-blue-500">📊</div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-purple-500">
+                    <div class="flex items-center">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-600">Integration Rate</p>
+                            <p id="erp-rate-percentage" class="text-2xl font-bold text-purple-600">0%</p>
+                        </div>
+                        <div class="text-purple-500">📈</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ERP Filter Controls -->
+            <div class="bg-white p-4 rounded-lg shadow mb-6">
+                <div class="flex flex-wrap gap-4 items-center">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Filter by Status:</label>
+                        <select id="erp-status-filter" class="border border-gray-300 rounded px-3 py-2">
+                            <option value="">All Items</option>
+                            <option value="integrated">✅ Integrated</option>
+                            <option value="pending">⏳ Pending Integration</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Search:</label>
+                        <input type="text" id="erp-search-input" placeholder="Search item codes, descriptions..." 
+                               class="border border-gray-300 rounded px-3 py-2 w-64">
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <button onclick="refreshERPData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                            🔄 Refresh
+                        </button>
+                        <div class="relative">
+                            <button id="erp-export-btn" onclick="toggleERPExportDropdown()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2">
+                                📊 Export
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div id="erp-export-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg z-10 border">
+                                <div class="py-2">
+                                    <button onclick="exportERPData('all')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        📋 Export All Approved Items
+                                    </button>
+                                    <button onclick="exportERPData('integrated')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        ✅ Export ERP Integrated Items
+                                    </button>
+                                    <button onclick="exportERPData('pending')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        ⏳ Export Pending Integration
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ERP Items Table -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="px-4 py-3 bg-gray-50 border-b">
+                    <h3 class="text-lg font-medium text-gray-900">Approved Item Codes for ERP Integration</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Code</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Group</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manufacturer</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Country of Origin</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approved Date</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ERP Status</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="erp-items-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Will be populated by JavaScript -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -1005,13 +1130,13 @@ async function checkCombinationExists(combination, uom, country, modelNumber, un
     if (!currentProject) return { exists: false };
     
     try {
-        console.log('ðŸ” Checking duplicates with VARIATION logic...');
+        console.log('Ã°Å¸â€Â Checking duplicates with VARIATION logic...');
         
         const baseSignature = getBaseCombinationSignature();
         const variationSignature = getVariationFieldsSignature();
         
-        console.log('ðŸ” Base signature (attributes):', baseSignature);
-        console.log('ðŸ” Variation signature (UOM/manufacturer/model/country):', variationSignature);
+        console.log('Ã°Å¸â€Â Base signature (attributes):', baseSignature);
+        console.log('Ã°Å¸â€Â Variation signature (UOM/manufacturer/model/country):', variationSignature);
         
         // Check existing approved codes
         const { data: existingCodes, error: codeError } = await supabase
@@ -1046,7 +1171,7 @@ async function checkCombinationExists(combination, uom, country, modelNumber, un
             });
             
             if (exactMatch) {
-                console.log('ðŸš¨ EXACT DUPLICATE found:', exactMatch);
+                console.log('Ã°Å¸Å¡Â¨ EXACT DUPLICATE found:', exactMatch);
                 return { 
                     exists: true, 
                     type: 'approved code', 
@@ -1070,8 +1195,8 @@ async function checkCombinationExists(combination, uom, country, modelNumber, un
                 const baseItem = baseMatches.find(code => !code.is_variation) || baseMatches[0];
                 const variationCount = baseMatches.length;
                 
-                console.log('âœ… Base combination exists, can create variation');
-                console.log('ðŸ“Š Existing variations:', variationCount);
+                console.log('Ã¢Å“â€¦ Base combination exists, can create variation');
+                console.log('Ã°Å¸â€œÅ  Existing variations:', variationCount);
                 
                 return { 
                     exists: false, 
@@ -1109,7 +1234,7 @@ async function checkCombinationExists(combination, uom, country, modelNumber, un
             });
             
             if (exactRequestMatch) {
-                console.log('ðŸš¨ EXACT DUPLICATE found in requests:', exactRequestMatch);
+                console.log('Ã°Å¸Å¡Â¨ EXACT DUPLICATE found in requests:', exactRequestMatch);
                 return { 
                     exists: true, 
                     type: 'pending request', 
@@ -1120,7 +1245,7 @@ async function checkCombinationExists(combination, uom, country, modelNumber, un
         }
         
         // No conflicts found
-        console.log('âœ… No duplicates found - safe to proceed');
+        console.log('Ã¢Å“â€¦ No duplicates found - safe to proceed');
         return { 
             exists: false, 
             canCreateVariation: false, 
@@ -1184,7 +1309,7 @@ function showVariationPreview(duplicateCheck) {
             existingVariationsCount.textContent = `${duplicateCheck.existingVariations} existing`;
         }
         
-        console.log('ðŸ”„ Showing variation preview:', {
+        console.log('Ã°Å¸â€â€ž Showing variation preview:', {
             baseCode: duplicateCheck.baseItemCode,
             variationCode: nextVariationCode,
             existingCount: duplicateCheck.existingVariations
@@ -1367,7 +1492,22 @@ async function initializeApp() {
         
         // Show admin tab if admin
 if (currentUser.role === 'admin') {
+    console.log('👑 Admin user detected, showing admin tab');
     document.getElementById('admin-tab').classList.remove('hidden');
+}
+
+// Show ERP tab if ERP data entry or admin
+if (currentUser.role === 'erp_data_entry' || currentUser.role === 'admin') {
+    console.log('🔧 ERP access granted for role:', currentUser.role, 'showing ERP tab');
+    const erpTabBtn = document.getElementById('erp-tab-button');
+    if (erpTabBtn) {
+        erpTabBtn.classList.remove('hidden');
+        console.log('✅ ERP tab button is now visible');
+    } else {
+        console.error('❌ ERP tab button element not found!');
+    }
+} else {
+    console.log('🚫 ERP access denied for role:', currentUser.role);
 }
 
         // Load initial data in sequence to avoid race conditions
@@ -2223,7 +2363,7 @@ function renderProjectDropdown(projects) {
         
         // Add additional level if exists
         const additionalLevelText = project.additional_level_value && project.additional_level_value.trim() !== ''
-    ? ` Ã¢â€ â€™ ${project.additional_level_value}`
+    ? ` ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ${project.additional_level_value}`
     : '';
             
         return `
@@ -2367,7 +2507,7 @@ if (currentProject.attributes && Array.isArray(currentProject.attributes)) {
     
     // Format display text correctly - avoid duplication
 let displayText = project.additional_level_value && project.additional_level_value.trim() !== '' 
-    ? `${project.item_code} Ã¢â€ â€™ ${project.additional_level_value}`
+    ? `${project.item_code} ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ${project.additional_level_value}`
     : `${project.item_code} - ${project.item_description || 'No description'}`;
     
     selectedInfo.innerHTML = `
@@ -2744,7 +2884,7 @@ function renderAttributes() {
         let html = `
             <div class="drag-handle ${!canReorder ? 'disabled' : ''}" 
                  ${!canReorder ? 'title="Reordering is locked due to pending requests"' : 'title="Drag to reorder"'}>
-                ☰
+                â˜°
             </div>
             <div class="flex-1">
                 <div class="mb-2">
@@ -3134,7 +3274,7 @@ function updateManualAttributeValue(attrId, value, unitSelectId) {
     }
     
     attributeSelections[attrId] = { 
-        value: formattedValue,  // Ã¢â€ Â FIXED: Include unit in formatted value
+        value: formattedValue,  // ÃƒÂ¢Ã¢â‚¬Â Ã‚Â FIXED: Include unit in formatted value
         index: index,
         rawValue: value,
         unit: unit || ''
@@ -3231,11 +3371,11 @@ async function generateItemCodeWithVariations() {
         if (duplicateCheck.willBeVariation) {
             // This will be a variation - use base item code + variation suffix
             const variationNumber = duplicateCheck.nextVariationNumber;
-            console.log('ðŸ”„ Creating variation:', `${duplicateCheck.baseItemCode}/${variationNumber}`);
+            console.log('Ã°Å¸â€â€ž Creating variation:', `${duplicateCheck.baseItemCode}/${variationNumber}`);
             return `${duplicateCheck.baseItemCode}/${variationNumber}`;
         } else {
             // This will be a new base item - generate normally
-            console.log('ðŸ“ Creating new base item');
+            console.log('Ã°Å¸â€œÂ Creating new base item');
             return await generateItemCode(); // Use existing logic for new items
         }
         
@@ -5052,6 +5192,7 @@ window.exportAllRequests = exportAllRequests;        // PDF Export
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const tabName = btn.dataset.tab;
+            console.log('🔄 Tab clicked:', tabName);
             
             document.querySelectorAll('.tab-btn').forEach(b => {
                 b.classList.remove('border-blue-500', 'text-blue-600');
@@ -5065,18 +5206,20 @@ window.exportAllRequests = exportAllRequests;        // PDF Export
             });
             document.getElementById(`${tabName}-tab`).classList.remove('hidden');
             
-           if (tabName === 'requests') {
-    loadUserRequests();
-} else if (tabName === 'admin') {
-    loadAdminPanel();
-} else if (tabName === 'search') {
-    console.log('Search tab clicked, allApprovedCodes.length:', allApprovedCodes.length);
-    // Always refresh search data when switching to search tab to ensure latest data
-    console.log('Refreshing search codes data for latest changes...');
-    refreshSearchCodesData();
-} {
-    loadAllApprovedCodes();
-}
+            // Load specific tab data
+            if (tabName === 'requests') {
+                loadUserRequests();
+            } else if (tabName === 'admin') {
+                loadAdminPanel();
+            } else if (tabName === 'search') {
+                console.log('Search tab clicked, allApprovedCodes.length:', allApprovedCodes.length);
+                // Always refresh search data when switching to search tab to ensure latest data
+                console.log('Refreshing search codes data for latest changes...');
+                refreshSearchCodesData();
+            } else if (tabName === 'erp') {
+                console.log('🔧 ERP tab clicked, loading dashboard...');
+                loadERPDashboard();
+            }
         });
     });
 
@@ -5462,10 +5605,10 @@ async function loadAllApprovedCodes() {
         if (error) throw error;
         
         allApprovedCodes = approvedCodes || [];
-        console.log('âœ… ONLY admin-approved codes loaded:', allApprovedCodes.length);
-        console.log('ðŸ“Š Approved by admins:', allApprovedCodes.filter(c => c.approved_by).length);
+        console.log('Ã¢Å“â€¦ ONLY admin-approved codes loaded:', allApprovedCodes.length);
+        console.log('Ã°Å¸â€œÅ  Approved by admins:', allApprovedCodes.filter(c => c.approved_by).length);
         if (allApprovedCodes.length > 0) {
-            console.log('ðŸ‘¤ First item approved by:', allApprovedCodes[0].approved_by_user?.username);
+            console.log('Ã°Å¸â€˜Â¤ First item approved by:', allApprovedCodes[0].approved_by_user?.username);
         }
         
         // Hide loading state
@@ -5509,9 +5652,9 @@ function showEmptyState() {
             <p class="text-lg font-medium mb-2">No approved item codes found</p>
             <p class="text-sm mb-4">There are currently no approved item codes in the system.</p>
             <div class="text-xs text-gray-400 space-y-1">
-                <p>Ã¢â‚¬Â¢ Item codes need to be generated and approved first</p>
-                <p>Ã¢â‚¬Â¢ Check the "Generate Codes" tab to create new item codes</p>
-                <p>Ã¢â‚¬Â¢ Admins can approve codes in the approval portal</p>
+                <p>ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Item codes need to be generated and approved first</p>
+                <p>ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Check the "Generate Codes" tab to create new item codes</p>
+                <p>ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Admins can approve codes in the approval portal</p>
             </div>
         </div>
     `;
@@ -5540,9 +5683,9 @@ function showEmptyStateApproved() {
                 <p class="text-lg font-medium mb-2">No approved item codes found</p>
                 <p class="text-sm mb-4">There are currently no approved item codes in the system.</p>
                 <div class="text-xs text-gray-400 space-y-1">
-                    <p>â€¢ Item codes must be approved by an admin before appearing here</p>
-                    <p>â€¢ Only codes with status 'approved' are shown</p>
-                    <p>â€¢ Check with admin if codes are missing</p>
+                    <p>Ã¢â‚¬Â¢ Item codes must be approved by an admin before appearing here</p>
+                    <p>Ã¢â‚¬Â¢ Only codes with status 'approved' are shown</p>
+                    <p>Ã¢â‚¬Â¢ Check with admin if codes are missing</p>
                 </div>
             </div>
         `;
@@ -5806,11 +5949,11 @@ function displayHierarchyView(codes) {
     `).join('');
 }
 function createSearchCodeCard(item) {
-    console.log('ðŸŽ¯ Creating card for item:', item.id);
-    console.log('ðŸ‘¤ Current user:', currentUser);
-    console.log('ðŸ”’ User role:', currentUser?.role);
+    console.log('Ã°Å¸Å½Â¯ Creating card for item:', item.id);
+    console.log('Ã°Å¸â€˜Â¤ Current user:', currentUser);
+    console.log('Ã°Å¸â€â€™ User role:', currentUser?.role);
     const isAdmin = currentUser && currentUser.role === 'admin';
-    console.log('âœ… Is admin check result:', isAdmin);
+    console.log('Ã¢Å“â€¦ Is admin check result:', isAdmin);
     
     return `
         <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow">
@@ -5829,7 +5972,7 @@ function createSearchCodeCard(item) {
                         ${item.status ? item.status.toUpperCase() : 'UNKNOWN'}
                     </span>
                     <span class="px-2 py-1 text-xs rounded-full ${item.erp_integrated ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}">
-                        ERP ${item.erp_integrated ? 'âœ“' : 'âœ—'}
+                        ERP ${item.erp_integrated ? 'Ã¢Å“â€œ' : 'Ã¢Å“â€”'}
                     </span>
                 </div>
             </div>
@@ -5876,7 +6019,7 @@ function createSearchCodeCard(item) {
             ${isAdmin ? `
                 <div class="border-2 border-yellow-400 bg-yellow-50 p-4 rounded-lg mb-4">
                     <div class="flex items-center mb-3">
-                        <span class="text-lg">ðŸ”§</span>
+                        <span class="text-lg">Ã°Å¸â€Â§</span>
                         <h4 class="font-bold text-gray-800 ml-2">ADMIN: ERP Integration Control</h4>
                     </div>
                     <div class="flex items-center justify-between">
@@ -5884,7 +6027,7 @@ function createSearchCodeCard(item) {
                             <div class="text-sm font-medium">
                                 Current Status: 
                                 <span class="px-2 py-1 rounded text-xs ${item.erp_integrated ? 'bg-green-200 text-green-800' : 'bg-orange-200 text-orange-800'}">
-                                    ${item.erp_integrated ? 'âœ… INTEGRATED' : 'âŒ NOT INTEGRATED'}
+                                    ${item.erp_integrated ? 'Ã¢Å“â€¦ INTEGRATED' : 'Ã¢ÂÅ’ NOT INTEGRATED'}
                                 </span>
                             </div>
                             ${item.erp_integrated && item.erp_integrated_at ? 
@@ -5911,7 +6054,7 @@ function createSearchCodeCard(item) {
                     <div class="text-sm text-gray-600">
                         <strong>ERP Status:</strong> 
                         <span class="font-medium ${item.erp_integrated ? 'text-green-700' : 'text-orange-700'}">
-                            ${item.erp_integrated ? 'âœ… Integrated' : 'âŒ Not Integrated'}
+                            ${item.erp_integrated ? 'Ã¢Å“â€¦ Integrated' : 'Ã¢ÂÅ’ Not Integrated'}
                         </span>
                         ${item.erp_integrated && item.erp_integrated_at ? 
                             `<span class="text-xs text-gray-500 ml-2">(${formatDate(item.erp_integrated_at)})</span>` : 
@@ -5924,13 +6067,13 @@ function createSearchCodeCard(item) {
             <!-- Action Buttons -->
             <div class="flex flex-wrap gap-2 pt-3 border-t border-gray-200">
                 <button onclick="viewCodeDetails(${item.id})" class="text-xs bg-blue-100 text-blue-800 px-3 py-2 rounded hover:bg-blue-200 transition-colors">
-                    ðŸ‘ï¸ View Details
+                    Ã°Å¸â€˜ÂÃ¯Â¸Â View Details
                 </button>
                 <button onclick="exportItemToPDF(${item.id}, 'approved')" class="text-xs bg-red-100 text-red-800 px-3 py-2 rounded hover:bg-red-200 transition-colors">
-                    ðŸ“„ Export PDF
+                    Ã°Å¸â€œâ€ž Export PDF
                 </button>
                 <button onclick="exportItemToExcel(${item.id}, 'approved')" class="text-xs bg-green-100 text-green-800 px-3 py-2 rounded hover:bg-green-200 transition-colors">
-                    ðŸ“Š Export Excel
+                    Ã°Å¸â€œÅ  Export Excel
                 </button>
             </div>
         </div>
@@ -6208,7 +6351,7 @@ function generateSingleRequestPDF(item) {
             yPos += 5;
             
             // Create approval summary with names and dates
-            let approvalText = 'STATUS: APPROVED Ã¢Å“â€œ';
+            let approvalText = 'STATUS: APPROVED ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“';
             let approvalDetails = [];
             
             // Always show reviewer info for approved items
@@ -6352,10 +6495,10 @@ function createHierarchyCard(node, level) {
     };
     
     const levelIcons = {
-        division: '🏛️',
-        section: '📜',
-        detailed_section: '🔗',
-        item: '⚪'
+        division: 'ðŸ›ï¸',
+        section: 'ðŸ“œ',
+        detailed_section: 'ðŸ”—',
+        item: 'âšª'
     };
     
     let content = `
@@ -6464,10 +6607,10 @@ function createCodeCard(code) {
                     Copy Code
                 </button>
                 <button onclick="exportItemToPDF(${code.id}, 'approved')" class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded hover:bg-red-200">
-                    ðŸ“„ PDF
+                    Ã°Å¸â€œâ€ž PDF
                 </button>
                 <button onclick="exportItemToExcel(${code.id}, 'approved')" class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded hover:bg-green-200">
-                    ðŸ“Š Excel
+                    Ã°Å¸â€œÅ  Excel
                 </button>
             </div>
         </div>
@@ -6694,10 +6837,10 @@ Project: ${code.classification_projects?.project_name || 'N/A'}
 // Toggle ERP integration status
 async function toggleERPStatus(codeId, isIntegrated) {
     try {
-        console.log('ðŸ”„ Toggling ERP status for code:', codeId, 'to:', isIntegrated);
+        console.log('Ã°Å¸â€â€ž Toggling ERP status for code:', codeId, 'to:', isIntegrated);
         console.log('Current user:', currentUser);
         
-        if (!currentUser || currentUser.role !== 'admin') {
+        if (!currentUser || currentUser.role !== 'admin' && currentUser.role !== 'erp_data_entry') {
             alert('Only administrators can change ERP integration status');
             // Revert checkbox
             const checkbox = document.getElementById(`erp-toggle-${codeId}`);
@@ -6723,7 +6866,7 @@ async function toggleERPStatus(codeId, isIntegrated) {
             throw error;
         }
         
-        console.log('âœ… Database updated successfully');
+        console.log('Ã¢Å“â€¦ Database updated successfully');
         
         // Update local cache
         const codeIndex = allApprovedCodes.findIndex(c => c.id === codeId);
@@ -6731,22 +6874,22 @@ async function toggleERPStatus(codeId, isIntegrated) {
             allApprovedCodes[codeIndex].erp_integrated = isIntegrated;
             allApprovedCodes[codeIndex].erp_integrated_at = updateData.erp_integrated_at;
             allApprovedCodes[codeIndex].erp_integrated_by = updateData.erp_integrated_by;
-            console.log('âœ… Local cache updated');
+            console.log('Ã¢Å“â€¦ Local cache updated');
         }
         
         // Show success notification
         showNotification(
-            `âœ… Item code ${isIntegrated ? 'marked as integrated' : 'unmarked from integration'} successfully`,
+            `Ã¢Å“â€¦ Item code ${isIntegrated ? 'marked as integrated' : 'unmarked from integration'} successfully`,
             'success'
         );
         
         // Refresh the display
-        console.log('ðŸ”„ Refreshing display...');
+        console.log('Ã°Å¸â€â€ž Refreshing display...');
         displaySearchResults(allApprovedCodes);
         
     } catch (error) {
-        console.error('âŒ Error updating ERP status:', error);
-        showNotification('âŒ Failed to update ERP status: ' + error.message, 'error');
+        console.error('Ã¢ÂÅ’ Error updating ERP status:', error);
+        showNotification('Ã¢ÂÅ’ Failed to update ERP status: ' + error.message, 'error');
         
         // Revert checkbox state
         const checkbox = document.getElementById(`erp-toggle-${codeId}`);
@@ -6772,7 +6915,7 @@ function showNotification(message, type = 'info') {
     notification.innerHTML = `
         <div class="flex items-center">
             <span class="mr-2">
-                ${type === 'success' ? 'âœ“' : type === 'error' ? 'âœ—' : 'â„¹'}
+                ${type === 'success' ? 'Ã¢Å“â€œ' : type === 'error' ? 'Ã¢Å“â€”' : 'Ã¢â€žÂ¹'}
             </span>
             <span>${message}</span>
         </div>
@@ -6828,9 +6971,9 @@ async function copyToClipboard(text) {
 
 // Get filtered data based on export selection
 function getFilteredExportData(filterType) {
-    console.log('ðŸ” Getting filtered data for export, filter type:', filterType);
-    console.log('ðŸ” allApprovedCodes is array:', Array.isArray(allApprovedCodes));
-    console.log('ðŸ” allApprovedCodes length:', allApprovedCodes.length);
+    console.log('Ã°Å¸â€Â Getting filtered data for export, filter type:', filterType);
+    console.log('Ã°Å¸â€Â allApprovedCodes is array:', Array.isArray(allApprovedCodes));
+    console.log('Ã°Å¸â€Â allApprovedCodes length:', allApprovedCodes.length);
     
     let filteredData = [];
     
@@ -6854,8 +6997,8 @@ function getFilteredExportData(filterType) {
             filteredData = [...allApprovedCodes];
     }
     
-    console.log(`ðŸ” Filtered data: ${filteredData.length} items for export type '${filterType}'`);
-    console.log('ðŸ” First filtered item:', filteredData[0]);
+    console.log(`Ã°Å¸â€Â Filtered data: ${filteredData.length} items for export type '${filterType}'`);
+    console.log('Ã°Å¸â€Â First filtered item:', filteredData[0]);
     return filteredData;
 }
 
@@ -7326,6 +7469,12 @@ function showTab(tabName) {
         content.classList.add('hidden');
     });
     document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+    
+    // Load specific tab data
+    if (tabName === 'erp') {
+        console.log('🔧 ERP tab activated, loading dashboard...');
+        loadERPDashboard();
+    }
 }
 // Make functions globally available
 window.selectAttribute = selectAttribute;
@@ -7379,7 +7528,7 @@ function renderRequestsCards() {
                 <h3 class="text-lg font-semibold text-gray-900">${request.item_code || 'No Code'}</h3>
                 <p class="text-sm text-gray-600">${request.csi_division_code || 'No CSI Code'}</p>
                 ${(request.status === 'rejected' || request.status === 'reviewer_rejected' || request.status === 'admin_rejected') ? `
-                    <p class="text-xs text-red-600 font-medium mt-1">Ã¢Å¡Â  This item code is obsolete due to rejection</p>
+                    <p class="text-xs text-red-600 font-medium mt-1">ÃƒÂ¢Ã…Â¡Ã‚Â  This item code is obsolete due to rejection</p>
                 ` : ''}
             </div>
             <div class="flex items-center gap-2">
@@ -7444,11 +7593,11 @@ function renderRequestsCards() {
                 ${['reviewer_approved', 'admin_approved', 'approved'].includes(request.status) ? `
                     <button onclick="exportRequestToPDF(${request.id})" 
                             class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded">
-                        â€œâ€ž PDF
+                        Ã¢â‚¬Å“Ã¢â‚¬Å¾ PDF
                     </button>
                     <button onclick="exportRequestToExcel(${request.id})" 
                             class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded">
-                        Ã°Å¸â€œÅ  Excel
+                        ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â  Excel
                     </button>
                 ` : ''}
             </div>
@@ -7456,7 +7605,7 @@ function renderRequestsCards() {
             ${(request.status === 'rejected' || request.status === 'reviewer_rejected' || request.status === 'admin_rejected') ? `
                 <button onclick="regenerateFromRejected(${index}, 'requests')" 
                         class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded text-sm font-medium">
-                    Ã°Å¸â€â€ž Regenerate New Request
+                    ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬Å¾ Regenerate New Request
                 </button>
             ` : ''}
         </div>
@@ -7525,7 +7674,7 @@ async function regenerateFromRejected(index, source = 'history') {
                 <h3 class="text-2xl font-bold mb-6 text-gray-900">Regenerate Item Code Request</h3>
                 
                 <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded">
-                    <h4 class="font-semibold text-blue-900 mb-2">Ã°Å¸â€œâ€¹ What will happen:</h4>
+                    <h4 class="font-semibold text-blue-900 mb-2">ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹ What will happen:</h4>
                     <ul class="text-sm text-blue-800 space-y-2 list-disc list-inside">
                         <li>A <strong>new item code request</strong> will be created with a new serial number</li>
                         <li>All your previous selections and data will be pre-filled in the generator</li>
@@ -7535,12 +7684,12 @@ async function regenerateFromRejected(index, source = 'history') {
                 </div>
                 
                 <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded">
-                    <h4 class="font-semibold text-red-900 mb-2">Ã¢ÂÅ’ Previous Rejection Reason:</h4>
+                    <h4 class="font-semibold text-red-900 mb-2">ÃƒÂ¢Ã‚ÂÃ…â€™ Previous Rejection Reason:</h4>
                     <p class="text-sm text-red-700">${rejectedRequest.review_comments || 'No comments provided'}</p>
                 </div>
                 
                 <div class="mb-6 p-4 bg-gray-50 border border-gray-300 rounded">
-                    <h4 class="font-semibold text-gray-900 mb-3">Ã°Å¸â€œÂ¦ Data to be copied:</h4>
+                    <h4 class="font-semibold text-gray-900 mb-3">ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â¦ Data to be copied:</h4>
                     <div class="grid grid-cols-2 gap-3 text-sm">
                         <div>
                             <p class="text-gray-600">Project:</p>
@@ -7984,7 +8133,7 @@ function renderSearchResults(results) {
 }
 // Load admin panel data
 async function loadAdminPanel() {
-    if (currentUser.role !== 'admin') {
+    if (currentUser.role !== 'admin' && currentUser.role !== 'erp_data_entry') {
         document.getElementById('pending-codes').innerHTML = '<p class="text-red-500">Access denied - Admin only</p>';
         document.getElementById('pending-values').innerHTML = '<p class="text-red-500">Access denied - Admin only</p>';
         return;
@@ -8341,7 +8490,7 @@ window.clearAttributeSelection = clearAttributeSelection;
 
 // Additional missing admin functions
 async function editItemCode(requestId) {
-    if (currentUser.role !== 'admin') {
+    if (currentUser.role !== 'admin' && currentUser.role !== 'erp_data_entry') {
         alert('Only administrators can edit item codes.');
         return;
     }
@@ -8382,7 +8531,7 @@ refreshSearchCodesData(); // Refresh search codes data
 }
 
 async function deleteItemCode(requestId) {
-    if (currentUser.role !== 'admin') {
+    if (currentUser.role !== 'admin' && currentUser.role !== 'erp_data_entry') {
         alert('Only administrators can delete item codes.');
         return;
     }
@@ -8664,7 +8813,7 @@ window.exportAllItems = exportAllItems;
 window.modifyRejectedRequest = modifyRejectedRequest;       
 // Admin functions
         async function editItemCode(requestId) {
-            if (currentUser.role !== 'admin') {
+            if (currentUser.role !== 'admin' && currentUser.role !== 'erp_data_entry') {
                 alert('Only administrators can edit item codes.');
                 return;
             }
@@ -8702,7 +8851,7 @@ window.modifyRejectedRequest = modifyRejectedRequest;
         }
 
         async function deleteItemCode(requestId) {
-            if (currentUser.role !== 'admin') {
+            if (currentUser.role !== 'admin' && currentUser.role !== 'erp_data_entry') {
                 alert('Only administrators can delete item codes.');
                 return;
             }
@@ -8734,7 +8883,7 @@ let isSearchTableView = false;
 
 // Toggle between card/hierarchy view and table view
 function toggleSearchTableView() {
-    console.log('ðŸ”„ Toggling search view mode...');
+    console.log('Ã°Å¸â€â€ž Toggling search view mode...');
     
     const hierarchyView = document.getElementById('hierarchy-view');
     const listView = document.getElementById('list-view');
@@ -8743,7 +8892,7 @@ function toggleSearchTableView() {
     const viewDescription = document.getElementById('view-description');
     
     if (!tableView) {
-        console.error('âŒ Table view container not found');
+        console.error('Ã¢ÂÅ’ Table view container not found');
         return;
     }
     
@@ -8779,16 +8928,16 @@ function toggleSearchTableView() {
         }
     }
     
-    console.log('âœ… Switched to', isSearchTableView ? 'table' : 'card', 'view');
+    console.log('Ã¢Å“â€¦ Switched to', isSearchTableView ? 'table' : 'card', 'view');
 }
 
 // Populate the search table with approved codes
 function populateSearchTable() {
-    console.log('ðŸ“Š Populating search table...');
+    console.log('Ã°Å¸â€œÅ  Populating search table...');
     
     const tableBody = document.getElementById('search-codes-table-body');
     if (!tableBody) {
-        console.error('âŒ Table body not found');
+        console.error('Ã¢ÂÅ’ Table body not found');
         return;
     }
     
@@ -8797,10 +8946,12 @@ function populateSearchTable() {
         return;
     }
     
-    console.log('ðŸ“Š Populating table with', allApprovedCodes.length, 'admin-approved items');
+    console.log('Ã°Å¸â€œÅ  Populating table with', allApprovedCodes.length, 'admin-approved items');
     
     // Check if user is admin for showing checkboxes
     const isAdmin = currentUser && currentUser.role === 'admin';
+    // Check if user is ERP data entry for showing ERP controls
+    const isERPDataEntry = currentUser && currentUser.role === 'erp_data_entry';
     
     tableBody.innerHTML = allApprovedCodes.map((item, index) => `
         <tr class="hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}">
@@ -8816,11 +8967,11 @@ function populateSearchTable() {
             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-b">${new Date(item.created_at).toLocaleDateString()}</td>
             <td class="px-4 py-3 whitespace-nowrap text-center border-b">
                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.erp_integrated ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                    ${item.erp_integrated ? 'âœ… INTEGRATED' : 'âŒ NOT INTEGRATED'}
+                    ${item.erp_integrated ? 'Ã¢Å“â€¦ INTEGRATED' : 'Ã¢ÂÅ’ NOT INTEGRATED'}
                 </span>
             </td>
             <td class="px-4 py-3 whitespace-nowrap text-center border-b bg-yellow-50">
-                ${isAdmin ? `
+                ${isAdmin || isERPDataEntry ? `
                     <div class="flex items-center justify-center">
                         <label class="flex items-center cursor-pointer">
                             <input type="checkbox" 
@@ -8835,23 +8986,27 @@ function populateSearchTable() {
                         </label>
                     </div>
                 ` : `
-                    <span class="text-xs text-gray-500">Admin Only</span>
+                    <span class="text-xs ${item.erp_integrated ? 'text-green-700 font-semibold' : 'text-orange-700 font-semibold'}">
+                        ${item.erp_integrated ? '✅ Integrated' : '⏳ Pending'}
+                    </span>
+                    ${item.erp_integrated && item.erp_integrated_at ? `<div class="text-xs text-gray-500 mt-1">${new Date(item.erp_integrated_at).toLocaleDateString()}</div>` : ''}
                 `}
+            </td>
             </td>
         </tr>
     `).join('');
     
-    console.log('âœ… Table populated with', allApprovedCodes.length, 'rows');
+    console.log('Ã¢Å“â€¦ Table populated with', allApprovedCodes.length, 'rows');
 }
 
 // Handle ERP toggle from table
 async function handleERPToggleFromTable(checkbox, itemId) {
-    console.log('ðŸ”„ Table ERP toggle:', itemId, checkbox.checked);
+    console.log('Ã°Å¸â€â€ž Table ERP toggle:', itemId, checkbox.checked);
     
     try {
         // Quick admin check
-        if (!currentUser || currentUser.role !== 'admin') {
-            alert('âŒ Admin access required');
+        if (!currentUser || currentUser.role !== 'admin' && currentUser.role !== 'erp_data_entry') {
+            alert('Ã¢ÂÅ’ ERP Data Entry or Admin access required');
             checkbox.checked = !checkbox.checked; // Revert
             return;
         }
@@ -8876,7 +9031,7 @@ async function handleERPToggleFromTable(checkbox, itemId) {
             .eq('id', itemId);
         
         if (error) {
-            console.error('âŒ Database error:', error);
+            console.error('Ã¢ÂÅ’ Database error:', error);
             alert('Database update failed: ' + error.message);
             checkbox.checked = !isIntegrated; // Revert
             row.cells[11].innerHTML = originalHTML; // Restore
@@ -8895,7 +9050,7 @@ async function handleERPToggleFromTable(checkbox, itemId) {
         const statusCell = row.cells[10]; // ERP Status column
         statusCell.innerHTML = `
             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${isIntegrated ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                ${isIntegrated ? 'âœ… INTEGRATED' : 'âŒ NOT INTEGRATED'}
+                ${isIntegrated ? 'Ã¢Å“â€¦ INTEGRATED' : 'Ã¢ÂÅ’ NOT INTEGRATED'}
             </span>
         `;
         
@@ -8919,14 +9074,14 @@ async function handleERPToggleFromTable(checkbox, itemId) {
         
         // Show success notification
         showNotification(
-            `âœ… ${itemCode} ${isIntegrated ? 'marked as integrated' : 'unmarked from integration'}`,
+            `Ã¢Å“â€¦ ${itemCode} ${isIntegrated ? 'marked as integrated' : 'unmarked from integration'}`,
             'success'
         );
         
-        console.log('âœ… ERP status updated successfully');
+        console.log('Ã¢Å“â€¦ ERP status updated successfully');
         
     } catch (error) {
-        console.error('âŒ Error updating ERP status:', error);
+        console.error('Ã¢ÂÅ’ Error updating ERP status:', error);
         alert('Error: ' + error.message);
         checkbox.checked = !checkbox.checked; // Revert
         checkbox.disabled = false;
@@ -8947,6 +9102,548 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ===== END TABLE VIEW FUNCTIONALITY =====
+
+// ===== ERP INTEGRATION FUNCTIONALITY =====
+
+// Load ERP dashboard data
+async function loadERPDashboard() {
+    console.log('🔧 Loading ERP dashboard...');
+    
+    try {
+        // Check user permissions
+        if (!currentUser || (currentUser.role !== 'erp_data_entry' && currentUser.role !== 'admin')) {
+            alert('Access denied. ERP Data Entry role required.');
+            return;
+        }
+
+        let erpItems;
+        
+        // Try to reuse already loaded data if available
+        if (window.allApprovedCodes && window.allApprovedCodes.length > 0) {
+            console.log('🔄 Reusing already loaded approved codes for ERP dashboard:', window.allApprovedCodes.length);
+            erpItems = window.allApprovedCodes;
+        } else {
+            console.log('📡 Loading approved items for ERP dashboard...');
+            
+            // Load approved item codes using the same query structure as search
+            const { data: approvedCodes, error } = await supabase
+                .from('item_codes')
+                .select(`
+                    id,
+                    item_code,
+                    description1,
+                    description2,
+                    uom,
+                    country_of_origin,
+                    model_number,
+                    unit_price,
+                    currency_code,
+                    manufacturer,
+                    created_at,
+                    project_id,
+                    status,
+                    approved_by,
+                    approved_at,
+                    erp_integrated,
+                    erp_integrated_at,
+                    erp_integrated_by,
+                    created_by_user:users!item_codes_created_by_fkey(username, email),
+                    approved_by_user:users!item_codes_approved_by_fkey(username, email),
+                    classification_projects!inner (
+                        id,
+                        project_name,
+                        division_code,
+                        division_description,
+                        section_code,
+                        section_description,
+                        detailed_section_code,
+                        detailed_section_description,
+                        item_code,
+                        item_description,
+                        additional_level_name,
+                        additional_level_value
+                    )
+                `)
+                .eq('status', 'approved')  // Status must be approved
+                .not('approved_by', 'is', null)  // CRITICAL: Must have admin approval
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Error loading ERP items:', error);
+                alert('Failed to load ERP data: ' + error.message);
+                return;
+            }
+            
+            erpItems = approvedCodes || [];
+            console.log('✅ Loaded approved items for ERP:', erpItems.length);
+        }
+
+        // Store data globally
+        window.erpItems = erpItems;
+        
+        // Update stats
+        updateERPStats(erpItems);
+        
+        // Populate table
+        populateERPTable(erpItems);
+        
+        console.log('✅ ERP dashboard loaded with', erpItems.length, 'items');
+        
+        // VISUAL TEST: Force show the ERP tab content
+        console.log('🧪 VISUAL TEST: Checking ERP tab content visibility...');
+        
+        const erpTabContent = document.getElementById('erp-tab');  // This is the content div
+        const tableBody = document.getElementById('erp-items-table-body');
+        
+        console.log('📱 ERP tab content found:', !!erpTabContent);
+        console.log('📱 ERP tab content classes:', erpTabContent?.className);
+        console.log('📊 Table body found:', !!tableBody);
+        console.log('📊 Table body rows:', tableBody?.children?.length || 0);
+        
+        // Force remove hidden class from tab content
+        if (erpTabContent) {
+            const isHidden = erpTabContent.classList.contains('hidden');
+            console.log('👁️ ERP tab content is hidden:', isHidden);
+            if (isHidden) {
+                console.log('🚨 FIXING: Removing hidden class from ERP tab content!');
+                erpTabContent.classList.remove('hidden');
+                console.log('✅ Hidden class removed - content should now be visible!');
+            } else {
+                console.log('✅ ERP tab content is already visible');
+            }
+            
+            // Double-check final state
+            console.log('🔍 Final tab content classes:', erpTabContent.className);
+        } else {
+            console.error('❌ ERP tab content element not found!');
+        }
+        
+    } catch (error) {
+        console.error('Error in loadERPDashboard:', error);
+        alert('Error loading ERP dashboard: ' + error.message);
+    }
+}
+
+// Update ERP statistics
+function updateERPStats(items) {
+    console.log('📈 updateERPStats called with items:', items?.length || 0);
+    
+    const total = items?.length || 0;
+    const integrated = items?.filter(item => item.erp_integrated).length || 0;
+    const pending = total - integrated;
+    const rate = total > 0 ? Math.round((integrated / total) * 100) : 0;
+
+    console.log('📊 ERP Stats - Total:', total, 'Integrated:', integrated, 'Pending:', pending, 'Rate:', rate + '%');
+
+    const totalElement = document.getElementById('erp-total-count');
+    const integratedElement = document.getElementById('erp-integrated-count');
+    const pendingElement = document.getElementById('erp-pending-count');
+    const rateElement = document.getElementById('erp-rate-percentage');
+
+    console.log('🎯 Statistics elements found:', {
+        total: !!totalElement,
+        integrated: !!integratedElement, 
+        pending: !!pendingElement,
+        rate: !!rateElement
+    });
+
+    if (totalElement) {
+        totalElement.textContent = total;
+        console.log('📊 Total count set to:', totalElement.textContent);
+    }
+    if (integratedElement) {
+        integratedElement.textContent = integrated;
+        console.log('📊 Integrated count set to:', integratedElement.textContent);
+    }
+    if (pendingElement) {
+        pendingElement.textContent = pending;
+        console.log('📊 Pending count set to:', pendingElement.textContent);
+    }
+    if (rateElement) {
+        rateElement.textContent = rate + '%';
+        console.log('📊 Rate set to:', rateElement.textContent);
+    }
+    
+    console.log('✅ ERP stats updated successfully');
+}
+
+// Populate ERP table
+function populateERPTable(items) {
+    console.log('📊 populateERPTable called with items:', items?.length || 0);
+    
+    const tableBody = document.getElementById('erp-items-table-body');
+    if (!tableBody) {
+        console.error('❌ ERP table body not found');
+        return;
+    }
+
+    if (!items || items.length === 0) {
+        console.log('📭 No items to display in ERP table');
+        tableBody.innerHTML = '<tr><td colspan="11" class="px-4 py-8 text-center text-gray-500">No approved items found</td></tr>';
+        return;
+    }
+
+    console.log('🔍 First item structure:', items[0]);
+
+    // Apply filters
+    const statusFilter = document.getElementById('erp-status-filter')?.value || '';
+    const searchText = document.getElementById('erp-search-input')?.value?.toLowerCase() || '';
+
+    let filteredItems = items;
+
+    // Filter by status
+    if (statusFilter === 'integrated') {
+        filteredItems = filteredItems.filter(item => item.erp_integrated);
+    } else if (statusFilter === 'pending') {
+        filteredItems = filteredItems.filter(item => !item.erp_integrated);
+    }
+
+    // Filter by search text
+    if (searchText) {
+        filteredItems = filteredItems.filter(item => 
+            (item.item_code || '').toLowerCase().includes(searchText) ||
+            (item.description1 || '').toLowerCase().includes(searchText) ||
+            (item.classification_projects?.project_name || '').toLowerCase().includes(searchText)
+        );
+    }
+
+    console.log('🔢 Filtered items count:', filteredItems.length);
+
+    if (filteredItems.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="11" class="px-4 py-8 text-center text-gray-500">No items found with current filters</td></tr>';
+        return;
+    }
+
+    const canModify = currentUser && (currentUser.role === 'erp_data_entry' || currentUser.role === 'admin');
+    console.log('👤 User can modify ERP status:', canModify, 'Role:', currentUser?.role);
+
+    console.log('🏗️ About to render table with', filteredItems.length, 'items...');
+    
+    try {
+        const tableHTML = filteredItems.map((item, index) => {
+            console.log(`📋 Rendering row ${index + 1}:`, item.item_code);
+            return `
+                <tr class="hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-mono font-semibold text-blue-600">
+                        ${item.item_code || 'N/A'}
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-purple-700 font-semibold">
+                        ${item.classification_projects?.division_code || 'N/A'}
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                        ${(item.classification_projects?.project_name || 'Unknown').substring(0, 30)}${(item.classification_projects?.project_name || '').length > 30 ? '...' : ''}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-900 max-w-xs" title="${item.description1 || ''}">
+                        ${(item.description1 || 'N/A').substring(0, 40)}${(item.description1 || '').length > 40 ? '...' : ''}
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-green-700">
+                        ${item.unit_price ? `${item.unit_price} ${item.currency_code || ''}` : 'Not specified'}
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                        ${(item.manufacturer || 'Not specified').substring(0, 20)}${(item.manufacturer || '').length > 20 ? '...' : ''}
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700" title="${item.model_number || 'N/A'}">
+                        ${(item.model_number || 'N/A').substring(0, 20)}${(item.model_number || '').length > 20 ? '...' : ''}
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900" title="${item.country_of_origin || 'N/A'}">
+                        ${(item.country_of_origin || 'N/A').substring(0, 15)}${(item.country_of_origin || '').length > 15 ? '...' : ''}
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                        ${item.approved_at ? new Date(item.approved_at).toLocaleDateString() : 'N/A'}
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-center">
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.erp_integrated ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}">
+                            ${item.erp_integrated ? '✅ INTEGRATED' : '⏳ PENDING'}
+                        </span>
+                        ${item.erp_integrated && item.erp_integrated_at ? `<div class="text-xs text-gray-500 mt-1">${new Date(item.erp_integrated_at).toLocaleDateString()}</div>` : ''}
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-center">
+                        ${canModify ? `
+                            <label class="flex items-center justify-center cursor-pointer">
+                                <input type="checkbox" 
+                                       class="erp-checkbox w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                       ${item.erp_integrated ? 'checked' : ''} 
+                                       data-item-id="${item.id}"
+                                       data-item-code="${item.item_code}"
+                                       onchange="handleERPToggleFromERPTab(this, ${item.id})">
+                                <span class="ml-2 text-xs font-medium text-gray-700">
+                                    ${item.erp_integrated ? 'Unmark' : 'Mark'}
+                                </span>
+                            </label>
+                        ` : `
+                            <span class="text-xs text-gray-500">No Action</span>
+                        `}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+        
+        console.log('🎨 Generated table HTML length:', tableHTML.length);
+        console.log('🎯 About to set innerHTML...');
+        
+        tableBody.innerHTML = tableHTML;
+        
+        console.log('✅ Table HTML set successfully!');
+        console.log('📊 Table body now has', tableBody.children.length, 'rows');
+        
+    } catch (error) {
+        console.error('❌ Error rendering table:', error);
+        tableBody.innerHTML = '<tr><td colspan="11" class="px-4 py-8 text-center text-red-500">Error rendering table: ' + error.message + '</td></tr>';
+    }
+}
+
+// Handle ERP toggle from ERP tab
+async function handleERPToggleFromERPTab(checkbox, itemId) {
+    console.log('🔧 ERP tab toggle:', itemId, checkbox.checked);
+    
+    try {
+        // Check permissions
+        if (!currentUser || (currentUser.role !== 'erp_data_entry' && currentUser.role !== 'admin')) {
+            alert('❌ ERP Data Entry or ERP Data Entry or Admin access required');
+            checkbox.checked = !checkbox.checked; // Revert
+            return;
+        }
+        
+        const isIntegrated = checkbox.checked;
+        const itemCode = checkbox.dataset.itemCode;
+        
+        // Show loading state
+        checkbox.disabled = true;
+        
+        // Update database
+        const { error } = await supabase
+            .from('item_codes')
+            .update({
+                erp_integrated: isIntegrated,
+                erp_integrated_by: isIntegrated ? currentUser.id : null,
+                erp_integrated_at: isIntegrated ? new Date().toISOString() : null
+            })
+            .eq('id', itemId);
+        
+        if (error) {
+            console.error('❌ Database error:', error);
+            alert('Database update failed: ' + error.message);
+            checkbox.checked = !isIntegrated; // Revert
+            checkbox.disabled = false;
+            return;
+        }
+        
+        // Update local data
+        const item = window.erpItems.find(c => c.id == itemId);
+        if (item) {
+            item.erp_integrated = isIntegrated;
+            item.erp_integrated_at = isIntegrated ? new Date().toISOString() : null;
+            item.erp_integrated_by = isIntegrated ? currentUser.id : null;
+        }
+        
+        // Show success notification
+        showNotification(
+            `✅ ${itemCode} ${isIntegrated ? 'marked as integrated' : 'unmarked from integration'}`,
+            'success'
+        );
+        
+        // Refresh dashboard
+        updateERPStats(window.erpItems);
+        populateERPTable(window.erpItems);
+        
+        console.log('✅ ERP status updated successfully');
+        
+    } catch (error) {
+        console.error('❌ Error updating ERP status:', error);
+        alert('Error: ' + error.message);
+        checkbox.checked = !checkbox.checked; // Revert
+        checkbox.disabled = false;
+    }
+}
+
+// Refresh ERP data
+async function refreshERPData() {
+    await loadERPDashboard();
+    showNotification('✅ ERP data refreshed', 'success');
+}
+
+// Add event listeners for ERP filters
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait for elements to be ready
+    setTimeout(() => {
+        const statusFilter = document.getElementById('erp-status-filter');
+        const searchInput = document.getElementById('erp-search-input');
+        
+        if (statusFilter) {
+            statusFilter.addEventListener('change', () => {
+                if (window.erpItems) populateERPTable(window.erpItems);
+            });
+        }
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                if (window.erpItems) populateERPTable(window.erpItems);
+            });
+        }
+    }, 2000);
+});
+
+// ===== ERP EXPORT FUNCTIONALITY =====
+
+// Toggle export dropdown
+function toggleERPExportDropdown() {
+    const dropdown = document.getElementById('erp-export-dropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('hidden');
+    }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const exportBtn = document.getElementById('erp-export-btn');
+    const dropdown = document.getElementById('erp-export-dropdown');
+    
+    if (exportBtn && dropdown && !exportBtn.contains(event.target) && !dropdown.contains(event.target)) {
+        dropdown.classList.add('hidden');
+    }
+});
+
+// Export ERP data to Excel
+function exportERPData(type) {
+    console.log('📊 Exporting ERP data:', type);
+    
+    if (!window.erpItems || window.erpItems.length === 0) {
+        alert('❌ No data available to export. Please load the ERP dashboard first.');
+        return;
+    }
+    
+    // Close dropdown
+    document.getElementById('erp-export-dropdown').classList.add('hidden');
+    
+    let dataToExport;
+    let filename;
+    
+    switch(type) {
+        case 'all':
+            dataToExport = window.erpItems;
+            filename = 'All_Approved_Items_ERP';
+            break;
+        case 'integrated':
+            dataToExport = window.erpItems.filter(item => item.erp_integrated);
+            filename = 'ERP_Integrated_Items';
+            break;
+        case 'pending':
+            dataToExport = window.erpItems.filter(item => !item.erp_integrated);
+            filename = 'Pending_ERP_Integration';
+            break;
+        default:
+            alert('❌ Invalid export type');
+            return;
+    }
+    
+    if (dataToExport.length === 0) {
+        alert(`❌ No items found for export type: ${type}`);
+        return;
+    }
+    
+    console.log(`📊 Exporting ${dataToExport.length} items for type: ${type}`);
+    
+    try {
+        // Prepare data for Excel - matching exactly the table view fields
+        const excelData = dataToExport.map(item => ({
+            'Item Code': item.item_code || 'N/A',
+            'Item Group': item.classification_projects?.division_code || 'N/A',
+            'Project': item.classification_projects?.project_name || 'Unknown',
+            'Description': item.description1 || 'N/A',
+            'Price': item.unit_price ? `${item.unit_price} ${item.currency_code || ''}` : 'Not specified',
+            'Manufacturer': item.manufacturer || 'Not specified',
+            'Model': item.model_number || 'N/A',
+            'Country of Origin': item.country_of_origin || 'N/A',
+            'Approved Date': item.approved_at ? new Date(item.approved_at).toLocaleDateString() : 'N/A',
+            'ERP Status': item.erp_integrated ? 'INTEGRATED' : 'PENDING',
+            'Action': 'N/A' // This column represents the toggle controls in the table
+        }));
+        
+        // Create workbook and worksheet
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(excelData);
+        
+        // Auto-size columns
+        const cols = [];
+        const maxWidths = {};
+        
+        // Calculate max width for each column
+        excelData.forEach(row => {
+            Object.keys(row).forEach(key => {
+                const value = String(row[key] || '');
+                maxWidths[key] = Math.max(maxWidths[key] || 0, value.length, key.length);
+            });
+        });
+        
+        // Set column widths with better sizing for table view columns
+        Object.keys(maxWidths).forEach(key => {
+            let width = Math.max(maxWidths[key] + 2, 12); // Minimum width of 12
+            
+            // Custom widths for specific columns
+            switch(key) {
+                case 'Item Code':
+                    width = Math.max(width, 15);
+                    break;
+                case 'Item Group':
+                    width = Math.max(width, 12);
+                    break;
+                case 'Project':
+                    width = Math.max(width, 25);
+                    break;
+                case 'Description':
+                    width = Math.max(width, 30);
+                    break;
+                case 'Model':
+                    width = Math.max(width, 18);
+                    break;
+                case 'Country of Origin':
+                    width = Math.max(width, 18);
+                    break;
+                case 'Price':
+                    width = Math.max(width, 15);
+                    break;
+                case 'Manufacturer':
+                    width = Math.max(width, 20);
+                    break;
+                case 'Approved Date':
+                    width = Math.max(width, 15);
+                    break;
+                case 'ERP Status':
+                    width = Math.max(width, 12);
+                    break;
+                case 'Action':
+                    width = 10;
+                    break;
+            }
+            
+            cols.push({ wch: Math.min(width, 40) }); // Max width of 40
+        });
+        ws['!cols'] = cols;
+        
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, ws, 'ERP Data');
+        
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().slice(0, 10);
+        const fullFilename = `${filename}_${timestamp}.xlsx`;
+        
+        // Save file
+        XLSX.writeFile(wb, fullFilename);
+        
+        console.log(`✅ Export completed: ${fullFilename}`);
+        
+        // Show success notification
+        showNotification(`✅ Export completed: ${dataToExport.length} items exported to ${fullFilename}`, 'success');
+        
+    } catch (error) {
+        console.error('❌ Export error:', error);
+        alert('❌ Export failed: ' + error.message);
+    }
+}
+
+// ===== END ERP EXPORT FUNCTIONALITY =====
+
+// ===== END ERP INTEGRATION FUNCTIONALITY =====
 
     </script>
 </body>
