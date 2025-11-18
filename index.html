@@ -448,8 +448,10 @@
                 <tr class="bg-gray-100">
                     <th class="py-2 px-4 border text-left text-xs">Item Code</th>
                     <th class="py-2 px-4 border text-left text-xs">Status</th>
+                    <th class="py-2 px-4 border text-left text-xs">Source</th>
                     <th class="py-2 px-4 border text-left text-xs">Request ID</th>
                     <th class="py-2 px-4 border text-left text-xs">Created By</th>
+                    <th class="py-2 px-4 border text-left text-xs">Approved By</th>
                     <th class="py-2 px-4 border text-left text-xs">Unit Price</th>
                     <th class="py-2 px-4 border text-left text-xs">Manufacturer</th>
                     <th class="py-2 px-4 border text-left text-xs">CSI Code</th>
@@ -4618,8 +4620,10 @@ async function submitBlockRequest() {
         // Load project history
         async function loadProjectHistory() {
     try {
-        console.log('Loading project history for project:', currentProject.id);
-       const { data, error } = await supabase
+        console.log('Loading comprehensive project history for project:', currentProject.id);
+        
+        // STEP 1: Load ALL item code requests (no limit)
+        const { data: requestsData, error: requestsError } = await supabase
             .from('item_code_requests')
             .select(`
                 id,
@@ -4651,19 +4655,151 @@ async function submitBlockRequest() {
                 project:classification_projects(project_name)
             `)
             .eq('project_id', currentProject.id)
-            .order('created_at', { ascending: false })
-            .limit(50);
+            .order('created_at', { ascending: false });
+            
+        if (requestsError) {
+            console.error('Error loading requests:', requestsError);
+            throw requestsError;
+        }
 
-        console.log('Project history data:', data);
-        console.log('Project history error:', error);
+        // STEP 2: Load ALL approved codes from item_codes table (including admin-generated)
+        const { data: approvedCodes, error: codesError } = await supabase
+            .from('item_codes')
+            .select(`
+                id,
+                project_id,
+                csi_base_code,
+                additional_level,
+                item_code,
+                description1,
+                description2,
+                combination_signature,
+                attribute_selections,
+                uom,
+                country_of_origin,
+                model_number,
+                unit_price,
+                currency_code,
+                manufacturer,
+                created_by,
+                approved_by,
+                status,
+                created_at,
+                approved_at,
+                erp_integrated,
+                erp_integrated_at,
+                serial_number,
+                created_by_user:users!item_codes_created_by_fkey(username, email),
+                approved_by_user:users!item_codes_approved_by_fkey(username, email),
+                classification_projects!inner(project_name, division_code)
+            `)
+            .eq('project_id', currentProject.id)
+            .eq('status', 'approved')
+            .order('created_at', { ascending: false });
+            
+        if (codesError) {
+            console.error('Error loading approved codes:', codesError);
+            throw codesError;
+        }
 
-        if (error) throw error;
+        console.log('📊 Data loaded:');
+        console.log('  - Requests from item_code_requests:', (requestsData || []).length);
+        console.log('  - Approved codes from item_codes:', (approvedCodes || []).length);
 
-        historyData = data || [];
-        console.log('History data loaded:', historyData.length, 'records');
+        // STEP 3: Create unified dataset
+        const allRequests = (requestsData || []).map(req => ({
+            ...req,
+            source: 'request',
+            sourceIcon: '📝',
+            sourceDescription: 'User Request',
+            isApproved: req.status === 'approved' || req.status === 'admin_approved',
+            displayStatus: req.status,
+            finalCode: req.item_code,
+            erpStatus: null // Will be populated if approved
+        }));
+
+        // STEP 4: Identify admin-generated codes (not in requests table)
+        const requestItemCodes = new Set(allRequests.map(r => r.item_code).filter(Boolean));
+        const adminGeneratedCodes = (approvedCodes || []).filter(code => 
+            !requestItemCodes.has(code.item_code)
+        ).map(code => ({
+            id: `admin-${code.id}`, // Unique ID for admin codes
+            project_id: code.project_id,
+            csi_division_code: code.csi_base_code,
+            additional_level: code.additional_level,
+            entry_description: 'Admin Generated',
+            item_code: code.item_code,
+            description1: code.description1,
+            description2: code.description2,
+            combination_signature: code.combination_signature,
+            attribute_selections: code.attribute_selections,
+            uom: code.uom,
+            country_of_origin: code.country_of_origin,
+            model_number: code.model_number,
+            unit_price: code.unit_price,
+            currency_code: code.currency_code,
+            manufacturer: code.manufacturer,
+            created_by: code.created_by,
+            reviewed_by: code.approved_by,
+            status: 'approved',
+            review_comments: null,
+            created_at: code.created_at,
+            reviewed_at: code.approved_at,
+            created_by_user: code.created_by_user,
+            project: code.classification_projects,
+            // Admin-specific fields
+            source: 'admin',
+            sourceIcon: '👑',
+            sourceDescription: 'Admin Generated',
+            isApproved: true,
+            displayStatus: 'admin_approved',
+            finalCode: code.item_code,
+            erpStatus: {
+                erp_integrated: code.erp_integrated,
+                erp_integrated_at: code.erp_integrated_at
+            },
+            approved_by_user: code.approved_by_user,
+            serial_number: code.serial_number
+        }));
+
+        // STEP 5: Add ERP status to approved requests
+        if (approvedCodes && approvedCodes.length > 0) {
+            const erpLookup = {};
+            approvedCodes.forEach(code => {
+                erpLookup[code.item_code] = {
+                    erp_integrated: code.erp_integrated,
+                    erp_integrated_at: code.erp_integrated_at
+                };
+            });
+            
+            allRequests.forEach(req => {
+                if (req.isApproved && req.item_code && erpLookup[req.item_code]) {
+                    req.erpStatus = erpLookup[req.item_code];
+                }
+            });
+        }
+
+        // STEP 6: Combine all data and sort by creation date
+        const combinedHistory = [...allRequests, ...adminGeneratedCodes]
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        historyData = combinedHistory;
+        
+        console.log('✅ Complete project history loaded:');
+        console.log('  - Total records:', historyData.length);
+        console.log('  - User requests:', allRequests.length);
+        console.log('  - Admin generated:', adminGeneratedCodes.length);
+        console.log('  - Approved items:', historyData.filter(h => h.isApproved).length);
+        
+        // STEP 7: Show summary to user
+        if (adminGeneratedCodes.length > 0) {
+            console.log(`📢 Found ${adminGeneratedCodes.length} admin-generated codes that were previously hidden`);
+        }
+        
         renderHistoryTable();
+        
     } catch (error) {
-        console.error('Error loading history:', error);
+        console.error('Error loading comprehensive project history:', error);
         alert('Failed to load project history: ' + error.message);
     }
 }
@@ -4698,7 +4834,7 @@ function renderHistoryTable() {
     const tbody = document.getElementById('history-table');
     const toggleBtn = document.getElementById('toggle-view-btn');
     
-    console.log('Rendering history table with', historyData.length, 'items');
+    console.log('Rendering enhanced history table with', historyData.length, 'items');
     console.log('Card view mode:', isCardView);
 
     // Clear both containers
@@ -4710,7 +4846,7 @@ function renderHistoryTable() {
             cardsContainer.innerHTML = '<div class="text-center py-8 text-gray-500">No request history found for this project</div>';
         }
         if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="15" class="py-4 text-center text-gray-500">No request history found for this project</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="16" class="py-4 text-center text-gray-500">No request history found for this project</td></tr>';
         }
         return;
     }
@@ -4718,7 +4854,7 @@ function renderHistoryTable() {
     // Render cards view with enhanced information
     if (cardsContainer && isCardView) {
         historyData.forEach((item, index) => {
-            const statusClass = getStatusClass(item.status);
+            const statusClass = getStatusClass(item.displayStatus || item.status);
             const formattedCombination = formatCombinationDisplay(item.attribute_selections);
             
             const card = document.createElement('div');
@@ -4727,10 +4863,17 @@ function renderHistoryTable() {
             card.innerHTML = `
                 <div class="flex justify-between items-start mb-4">
                     <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-lg">${item.sourceIcon}</span>
+                            <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">${item.sourceDescription}</span>
+                            ${item.erpStatus && item.erpStatus.erp_integrated ? 
+                                `<span class="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded">✅ ERP Integrated</span>` : ''}
+                        </div>
                         <h4 class="text-lg font-semibold text-gray-900 font-mono">${item.item_code}</h4>
                         <div class="flex items-center mt-1">
-                            <span class="px-2 py-1 rounded text-xs font-medium ${statusClass}">${item.status}</span>
+                            <span class="px-2 py-1 rounded text-xs font-medium ${statusClass}">${item.displayStatus || item.status}</span>
                             <span class="ml-2 text-sm text-gray-500">${new Date(item.created_at).toLocaleDateString()}</span>
+                            ${item.serial_number ? `<span class="ml-2 text-xs bg-gray-100 px-2 py-1 rounded">Serial: ${item.serial_number}</span>` : ''}
                         </div>
                     </div>
                     <div class="flex flex-wrap gap-2 ml-4">
@@ -4743,7 +4886,7 @@ function renderHistoryTable() {
                         <button onclick="exportSingleItem(${index}, 'pdf')" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm">
                             PDF
                         </button>
-                        ${(item.status === 'rejected' || item.status === 'reviewer_rejected' || item.status === 'admin_rejected') && currentUser && currentUser.id === item.created_by ? `
+                        ${(item.status === 'rejected' || item.status === 'reviewer_rejected' || item.status === 'admin_rejected') && currentUser && currentUser.id === item.created_by && item.source === 'request' ? `
                             <button onclick="regenerateFromRejected(${index})" class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-sm">
                                 <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
@@ -4751,7 +4894,7 @@ function renderHistoryTable() {
                                 Regenerate
                             </button>
                         ` : ''}
-                        ${currentUser && currentUser.role === 'admin' ? `
+                        ${currentUser && currentUser.role === 'admin' && item.source === 'request' ? `
                             <button onclick="editItemCode(${item.id})" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm">
                                 Edit
                             </button>
@@ -4773,6 +4916,11 @@ function renderHistoryTable() {
                         <p class="text-gray-900">${item.created_by_user?.username || 'Unknown'}</p>
                         ${item.created_by_user?.email ? `<p class="text-xs text-gray-500">${item.created_by_user.email}</p>` : ''}
                     </div>
+                    ${item.approved_by_user ? `
+                    <div>
+                        <span class="font-medium text-gray-600">Approved by:</span>
+                        <p class="text-green-700 font-medium">${item.approved_by_user.username}</p>
+                    </div>` : ''}
                     <div>
                         <span class="font-medium text-gray-600">Unit Price:</span>
                         <p class="font-mono bg-green-50 px-2 py-1 rounded text-green-800">${item.unit_price ? `${item.unit_price} ${item.currency_code || ''}` : 'Not specified'}</p>
@@ -4828,6 +4976,12 @@ function renderHistoryTable() {
                             <p class="text-gray-800 bg-yellow-50 p-2 rounded border">${item.review_comments}</p>
                         </div>
                     ` : ''}
+                    ${item.erpStatus && item.erpStatus.erp_integrated && item.erpStatus.erp_integrated_at ? `
+                        <div>
+                            <span class="font-medium text-gray-600">ERP Integration:</span>
+                            <p class="text-green-800 bg-green-50 p-2 rounded border">✅ Integrated on ${new Date(item.erpStatus.erp_integrated_at).toLocaleDateString()}</p>
+                        </div>
+                    ` : ''}
                 </div>
             `;
             
@@ -4835,10 +4989,10 @@ function renderHistoryTable() {
         });
     }
 
-    // Render table view with enhanced columns
+    // Render table view with enhanced columns including source information
     if (tbody && !isCardView) {
         historyData.forEach((item, index) => {
-            const statusClass = getStatusClass(item.status);
+            const statusClass = getStatusClass(item.displayStatus || item.status);
             const formattedCombination = formatCombinationDisplay(item.attribute_selections);
             
             const row = document.createElement('tr');
@@ -4846,12 +5000,23 @@ function renderHistoryTable() {
             row.innerHTML = `
                 <td class="px-4 py-3 border-b text-sm font-mono">${item.item_code}</td>
                 <td class="px-4 py-3 border-b text-sm">
-                    <span class="px-2 py-1 rounded text-xs font-medium ${statusClass}">${item.status}</span>
+                    <div class="flex items-center gap-1">
+                        <span class="text-sm">${item.sourceIcon}</span>
+                        <span class="px-1 py-0.5 rounded text-xs font-medium ${statusClass}">${item.displayStatus || item.status}</span>
+                    </div>
+                </td>
+                <td class="px-4 py-3 border-b text-sm">
+                    <span class="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">${item.sourceDescription}</span>
+                    ${item.erpStatus && item.erpStatus.erp_integrated ? 
+                        `<br><span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded mt-1 inline-block">✅ ERP</span>` : ''}
                 </td>
                 <td class="px-4 py-3 border-b text-sm font-mono text-blue-600">#${item.id}</td>
                 <td class="px-4 py-3 border-b text-sm">
                     ${item.created_by_user?.username || 'Unknown'}
                     ${item.created_by_user?.email ? `<br><span class="text-xs text-gray-500">${item.created_by_user.email}</span>` : ''}
+                </td>
+                <td class="px-4 py-3 border-b text-sm">
+                    ${item.approved_by_user ? `<span class="text-green-700 font-medium">${item.approved_by_user.username}</span>` : '-'}
                 </td>
                 <td class="px-4 py-3 border-b text-sm font-mono">
                     <span class="bg-green-50 px-2 py-1 rounded text-green-800">
@@ -4877,12 +5042,12 @@ function renderHistoryTable() {
                         <button onclick="exportSingleItem(${index}, 'pdf')" class="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded text-xs">
                             PDF
                         </button>
-                        ${(item.status === 'rejected' || item.status === 'reviewer_rejected' || item.status === 'admin_rejected') && currentUser && currentUser.id === item.created_by ? `
+                        ${(item.status === 'rejected' || item.status === 'reviewer_rejected' || item.status === 'admin_rejected') && currentUser && currentUser.id === item.created_by && item.source === 'request' ? `
                             <button onclick="regenerateFromRejected(${index})" class="bg-orange-600 hover:bg-orange-700 text-white px-2 py-1 rounded text-xs">
                                 Regenerate
                             </button>
                         ` : ''}
-                        ${currentUser && currentUser.role === 'admin' ? `
+                        ${currentUser && currentUser.role === 'admin' && item.source === 'request' ? `
                             <button onclick="editItemCode(${item.id})" class="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded text-xs">
                                 Edit
                             </button>
@@ -4898,15 +5063,20 @@ function renderHistoryTable() {
         });
     }
 
-    console.log('History rendering completed');
+    console.log('Enhanced history rendering completed');
 }
 
 // Helper function to get status styling
 function getStatusClass(status) {
     switch(status) {
         case 'approved':
+        case 'admin_approved':
             return 'bg-green-100 text-green-800';
+        case 'reviewer_approved':
+            return 'bg-blue-100 text-blue-800';
         case 'rejected':
+        case 'reviewer_rejected':
+        case 'admin_rejected':
             return 'bg-red-100 text-red-800';
         case 'pending':
             return 'bg-yellow-100 text-yellow-800';
@@ -10379,8 +10549,9 @@ async function loadERPDashboard() {
                         additional_level_value
                     )
                 `)
-                .eq('status', 'approved')  // Status must be approved
-                .not('approved_by', 'is', null)  // CRITICAL: Must have final admin approval
+                .eq('status', 'approved')  // CRITICAL: Only items with final 'approved' status
+                .not('approved_by', 'is', null)  // CRITICAL: Must have admin who approved it
+                .not('approved_at', 'is', null)  // CRITICAL: Must have approval timestamp
                 .order('created_at', { ascending: false });
 
             if (error) {
