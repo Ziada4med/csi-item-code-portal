@@ -3630,7 +3630,7 @@ async function checkForDuplicates() {
         return false;
         
     } catch (error) {
-        console.error('⚠️ Error in enhanced duplicate detection:', error);
+        console.error('âš ï¸ Error in enhanced duplicate detection:', error);
         showErrorStatusEnhanced(error.message);
         return false; // Allow submission on error to avoid blocking due to technical issues
     }
@@ -3679,7 +3679,7 @@ function showDuplicateStatusEnhanced(type, itemCode, method) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.854-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
             </svg>
             <div class="text-red-800">
-                <div class="font-bold text-lg mb-2">⚠️ DUPLICATE DETECTED</div>
+                <div class="font-bold text-lg mb-2">âš ï¸ DUPLICATE DETECTED</div>
                 <div class="mb-2">
                     This combination already exists as <strong>${formatDuplicateTypeEnhanced(type)}</strong>:
                 </div>
@@ -3690,7 +3690,7 @@ function showDuplicateStatusEnhanced(type, itemCode, method) {
                     Detection method: ${formatDetectionMethodEnhanced(method)}
                 </div>
                 <div class="text-red-600 font-medium text-sm">
-                    ⚠️ Cannot submit identical combination. Please modify your selections.
+                    âš ï¸ Cannot submit identical combination. Please modify your selections.
                 </div>
             </div>
         </div>
@@ -3736,13 +3736,13 @@ function showErrorStatusEnhanced(errorMessage) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
             <div class="text-yellow-800">
-                <div class="font-bold text-lg mb-2">⚠️ DUPLICATE CHECK ERROR</div>
+                <div class="font-bold text-lg mb-2">âš ï¸ DUPLICATE CHECK ERROR</div>
                 <div class="mb-2">Error checking for duplicates:</div>
                 <div class="bg-yellow-200 p-2 rounded font-mono text-sm mb-2">
                     ${errorMessage}
                 </div>
                 <div class="text-yellow-600 font-medium text-sm">
-                    ⚠️ Proceeding with caution. Manual verification recommended.
+                    âš ï¸ Proceeding with caution. Manual verification recommended.
                 </div>
             </div>
         </div>
@@ -3996,7 +3996,7 @@ function getFormattedCombination() {
             .eq('is_blocked', false);
         
         if (finalApprovedError) {
-            console.error('⚠️ Final approved codes check error:', finalApprovedError);
+            console.error('âš ï¸ Final approved codes check error:', finalApprovedError);
             alert('Final duplicate check failed: ' + finalApprovedError.message);
             return;
         }
@@ -4039,7 +4039,7 @@ function getFormattedCombination() {
             .in('status', ['pending', 'reviewer_approved']);
         
         if (finalRequestError) {
-            console.error('⚠️ Final requests check error:', finalRequestError);
+            console.error('âš ï¸ Final requests check error:', finalRequestError);
             alert('Final duplicate check failed: ' + finalRequestError.message);
             return;
         }
@@ -4077,7 +4077,7 @@ function getFormattedCombination() {
         console.log(' Final duplicate check passed - proceeding with submission');
         
     } catch (error) {
-        console.error('⚠️ Final duplicate check exception:', error);
+        console.error('âš ï¸ Final duplicate check exception:', error);
         const proceed = confirm(`DUPLICATE CHECK FAILED\n\nError: ${error.message}\n\nDo you want to proceed anyway? (Not recommended)`);
         if (!proceed) {
             return;
@@ -4147,7 +4147,7 @@ function getFormattedCombination() {
                 .eq('is_blocked', false);
             
             if (submitApprovedError) {
-                console.error('⚠️ Submit approved check error:', submitApprovedError);
+                console.error('âš ï¸ Submit approved check error:', submitApprovedError);
                 alert('Duplicate validation failed: ' + submitApprovedError.message);
                 return;
             }
@@ -4187,7 +4187,7 @@ function getFormattedCombination() {
                 .in('status', ['pending', 'reviewer_approved']);
             
             if (submitRequestError) {
-                console.error('⚠️ Submit request check error:', submitRequestError);
+                console.error('âš ï¸ Submit request check error:', submitRequestError);
                 alert('Duplicate validation failed: ' + submitRequestError.message);
                 return;
             }
@@ -4672,7 +4672,7 @@ async function submitBlockRequest() {
             throw workflowError;
         }
 
-        console.log('📊 Data loaded from unified workflow table:', (allWorkflowItems || []).length);
+        console.log('ðŸ“Š Data loaded from unified workflow table:', (allWorkflowItems || []).length);
 
         // Transform for display compatibility
         historyData = (allWorkflowItems || []).map(item => ({
@@ -4682,7 +4682,7 @@ async function submitBlockRequest() {
             review_comments: item.reviewer_comments,
             // Determine display properties
             source: item.status === 'admin_approved' ? 'admin' : 'request',
-            sourceIcon: item.status === 'admin_approved' ? '👨‍💼' : '📝',
+            sourceIcon: item.status === 'admin_approved' ? 'ðŸ‘¨â€ðŸ’¼' : 'ðŸ“',
             sourceDescription: item.status === 'admin_approved' ? 'Admin Generated' : 'User Request',
             isApproved: item.status === 'admin_approved',
             displayStatus: item.status,
@@ -4694,7 +4694,7 @@ async function submitBlockRequest() {
             } : null
         }));
         
-        console.log('✅ Complete project history loaded:');
+        console.log('âœ… Complete project history loaded:');
         console.log('  - Total records:', historyData.length);
         console.log('  - Pending items:', historyData.filter(h => h.status === 'pending').length);
         console.log('  - Reviewer approved:', historyData.filter(h => h.status === 'reviewer_approved').length);  
@@ -4772,7 +4772,7 @@ function renderHistoryTable() {
                             <span class="text-lg">${item.sourceIcon}</span>
                             <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">${item.sourceDescription}</span>
                             ${item.erpStatus && item.erpStatus.erp_integrated ? 
-                                `<span class="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded">… ERP Integrated</span>` : ''}
+                                `<span class="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded">â€¦ ERP Integrated</span>` : ''}
                         </div>
                         <h4 class="text-lg font-semibold text-gray-900 font-mono">${item.item_code}</h4>
                         <div class="flex items-center mt-1">
@@ -4884,7 +4884,7 @@ function renderHistoryTable() {
                     ${item.erpStatus && item.erpStatus.erp_integrated && item.erpStatus.erp_integrated_at ? `
                         <div>
                             <span class="font-medium text-gray-600">ERP Integration:</span>
-                            <p class="text-green-800 bg-green-50 p-2 rounded border">… Integrated on ${new Date(item.erpStatus.erp_integrated_at).toLocaleDateString()}</p>
+                            <p class="text-green-800 bg-green-50 p-2 rounded border">â€¦ Integrated on ${new Date(item.erpStatus.erp_integrated_at).toLocaleDateString()}</p>
                         </div>
                     ` : ''}
                 </div>
@@ -4913,7 +4913,7 @@ function renderHistoryTable() {
                 <td class="px-4 py-3 border-b text-sm">
                     <span class="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">${item.sourceDescription}</span>
                     ${item.erpStatus && item.erpStatus.erp_integrated ? 
-                        `<br><span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded mt-1 inline-block">… ERP</span>` : ''}
+                        `<br><span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded mt-1 inline-block">â€¦ ERP</span>` : ''}
                 </td>
                 <td class="px-4 py-3 border-b text-sm font-mono text-blue-600">#${item.id}</td>
                 <td class="px-4 py-3 border-b text-sm">
@@ -6548,12 +6548,12 @@ async function exportRequestToExcel(requestId) {
 // Export individual item from search to PDF/Excel
 async function exportItemToPDF(itemId, source) {
     try {
-        const table = source === 'approved' ? 'item_codes' : 'item_code_requests';
+        // Use unified workflow table for all items
         const { data: item, error } = await supabase
-            .from(table)
+            .from('item_code_workflow')
             .select(`
                 *,
-                created_by_user:users!${table}_created_by_fkey(username, email),
+                created_by_user:users!item_code_workflow_created_by_fkey(username, email),
                 project:classification_projects(project_name)
             `)
             .eq('id', itemId)
@@ -6570,12 +6570,12 @@ async function exportItemToPDF(itemId, source) {
 
 async function exportItemToExcel(itemId, source) {
     try {
-        const table = source === 'approved' ? 'item_codes' : 'item_code_requests';
+        // Use unified workflow table for all items
         const { data: item, error } = await supabase
-            .from(table)
+            .from('item_code_workflow')
             .select(`
                 *,
-                created_by_user:users!${table}_created_by_fkey(username, email),
+                created_by_user:users!item_code_workflow_created_by_fkey(username, email),
                 project:classification_projects(project_name)
             `)
             .eq('id', itemId)
@@ -6583,7 +6583,7 @@ async function exportItemToExcel(itemId, source) {
             
         if (error) throw error;
         
-        generateSingleItemExcel([item], `${source === 'approved' ? 'Item' : 'Request'}_${item.item_code}_${Date.now()}.xlsx`);
+        generateSingleItemExcel([item], `Item_${item.item_code}_${Date.now()}.xlsx`);
     } catch (error) {
         console.error('Error exporting item to Excel:', error);
         alert('Failed to export Excel: ' + error.message);
@@ -7173,50 +7173,6 @@ async function exportRequestToExcel(requestId) {
     }
 }
 
-
-
-async function exportItemToExcel(itemId, source) {
-    try {
-        const table = source === 'approved' ? 'item_codes' : 'item_code_requests';
-        const { data: item, error } = await supabase
-            .from(table)
-            .select(`
-                *,
-                created_by_user:users!${table}_created_by_fkey(username, email),
-                project:classification_projects(project_name)
-            `)
-            .eq('id', itemId)
-            .single();
-            
-        if (error) throw error;
-        
-        // Generate Excel for single item
-        const excelData = [{
-            'Item Code': item.item_code || '',
-            'Project': item.project?.project_name || '',
-            'Description 1': item.description1 || '',
-            'Description 2': item.description2 || '',
-            'Unit of Measurement': item.uom || '',
-            'Country of Origin': item.country_of_origin || '',
-            'Model Number': item.model_number || '',
-            'Unit Price': item.unit_price || '',
-            'Currency': item.currency_code || '',
-            'Manufacturer': item.manufacturer || '',
-            'Status': item.status,
-            'Created Date': new Date(item.created_at).toLocaleDateString(),
-            'Created By': item.created_by_user?.username || '',
-            'Creator Email': item.created_by_user?.email || ''
-        }];
-        
-        const worksheet = XLSX.utils.json_to_sheet(excelData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Item Details');
-        XLSX.writeFile(workbook, `${source === 'approved' ? 'Item' : 'Request'}_${item.item_code}_${Date.now()}.xlsx`);
-    } catch (error) {
-        console.error('Error exporting item to Excel:', error);
-        alert('Failed to export Excel: ' + error.message);
-    }
-}
 // Toggle hierarchy node visibility
 function toggleHierarchyNode(button) {
     const content = button.closest('.border').querySelector('.hierarchy-content');
@@ -7999,7 +7955,7 @@ async function loadUserRequests() {
             itemCodes: (codeRequests || []).map(req => ({
                 ...req,
                 type: 'Item Code',
-                typeIcon: 'ðŸ”¢',
+                typeIcon: 'Ã°Å¸â€Â¢',
                 title: req.item_code || 'Pending Code Generation',
                 subtitle: `${req.project?.division_code || ''} - ${req.project?.project_name || 'Unknown Project'}`,
                 erpStatus: erpStatusMap[req.item_code] || null
@@ -8023,7 +7979,7 @@ async function loadUserRequests() {
             manufacturers: (manufacturerRequests || []).map(req => ({
                 ...req,
                 type: 'Manufacturer',
-                typeIcon: 'ðŸ­',
+                typeIcon: 'Ã°Å¸ÂÂ­',
                 title: req.manufacturer_name,
                 subtitle: `${req.project?.project_name || 'Unknown Project'}`,
                 erpStatus: null // Manufacturer requests don't have direct ERP integration
@@ -8040,7 +7996,7 @@ async function loadUserRequests() {
             organizedRequests.standardValues.length +
             organizedRequests.manufacturers.length;
 
-        console.log('ðŸ“Š Loaded comprehensive requests:', {
+        console.log('Ã°Å¸â€œÅ  Loaded comprehensive requests:', {
             itemCodes: organizedRequests.itemCodes.length,
             blockCombinations: organizedRequests.blockCombinations.length,
             standardValues: organizedRequests.standardValues.length,
@@ -8189,7 +8145,7 @@ function renderEnhancedRequestsCards(organizedRequests) {
     if (totalRequests === 0) {
         container.innerHTML = `
             <div class="text-center py-12">
-                <div class="text-gray-400 text-6xl mb-4">ðŸ“</div>
+                <div class="text-gray-400 text-6xl mb-4">Ã°Å¸â€œÂ</div>
                 <h3 class="text-xl font-medium text-gray-900 mb-2">No Requests Found</h3>
                 <p class="text-gray-500">You haven't made any requests yet. Start by generating an item code!</p>
             </div>
@@ -8227,7 +8183,7 @@ function renderEnhancedRequestsCards(organizedRequests) {
         renderRequestSection('Item Code Requests', 'itemCodes', organizedRequests.itemCodes, '', 'blue'),
         renderRequestSection('Combination Requests', 'blockCombinations', organizedRequests.blockCombinations, '', 'purple'),
         renderRequestSection('Standard Value Requests', 'standardValues', organizedRequests.standardValues, '', 'green'),
-        renderRequestSection('Manufacturer Requests', 'manufacturers', organizedRequests.manufacturers, '­', 'orange')
+        renderRequestSection('Manufacturer Requests', 'manufacturers', organizedRequests.manufacturers, 'Â­', 'orange')
     ].join('');
 
     container.innerHTML = summaryHtml + sectionsHtml;
@@ -8279,7 +8235,7 @@ function renderSingleRequestCard(request, sectionType, index, color) {
         <div class="mt-3 p-3 rounded-lg ${request.erpStatus.erp_integrated ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}">
             <div class="flex items-center gap-2">
                 <span class="text-sm font-medium ${request.erpStatus.erp_integrated ? 'text-green-800' : 'text-yellow-800'}">
-                    ${request.erpStatus.erp_integrated ? '… ERP INTEGRATED' : 'PENDING ERP INTEGRATION'}
+                    ${request.erpStatus.erp_integrated ? 'â€¦ ERP INTEGRATED' : 'PENDING ERP INTEGRATION'}
                 </span>
             </div>
             ${request.erpStatus.erp_integrated && request.erpStatus.erp_integrated_at ? `
@@ -8339,17 +8295,17 @@ function renderSingleRequestCard(request, sectionType, index, color) {
                     ${isApproved ? `
                         <button onclick="exportRequestToPDF('${sectionType}', ${index})" 
                                 class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors">
-                            ðŸ“„ PDF
+                            Ã°Å¸â€œâ€ž PDF
                         </button>
                         <button onclick="exportRequestToExcel('${sectionType}', ${index})" 
                                 class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors">
-                            ðŸ“Š Excel
+                            Ã°Å¸â€œÅ  Excel
                         </button>
                     ` : ''}
                     ${isRejected ? `
                         <button onclick="regenerateFromRejected('${sectionType}', ${index})" 
                                 class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded transition-colors">
-                            ðŸ”„ Regenerate Request
+                            Ã°Å¸â€â€ž Regenerate Request
                         </button>
                     ` : ''}
                 </div>
@@ -8462,11 +8418,11 @@ function getEnhancedStatusInfo(status) {
             description: 'Approved by reviewer, awaiting admin'
         },
         'admin_approved': {
-            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">… Admin Approved</span>',
+            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">â€¦ Admin Approved</span>',
             description: 'Fully approved'
         },
         'approved': {
-            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">… Approved</span>',
+            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">â€¦ Approved</span>',
             description: 'Fully approved'
         },
         'reviewer_rejected': {
@@ -8514,7 +8470,7 @@ function renderWorkflowProgress(status) {
                     <div class="flex items-center ${index < steps.length - 1 ? 'flex-1' : ''}">
                         <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium
                             ${isCompleted ? 'bg-green-500 text-white' : isActive ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-600'}">
-                            ${isCompleted ? '“' : index + 1}
+                            ${isCompleted ? 'â€œ' : index + 1}
                         </div>
                         <div class="ml-1 text-xs ${isCompleted ? 'text-green-600 font-medium' : isActive ? 'text-blue-600 font-medium' : 'text-gray-500'}">
                             ${step.name}
@@ -8675,7 +8631,7 @@ function generateEnhancedRequestPDF(request, sectionType) {
     workflowSteps.forEach((step, index) => {
         const isCompleted = completedSteps[index];
         doc.setFont(undefined, isCompleted ? 'bold' : 'normal');
-        doc.text(`${index + 1}. ${step} ${isCompleted ? '“' : ''}`, 20, yPosition);
+        doc.text(`${index + 1}. ${step} ${isCompleted ? 'â€œ' : ''}`, 20, yPosition);
         yPosition += 6;
     });
     
@@ -9325,7 +9281,7 @@ async function performItemCodeSearch() {
     try {
         resultsContainer.innerHTML = '<p class="text-blue-500">Searching...</p>';
         
-        // Query item_codes directly instead of using RPC
+        // Query item_code_workflow table directly instead of using RPC
         const { data, error } = await supabase
             .from('item_code_workflow')
             .select(`
@@ -9562,7 +9518,7 @@ async function approveRequest(type, requestId) {
             
             if (fetchError) throw fetchError;
             
-            // Create entry in item_codes table with all the data including hash
+            // Create entry in item_code_workflow table with all the data including hash
             const { error: insertError } = await supabase
                 .from('item_code_workflow')
                 .insert({
@@ -10415,7 +10371,7 @@ async function loadERPDashboard() {
         } else {
             console.log('Loading approved items for ERP dashboard...');
             
-            // Load approved item codes - ONLY items with final admin approval
+            // Load approved item codes - ONLY items with final admin approval from unified workflow table
             const { data: approvedCodes, error } = await supabase
                 .from('item_code_workflow')
                 .select(`
@@ -10454,7 +10410,7 @@ async function loadERPDashboard() {
                         additional_level_value
                     )
                 `)
-                .eq('status', 'admin_approved')  // CRITICAL: Only items with final 'approved' status
+                .eq('status', 'admin_approved')  // CRITICAL: Only items with final admin approval in workflow
                 .not('approved_by', 'is', null)  // CRITICAL: Must have admin who approved it
                 .not('approved_at', 'is', null)  // CRITICAL: Must have approval timestamp
                 .order('created_at', { ascending: false });
@@ -11049,7 +11005,7 @@ async function loadUserHistory() {
         if (!requests || requests.length === 0) {
             content.innerHTML = 
                 '<div class="text-center py-12">' +
-                    '<div class="text-gray-400 text-6xl mb-4">ðŸ“‹</div>' +
+                    '<div class="text-gray-400 text-6xl mb-4">Ã°Å¸â€œâ€¹</div>' +
                     '<h3 class="text-xl font-medium text-gray-900 mb-2">No Request History</h3>' +
                     '<p class="text-gray-500">You have not submitted any item code requests yet.</p>' +
                     '<p class="text-gray-400 text-sm mt-2">Start by generating your first item code!</p>' +
@@ -11392,17 +11348,17 @@ function getApprovalLineColor(status) {
 function getApprovalStatusBadge(status) {
     const badgeMap = {
         'submitted': { 
-            label: 'ðŸ“ Submitted - Awaiting Reviewer', 
+            label: 'Ã°Å¸â€œÂ Submitted - Awaiting Reviewer', 
             bg: 'bg-blue-50', 
             text: 'text-blue-700' 
         },
         'pending': { 
-            label: 'ðŸ‘€ Under Review by Reviewer', 
+            label: 'Ã°Å¸â€˜â‚¬ Under Review by Reviewer', 
             bg: 'bg-yellow-50', 
             text: 'text-yellow-700' 
         },
         'under_review': { 
-            label: 'ðŸ” Being Reviewed', 
+            label: 'Ã°Å¸â€Â Being Reviewed', 
             bg: 'bg-orange-50', 
             text: 'text-orange-700' 
         },
@@ -11412,14 +11368,14 @@ function getApprovalStatusBadge(status) {
             text: 'text-red-700' 
         },
         'admin_approved': { 
-            label: '… Approved by Admin', 
+            label: 'â€¦ Approved by Admin', 
             bg: 'bg-green-50', 
             text: 'text-green-700' 
         }
     };
     
     return badgeMap[status] || { 
-        label: `ðŸ“‹ Status: ${status ? status.replace('_', ' ') : 'Unknown'}`, 
+        label: `Ã°Å¸â€œâ€¹ Status: ${status ? status.replace('_', ' ') : 'Unknown'}`, 
         bg: 'bg-gray-50', 
         text: 'text-gray-700' 
     };
