@@ -3630,7 +3630,7 @@ async function checkForDuplicates() {
         return false;
         
     } catch (error) {
-        console.error('âš ï¸ Error in enhanced duplicate detection:', error);
+        console.error('Ã¢Å¡Â Ã¯Â¸Â Error in enhanced duplicate detection:', error);
         showErrorStatusEnhanced(error.message);
         return false; // Allow submission on error to avoid blocking due to technical issues
     }
@@ -3679,7 +3679,7 @@ function showDuplicateStatusEnhanced(type, itemCode, method) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.854-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
             </svg>
             <div class="text-red-800">
-                <div class="font-bold text-lg mb-2">âš ï¸ DUPLICATE DETECTED</div>
+                <div class="font-bold text-lg mb-2">Ã¢Å¡Â Ã¯Â¸Â DUPLICATE DETECTED</div>
                 <div class="mb-2">
                     This combination already exists as <strong>${formatDuplicateTypeEnhanced(type)}</strong>:
                 </div>
@@ -3690,7 +3690,7 @@ function showDuplicateStatusEnhanced(type, itemCode, method) {
                     Detection method: ${formatDetectionMethodEnhanced(method)}
                 </div>
                 <div class="text-red-600 font-medium text-sm">
-                    âš ï¸ Cannot submit identical combination. Please modify your selections.
+                    Ã¢Å¡Â Ã¯Â¸Â Cannot submit identical combination. Please modify your selections.
                 </div>
             </div>
         </div>
@@ -3736,13 +3736,13 @@ function showErrorStatusEnhanced(errorMessage) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
             <div class="text-yellow-800">
-                <div class="font-bold text-lg mb-2">âš ï¸ DUPLICATE CHECK ERROR</div>
+                <div class="font-bold text-lg mb-2">Ã¢Å¡Â Ã¯Â¸Â DUPLICATE CHECK ERROR</div>
                 <div class="mb-2">Error checking for duplicates:</div>
                 <div class="bg-yellow-200 p-2 rounded font-mono text-sm mb-2">
                     ${errorMessage}
                 </div>
                 <div class="text-yellow-600 font-medium text-sm">
-                    âš ï¸ Proceeding with caution. Manual verification recommended.
+                    Ã¢Å¡Â Ã¯Â¸Â Proceeding with caution. Manual verification recommended.
                 </div>
             </div>
         </div>
@@ -3996,7 +3996,7 @@ function getFormattedCombination() {
             .eq('is_blocked', false);
         
         if (finalApprovedError) {
-            console.error('âš ï¸ Final approved codes check error:', finalApprovedError);
+            console.error('Ã¢Å¡Â Ã¯Â¸Â Final approved codes check error:', finalApprovedError);
             alert('Final duplicate check failed: ' + finalApprovedError.message);
             return;
         }
@@ -4039,7 +4039,7 @@ function getFormattedCombination() {
             .in('status', ['pending', 'reviewer_approved']);
         
         if (finalRequestError) {
-            console.error('âš ï¸ Final requests check error:', finalRequestError);
+            console.error('Ã¢Å¡Â Ã¯Â¸Â Final requests check error:', finalRequestError);
             alert('Final duplicate check failed: ' + finalRequestError.message);
             return;
         }
@@ -4077,7 +4077,7 @@ function getFormattedCombination() {
         console.log(' Final duplicate check passed - proceeding with submission');
         
     } catch (error) {
-        console.error('âš ï¸ Final duplicate check exception:', error);
+        console.error('Ã¢Å¡Â Ã¯Â¸Â Final duplicate check exception:', error);
         const proceed = confirm(`DUPLICATE CHECK FAILED\n\nError: ${error.message}\n\nDo you want to proceed anyway? (Not recommended)`);
         if (!proceed) {
             return;
@@ -4147,7 +4147,7 @@ function getFormattedCombination() {
                 .eq('is_blocked', false);
             
             if (submitApprovedError) {
-                console.error('âš ï¸ Submit approved check error:', submitApprovedError);
+                console.error('Ã¢Å¡Â Ã¯Â¸Â Submit approved check error:', submitApprovedError);
                 alert('Duplicate validation failed: ' + submitApprovedError.message);
                 return;
             }
@@ -4187,7 +4187,7 @@ function getFormattedCombination() {
                 .in('status', ['pending', 'reviewer_approved']);
             
             if (submitRequestError) {
-                console.error('âš ï¸ Submit request check error:', submitRequestError);
+                console.error('Ã¢Å¡Â Ã¯Â¸Â Submit request check error:', submitRequestError);
                 alert('Duplicate validation failed: ' + submitRequestError.message);
                 return;
             }
@@ -4672,7 +4672,7 @@ async function submitBlockRequest() {
             throw workflowError;
         }
 
-        console.log('ðŸ“Š Data loaded from unified workflow table:', (allWorkflowItems || []).length);
+        console.log('Ã°Å¸â€œÅ  Data loaded from unified workflow table:', (allWorkflowItems || []).length);
 
         // Transform for display compatibility
         historyData = (allWorkflowItems || []).map(item => ({
@@ -4682,7 +4682,7 @@ async function submitBlockRequest() {
             review_comments: item.reviewer_comments,
             // Determine display properties
             source: item.status === 'admin_approved' ? 'admin' : 'request',
-            sourceIcon: item.status === 'admin_approved' ? 'ðŸ‘¨â€ðŸ’¼' : 'ðŸ“',
+            sourceIcon: item.status === 'admin_approved' ? 'Ã°Å¸â€˜Â¨Ã¢â‚¬ÂÃ°Å¸â€™Â¼' : 'Ã°Å¸â€œÂ',
             sourceDescription: item.status === 'admin_approved' ? 'Admin Generated' : 'User Request',
             isApproved: item.status === 'admin_approved',
             displayStatus: item.status,
@@ -4694,7 +4694,7 @@ async function submitBlockRequest() {
             } : null
         }));
         
-        console.log('âœ… Complete project history loaded:');
+        console.log('Ã¢Å“â€¦ Complete project history loaded:');
         console.log('  - Total records:', historyData.length);
         console.log('  - Pending items:', historyData.filter(h => h.status === 'pending').length);
         console.log('  - Reviewer approved:', historyData.filter(h => h.status === 'reviewer_approved').length);  
@@ -4772,7 +4772,7 @@ function renderHistoryTable() {
                             <span class="text-lg">${item.sourceIcon}</span>
                             <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">${item.sourceDescription}</span>
                             ${item.erpStatus && item.erpStatus.erp_integrated ? 
-                                `<span class="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded">â€¦ ERP Integrated</span>` : ''}
+                                `<span class="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded">Ã¢â‚¬Â¦ ERP Integrated</span>` : ''}
                         </div>
                         <h4 class="text-lg font-semibold text-gray-900 font-mono">${item.item_code}</h4>
                         <div class="flex items-center mt-1">
@@ -4884,7 +4884,7 @@ function renderHistoryTable() {
                     ${item.erpStatus && item.erpStatus.erp_integrated && item.erpStatus.erp_integrated_at ? `
                         <div>
                             <span class="font-medium text-gray-600">ERP Integration:</span>
-                            <p class="text-green-800 bg-green-50 p-2 rounded border">â€¦ Integrated on ${new Date(item.erpStatus.erp_integrated_at).toLocaleDateString()}</p>
+                            <p class="text-green-800 bg-green-50 p-2 rounded border">Ã¢â‚¬Â¦ Integrated on ${new Date(item.erpStatus.erp_integrated_at).toLocaleDateString()}</p>
                         </div>
                     ` : ''}
                 </div>
@@ -4913,7 +4913,7 @@ function renderHistoryTable() {
                 <td class="px-4 py-3 border-b text-sm">
                     <span class="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">${item.sourceDescription}</span>
                     ${item.erpStatus && item.erpStatus.erp_integrated ? 
-                        `<br><span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded mt-1 inline-block">â€¦ ERP</span>` : ''}
+                        `<br><span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded mt-1 inline-block">Ã¢â‚¬Â¦ ERP</span>` : ''}
                 </td>
                 <td class="px-4 py-3 border-b text-sm font-mono text-blue-600">#${item.id}</td>
                 <td class="px-4 py-3 border-b text-sm">
@@ -7955,7 +7955,7 @@ async function loadUserRequests() {
             itemCodes: (codeRequests || []).map(req => ({
                 ...req,
                 type: 'Item Code',
-                typeIcon: 'Ã°Å¸â€Â¢',
+                typeIcon: 'ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â¢',
                 title: req.item_code || 'Pending Code Generation',
                 subtitle: `${req.project?.division_code || ''} - ${req.project?.project_name || 'Unknown Project'}`,
                 erpStatus: erpStatusMap[req.item_code] || null
@@ -7979,7 +7979,7 @@ async function loadUserRequests() {
             manufacturers: (manufacturerRequests || []).map(req => ({
                 ...req,
                 type: 'Manufacturer',
-                typeIcon: 'Ã°Å¸ÂÂ­',
+                typeIcon: 'ÃƒÂ°Ã…Â¸Ã‚ÂÃ‚Â­',
                 title: req.manufacturer_name,
                 subtitle: `${req.project?.project_name || 'Unknown Project'}`,
                 erpStatus: null // Manufacturer requests don't have direct ERP integration
@@ -7996,7 +7996,7 @@ async function loadUserRequests() {
             organizedRequests.standardValues.length +
             organizedRequests.manufacturers.length;
 
-        console.log('Ã°Å¸â€œÅ  Loaded comprehensive requests:', {
+        console.log('ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â  Loaded comprehensive requests:', {
             itemCodes: organizedRequests.itemCodes.length,
             blockCombinations: organizedRequests.blockCombinations.length,
             standardValues: organizedRequests.standardValues.length,
@@ -8145,7 +8145,7 @@ function renderEnhancedRequestsCards(organizedRequests) {
     if (totalRequests === 0) {
         container.innerHTML = `
             <div class="text-center py-12">
-                <div class="text-gray-400 text-6xl mb-4">Ã°Å¸â€œÂ</div>
+                <div class="text-gray-400 text-6xl mb-4">ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â</div>
                 <h3 class="text-xl font-medium text-gray-900 mb-2">No Requests Found</h3>
                 <p class="text-gray-500">You haven't made any requests yet. Start by generating an item code!</p>
             </div>
@@ -8183,7 +8183,7 @@ function renderEnhancedRequestsCards(organizedRequests) {
         renderRequestSection('Item Code Requests', 'itemCodes', organizedRequests.itemCodes, '', 'blue'),
         renderRequestSection('Combination Requests', 'blockCombinations', organizedRequests.blockCombinations, '', 'purple'),
         renderRequestSection('Standard Value Requests', 'standardValues', organizedRequests.standardValues, '', 'green'),
-        renderRequestSection('Manufacturer Requests', 'manufacturers', organizedRequests.manufacturers, 'Â­', 'orange')
+        renderRequestSection('Manufacturer Requests', 'manufacturers', organizedRequests.manufacturers, 'Ã‚Â­', 'orange')
     ].join('');
 
     container.innerHTML = summaryHtml + sectionsHtml;
@@ -8235,7 +8235,7 @@ function renderSingleRequestCard(request, sectionType, index, color) {
         <div class="mt-3 p-3 rounded-lg ${request.erpStatus.erp_integrated ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}">
             <div class="flex items-center gap-2">
                 <span class="text-sm font-medium ${request.erpStatus.erp_integrated ? 'text-green-800' : 'text-yellow-800'}">
-                    ${request.erpStatus.erp_integrated ? 'â€¦ ERP INTEGRATED' : 'PENDING ERP INTEGRATION'}
+                    ${request.erpStatus.erp_integrated ? 'Ã¢â‚¬Â¦ ERP INTEGRATED' : 'PENDING ERP INTEGRATION'}
                 </span>
             </div>
             ${request.erpStatus.erp_integrated && request.erpStatus.erp_integrated_at ? `
@@ -8295,17 +8295,17 @@ function renderSingleRequestCard(request, sectionType, index, color) {
                     ${isApproved ? `
                         <button onclick="exportRequestToPDF('${sectionType}', ${index})" 
                                 class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors">
-                            Ã°Å¸â€œâ€ž PDF
+                            ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Å¾ PDF
                         </button>
                         <button onclick="exportRequestToExcel('${sectionType}', ${index})" 
                                 class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors">
-                            Ã°Å¸â€œÅ  Excel
+                            ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â  Excel
                         </button>
                     ` : ''}
                     ${isRejected ? `
                         <button onclick="regenerateFromRejected('${sectionType}', ${index})" 
                                 class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded transition-colors">
-                            Ã°Å¸â€â€ž Regenerate Request
+                            ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬Å¾ Regenerate Request
                         </button>
                     ` : ''}
                 </div>
@@ -8418,11 +8418,11 @@ function getEnhancedStatusInfo(status) {
             description: 'Approved by reviewer, awaiting admin'
         },
         'admin_approved': {
-            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">â€¦ Admin Approved</span>',
+            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Ã¢â‚¬Â¦ Admin Approved</span>',
             description: 'Fully approved'
         },
         'approved': {
-            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">â€¦ Approved</span>',
+            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Ã¢â‚¬Â¦ Approved</span>',
             description: 'Fully approved'
         },
         'reviewer_rejected': {
@@ -8470,7 +8470,7 @@ function renderWorkflowProgress(status) {
                     <div class="flex items-center ${index < steps.length - 1 ? 'flex-1' : ''}">
                         <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium
                             ${isCompleted ? 'bg-green-500 text-white' : isActive ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-600'}">
-                            ${isCompleted ? 'â€œ' : index + 1}
+                            ${isCompleted ? 'Ã¢â‚¬Å“' : index + 1}
                         </div>
                         <div class="ml-1 text-xs ${isCompleted ? 'text-green-600 font-medium' : isActive ? 'text-blue-600 font-medium' : 'text-gray-500'}">
                             ${step.name}
@@ -8631,7 +8631,7 @@ function generateEnhancedRequestPDF(request, sectionType) {
     workflowSteps.forEach((step, index) => {
         const isCompleted = completedSteps[index];
         doc.setFont(undefined, isCompleted ? 'bold' : 'normal');
-        doc.text(`${index + 1}. ${step} ${isCompleted ? 'â€œ' : ''}`, 20, yPosition);
+        doc.text(`${index + 1}. ${step} ${isCompleted ? 'Ã¢â‚¬Å“' : ''}`, 20, yPosition);
         yPosition += 6;
     });
     
@@ -11005,7 +11005,7 @@ async function loadUserHistory() {
         if (!requests || requests.length === 0) {
             content.innerHTML = 
                 '<div class="text-center py-12">' +
-                    '<div class="text-gray-400 text-6xl mb-4">Ã°Å¸â€œâ€¹</div>' +
+                    '<div class="text-gray-400 text-6xl mb-4">ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹</div>' +
                     '<h3 class="text-xl font-medium text-gray-900 mb-2">No Request History</h3>' +
                     '<p class="text-gray-500">You have not submitted any item code requests yet.</p>' +
                     '<p class="text-gray-400 text-sm mt-2">Start by generating your first item code!</p>' +
@@ -11095,6 +11095,17 @@ function generateRequestCard(request, index) {
     const createdDate = new Date(request.created_at).toLocaleDateString();
     const updatedDate = request.updated_at ? new Date(request.updated_at).toLocaleDateString() : null;
     
+    // Debug logging for ERP status
+    if (request.status === 'admin_approved') {
+        console.log(`🔍 Debug - Request #${request.id}:`, {
+            item_code: request.item_code,
+            status: request.status,
+            erp_integrated: request.erp_integrated,
+            erp_integrated_at: request.erp_integrated_at,
+            erp_integrated_by: request.erp_integrated_by
+        });
+    }
+    
     return `
         <div class="bg-white rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-200">
             <!-- Header -->
@@ -11125,49 +11136,58 @@ function generateRequestCard(request, index) {
             <div class="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100">
                 <div class="flex items-center justify-between text-sm text-gray-600 mb-3">
                     <span class="font-medium">Approval Process</span>
-                    <span class="text-xs bg-white px-2 py-1 rounded-full">${getApprovalStage(request.status)}</span>
+                    <span class="text-xs bg-white px-2 py-1 rounded-full">${getApprovalStage(request.status, request.erp_integrated)}</span>
                 </div>
                 
-                <!-- 3-Stage Progress Line: Submit Reviewer Admin -->
+                <!-- 4-Stage Progress Line: Submit → Reviewer → Admin → ERP Integration -->
                 <div class="relative">
                     <div class="flex items-center justify-between">
                         <!-- Stage 1: Submitted -->
                         <div class="flex flex-col items-center relative z-10">
-                            <div class="w-5 h-5 rounded-full ${getMilestoneStyle('submit', request.status).dot} flex items-center justify-center shadow-sm">
-                                ${getMilestoneStyle('submit', request.status).icon}
+                            <div class="w-5 h-5 rounded-full ${getMilestoneStyle('submit', request.status, request.erp_integrated).dot} flex items-center justify-center shadow-sm">
+                                ${getMilestoneStyle('submit', request.status, request.erp_integrated).icon}
                             </div>
-                            <span class="text-xs mt-2 ${getMilestoneStyle('submit', request.status).text} font-medium">Submit</span>
+                            <span class="text-xs mt-2 ${getMilestoneStyle('submit', request.status, request.erp_integrated).text} font-medium">Submit</span>
                         </div>
                         
                         <!-- Stage 2: Reviewer -->
                         <div class="flex flex-col items-center relative z-10">
-                            <div class="w-5 h-5 rounded-full ${getMilestoneStyle('reviewer', request.status).dot} flex items-center justify-center shadow-sm">
-                                ${getMilestoneStyle('reviewer', request.status).icon}
+                            <div class="w-5 h-5 rounded-full ${getMilestoneStyle('reviewer', request.status, request.erp_integrated).dot} flex items-center justify-center shadow-sm">
+                                ${getMilestoneStyle('reviewer', request.status, request.erp_integrated).icon}
                             </div>
-                            <span class="text-xs mt-2 ${getMilestoneStyle('reviewer', request.status).text} font-medium">Reviewer</span>
+                            <span class="text-xs mt-2 ${getMilestoneStyle('reviewer', request.status, request.erp_integrated).text} font-medium">Reviewer</span>
                             ${request.reviewer_user ? `<span class="text-xs text-gray-500 mt-1">${request.reviewer_user.username}</span>` : ''}
                         </div>
                         
                         <!-- Stage 3: Admin -->
                         <div class="flex flex-col items-center relative z-10">
-                            <div class="w-5 h-5 rounded-full ${getMilestoneStyle('admin', request.status).dot} flex items-center justify-center shadow-sm">
-                                ${getMilestoneStyle('admin', request.status).icon}
+                            <div class="w-5 h-5 rounded-full ${getMilestoneStyle('admin', request.status, request.erp_integrated).dot} flex items-center justify-center shadow-sm">
+                                ${getMilestoneStyle('admin', request.status, request.erp_integrated).icon}
                             </div>
-                            <span class="text-xs mt-2 ${getMilestoneStyle('admin', request.status).text} font-medium">Admin</span>
+                            <span class="text-xs mt-2 ${getMilestoneStyle('admin', request.status, request.erp_integrated).text} font-medium">Admin</span>
+                        </div>
+                        
+                        <!-- Stage 4: ERP Integration -->
+                        <div class="flex flex-col items-center relative z-10">
+                            <div class="w-5 h-5 rounded-full ${getMilestoneStyle('erp', request.status, request.erp_integrated).dot} flex items-center justify-center shadow-sm">
+                                ${getMilestoneStyle('erp', request.status, request.erp_integrated).icon}
+                            </div>
+                            <span class="text-xs mt-2 ${getMilestoneStyle('erp', request.status, request.erp_integrated).text} font-medium">ERP</span>
+                            ${request.erp_integrated_at ? `<span class="text-xs text-gray-500 mt-1">${new Date(request.erp_integrated_at).toLocaleDateString()}</span>` : ''}
                         </div>
                     </div>
                     
                     <!-- Connecting Lines Between Milestones -->
                     <div class="absolute top-2.5 left-0 right-0 h-1 bg-gray-300 -z-0 rounded-full">
                         <div class="h-full bg-gradient-to-r ${getApprovalLineColor(request.status)} rounded-full transition-all duration-700" 
-                             style="width: ${getApprovalProgress(request.status)}%"></div>
+                             style="width: ${getApprovalProgress(request.status, request.erp_integrated)}%"></div>
                     </div>
                 </div>
                 
                 <!-- Milestone Status Message -->
                 <div class="mt-4 text-center">
-                    <span class="text-xs px-4 py-2 rounded-full ${getApprovalStatusBadge(request.status).bg} ${getApprovalStatusBadge(request.status).text}">
-                        ${getApprovalStatusBadge(request.status).label}
+                    <span class="text-xs px-4 py-2 rounded-full ${getApprovalStatusBadge(request.status, request.erp_integrated).bg} ${getApprovalStatusBadge(request.status, request.erp_integrated).text}">
+                        ${getApprovalStatusBadge(request.status, request.erp_integrated).label}
                     </span>
                 </div>
             </div>
@@ -11271,23 +11291,24 @@ function getRequestStatusInfo(status) {
 
 // ===== 3-MILESTONE APPROVAL PROCESS FUNCTIONS =====
 
-function getApprovalStage(status) {
+function getApprovalStage(status, erpIntegrated = false) {
     const stageMap = {
-        'submitted': 'Stage 1 of 3',
-        'pending': 'Stage 2 of 3', 
-        'under_review': 'Stage 2 of 3',
+        'submitted': 'Stage 1 of 4',
+        'pending': 'Stage 2 of 4', 
+        'under_review': 'Stage 2 of 4',
         'reviewer_rejected': 'Rejected at Stage 2',
-        'admin_approved': 'Completed'
+        'admin_approved': erpIntegrated ? 'Completed' : 'Stage 3 of 4'
     };
     
     return stageMap[status] || 'In Process';
 }
 
-function getMilestoneStyle(milestone, currentStatus) {
+function getMilestoneStyle(milestone, currentStatus, erpIntegrated = false) {
     // Determine which milestones are reached based on status
     const isSubmitted = ['submitted', 'pending', 'under_review', 'reviewer_rejected', 'admin_approved'].includes(currentStatus);
     const reachedReviewer = ['reviewer_rejected', 'admin_approved'].includes(currentStatus);
     const reachedAdmin = ['admin_approved'].includes(currentStatus);
+    const reachedERP = erpIntegrated === true;
     const wasRejected = currentStatus === 'reviewer_rejected';
     
     const styles = {
@@ -11315,19 +11336,27 @@ function getMilestoneStyle(milestone, currentStatus) {
                   (!wasRejected && reachedReviewer ? 'text-blue-600' : 'text-gray-400'),
             icon: reachedAdmin ? '<svg class="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"></path></svg>' :
                   (!wasRejected && reachedReviewer ? '<div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>' : '<div class="w-2 h-2 bg-gray-400 rounded-full"></div>')
+        },
+        erp: {
+            dot: reachedERP ? 'bg-green-500 border-2 border-green-200' : 
+                 (!wasRejected && reachedAdmin ? 'bg-blue-500 border-2 border-blue-200 animate-pulse' : 'bg-gray-300 border-2 border-gray-200'),
+            text: reachedERP ? 'text-green-600' : 
+                  (!wasRejected && reachedAdmin ? 'text-blue-600' : 'text-gray-400'),
+            icon: reachedERP ? '<svg class="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"></path></svg>' :
+                  (!wasRejected && reachedAdmin ? '<div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>' : '<div class="w-2 h-2 bg-gray-400 rounded-full"></div>')
         }
     };
     
     return styles[milestone];
 }
 
-function getApprovalProgress(status) {
+function getApprovalProgress(status, erpIntegrated = false) {
     const progressMap = {
-        'submitted': 0,           // Just submitted, no progress
-        'pending': 33,            // At reviewer stage
-        'under_review': 33,       // At reviewer stage
-        'reviewer_rejected': 66,  // Rejected by reviewer (66% - stopped at stage 2)
-        'admin_approved': 100     // Completed all stages
+        'submitted': 0,           // Just submitted, no progress (0%)
+        'pending': 25,            // At reviewer stage (25%)
+        'under_review': 25,       // At reviewer stage (25%)
+        'reviewer_rejected': 50,  // Rejected by reviewer (50% - stopped at stage 2)
+        'admin_approved': erpIntegrated ? 100 : 75  // Admin approved (75%), ERP integrated (100%)
     };
     
     return progressMap[status] || 0;
@@ -11345,42 +11374,41 @@ function getApprovalLineColor(status) {
     return colorMap[status] || 'from-gray-300 to-gray-400';
 }
 
-function getApprovalStatusBadge(status) {
+function getApprovalStatusBadge(status, erpIntegrated = false) {
     const badgeMap = {
         'submitted': { 
-            label: 'Ã°Å¸â€œÂ Submitted - Awaiting Reviewer', 
+            label: 'ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â Submitted - Awaiting Reviewer', 
             bg: 'bg-blue-50', 
             text: 'text-blue-700' 
         },
         'pending': { 
-            label: 'Ã°Å¸â€˜â‚¬ Under Review by Reviewer', 
+            label: 'ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ¢â€šÂ¬ Under Review by Reviewer', 
             bg: 'bg-yellow-50', 
             text: 'text-yellow-700' 
         },
         'under_review': { 
-            label: 'Ã°Å¸â€Â Being Reviewed', 
+            label: 'ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â Being Reviewed', 
             bg: 'bg-orange-50', 
             text: 'text-orange-700' 
         },
         'reviewer_rejected': { 
-            label: 'Rejected by Reviewer', 
+            label: '❌ Rejected by Reviewer', 
             bg: 'bg-red-50', 
             text: 'text-red-700' 
         },
         'admin_approved': { 
-            label: 'â€¦ Approved by Admin', 
-            bg: 'bg-green-50', 
-            text: 'text-green-700' 
+            label: erpIntegrated ? '✅ Fully Complete - ERP Integrated' : '⏳ Approved - Awaiting ERP Integration', 
+            bg: erpIntegrated ? 'bg-green-50' : 'bg-blue-50', 
+            text: erpIntegrated ? 'text-green-700' : 'text-blue-700' 
         }
     };
     
     return badgeMap[status] || { 
-        label: `Ã°Å¸â€œâ€¹ Status: ${status ? status.replace('_', ' ') : 'Unknown'}`, 
+        label: `📋 Status: ${status ? status.replace('_', ' ') : 'Unknown'}`, 
         bg: 'bg-gray-50', 
         text: 'text-gray-700' 
     };
 }
-
 // ===== PAGINATION FUNCTIONS =====
 
 function generatePageNumbers(currentPage, totalPages) {
