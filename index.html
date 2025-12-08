@@ -535,12 +535,43 @@
 </div>
         <!-- End Generate Tab -->
         
-        <!-- User History Tab - BRAND NEW -->
+        <!-- User History Tab - Enhanced with Sub-tabs -->
         <div id="user-history-tab" class="tab-content hidden">
             <div class="bg-white p-6 rounded-lg shadow-md">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4">User History</h2>
-                <div id="user-history-content">
-                    <!-- Content will be loaded here -->
+                
+                <!-- Sub-tabs Navigation -->
+                <div class="mb-6 border-b border-gray-200">
+                    <nav class="flex space-x-8">
+                        <button class="history-subtab-btn py-2 px-1 border-b-2 border-blue-500 text-blue-600 font-medium" data-subtab="item-codes">
+                            Item Code Requests
+                        </button>
+                        <button class="history-subtab-btn py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-subtab="standard-values">
+                            Standard Value Requests
+                        </button>
+                        <button class="history-subtab-btn py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-subtab="combination-requests">
+                            Combination Requests
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Sub-tab Contents -->
+                <div id="item-codes-subtab" class="history-subtab-content">
+                    <div id="user-history-content">
+                        <!-- Item code requests content will be loaded here -->
+                    </div>
+                </div>
+
+                <div id="standard-values-subtab" class="history-subtab-content hidden">
+                    <div id="standard-values-content">
+                        <!-- Standard value requests content will be loaded here -->
+                    </div>
+                </div>
+
+                <div id="combination-requests-subtab" class="history-subtab-content hidden">
+                    <div id="combination-requests-content">
+                        <!-- Combination requests content will be loaded here -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -3630,7 +3661,7 @@ async function checkForDuplicates() {
         return false;
         
     } catch (error) {
-        console.error('Ã¢Å¡Â Ã¯Â¸Â Error in enhanced duplicate detection:', error);
+        console.error('ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Error in enhanced duplicate detection:', error);
         showErrorStatusEnhanced(error.message);
         return false; // Allow submission on error to avoid blocking due to technical issues
     }
@@ -3679,7 +3710,7 @@ function showDuplicateStatusEnhanced(type, itemCode, method) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.854-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
             </svg>
             <div class="text-red-800">
-                <div class="font-bold text-lg mb-2">Ã¢Å¡Â Ã¯Â¸Â DUPLICATE DETECTED</div>
+                <div class="font-bold text-lg mb-2">ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â DUPLICATE DETECTED</div>
                 <div class="mb-2">
                     This combination already exists as <strong>${formatDuplicateTypeEnhanced(type)}</strong>:
                 </div>
@@ -3690,7 +3721,7 @@ function showDuplicateStatusEnhanced(type, itemCode, method) {
                     Detection method: ${formatDetectionMethodEnhanced(method)}
                 </div>
                 <div class="text-red-600 font-medium text-sm">
-                    Ã¢Å¡Â Ã¯Â¸Â Cannot submit identical combination. Please modify your selections.
+                    ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Cannot submit identical combination. Please modify your selections.
                 </div>
             </div>
         </div>
@@ -3736,13 +3767,13 @@ function showErrorStatusEnhanced(errorMessage) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
             <div class="text-yellow-800">
-                <div class="font-bold text-lg mb-2">Ã¢Å¡Â Ã¯Â¸Â DUPLICATE CHECK ERROR</div>
+                <div class="font-bold text-lg mb-2">ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â DUPLICATE CHECK ERROR</div>
                 <div class="mb-2">Error checking for duplicates:</div>
                 <div class="bg-yellow-200 p-2 rounded font-mono text-sm mb-2">
                     ${errorMessage}
                 </div>
                 <div class="text-yellow-600 font-medium text-sm">
-                    Ã¢Å¡Â Ã¯Â¸Â Proceeding with caution. Manual verification recommended.
+                    ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Proceeding with caution. Manual verification recommended.
                 </div>
             </div>
         </div>
@@ -3996,7 +4027,7 @@ function getFormattedCombination() {
             .eq('is_blocked', false);
         
         if (finalApprovedError) {
-            console.error('Ã¢Å¡Â Ã¯Â¸Â Final approved codes check error:', finalApprovedError);
+            console.error('ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Final approved codes check error:', finalApprovedError);
             alert('Final duplicate check failed: ' + finalApprovedError.message);
             return;
         }
@@ -4039,7 +4070,7 @@ function getFormattedCombination() {
             .in('status', ['pending', 'reviewer_approved']);
         
         if (finalRequestError) {
-            console.error('Ã¢Å¡Â Ã¯Â¸Â Final requests check error:', finalRequestError);
+            console.error('ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Final requests check error:', finalRequestError);
             alert('Final duplicate check failed: ' + finalRequestError.message);
             return;
         }
@@ -4077,7 +4108,7 @@ function getFormattedCombination() {
         console.log(' Final duplicate check passed - proceeding with submission');
         
     } catch (error) {
-        console.error('Ã¢Å¡Â Ã¯Â¸Â Final duplicate check exception:', error);
+        console.error('ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Final duplicate check exception:', error);
         const proceed = confirm(`DUPLICATE CHECK FAILED\n\nError: ${error.message}\n\nDo you want to proceed anyway? (Not recommended)`);
         if (!proceed) {
             return;
@@ -4147,7 +4178,7 @@ function getFormattedCombination() {
                 .eq('is_blocked', false);
             
             if (submitApprovedError) {
-                console.error('Ã¢Å¡Â Ã¯Â¸Â Submit approved check error:', submitApprovedError);
+                console.error('ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Submit approved check error:', submitApprovedError);
                 alert('Duplicate validation failed: ' + submitApprovedError.message);
                 return;
             }
@@ -4187,7 +4218,7 @@ function getFormattedCombination() {
                 .in('status', ['pending', 'reviewer_approved']);
             
             if (submitRequestError) {
-                console.error('Ã¢Å¡Â Ã¯Â¸Â Submit request check error:', submitRequestError);
+                console.error('ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Submit request check error:', submitRequestError);
                 alert('Duplicate validation failed: ' + submitRequestError.message);
                 return;
             }
@@ -4672,7 +4703,7 @@ async function submitBlockRequest() {
             throw workflowError;
         }
 
-        console.log('Ã°Å¸â€œÅ  Data loaded from unified workflow table:', (allWorkflowItems || []).length);
+        console.log('ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â  Data loaded from unified workflow table:', (allWorkflowItems || []).length);
 
         // Transform for display compatibility
         historyData = (allWorkflowItems || []).map(item => ({
@@ -4682,7 +4713,7 @@ async function submitBlockRequest() {
             review_comments: item.reviewer_comments,
             // Determine display properties
             source: item.status === 'admin_approved' ? 'admin' : 'request',
-            sourceIcon: item.status === 'admin_approved' ? 'Ã°Å¸â€˜Â¨Ã¢â‚¬ÂÃ°Å¸â€™Â¼' : 'Ã°Å¸â€œÂ',
+            sourceIcon: item.status === 'admin_approved' ? 'ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ‚Â¨ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â¼' : 'ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â',
             sourceDescription: item.status === 'admin_approved' ? 'Admin Generated' : 'User Request',
             isApproved: item.status === 'admin_approved',
             displayStatus: item.status,
@@ -4694,7 +4725,7 @@ async function submitBlockRequest() {
             } : null
         }));
         
-        console.log('Ã¢Å“â€¦ Complete project history loaded:');
+        console.log('ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Complete project history loaded:');
         console.log('  - Total records:', historyData.length);
         console.log('  - Pending items:', historyData.filter(h => h.status === 'pending').length);
         console.log('  - Reviewer approved:', historyData.filter(h => h.status === 'reviewer_approved').length);  
@@ -4772,7 +4803,7 @@ function renderHistoryTable() {
                             <span class="text-lg">${item.sourceIcon}</span>
                             <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">${item.sourceDescription}</span>
                             ${item.erpStatus && item.erpStatus.erp_integrated ? 
-                                `<span class="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded">Ã¢â‚¬Â¦ ERP Integrated</span>` : ''}
+                                `<span class="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded">ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ ERP Integrated</span>` : ''}
                         </div>
                         <h4 class="text-lg font-semibold text-gray-900 font-mono">${item.item_code}</h4>
                         <div class="flex items-center mt-1">
@@ -4884,7 +4915,7 @@ function renderHistoryTable() {
                     ${item.erpStatus && item.erpStatus.erp_integrated && item.erpStatus.erp_integrated_at ? `
                         <div>
                             <span class="font-medium text-gray-600">ERP Integration:</span>
-                            <p class="text-green-800 bg-green-50 p-2 rounded border">Ã¢â‚¬Â¦ Integrated on ${new Date(item.erpStatus.erp_integrated_at).toLocaleDateString()}</p>
+                            <p class="text-green-800 bg-green-50 p-2 rounded border">ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Integrated on ${new Date(item.erpStatus.erp_integrated_at).toLocaleDateString()}</p>
                         </div>
                     ` : ''}
                 </div>
@@ -4913,7 +4944,7 @@ function renderHistoryTable() {
                 <td class="px-4 py-3 border-b text-sm">
                     <span class="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">${item.sourceDescription}</span>
                     ${item.erpStatus && item.erpStatus.erp_integrated ? 
-                        `<br><span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded mt-1 inline-block">Ã¢â‚¬Â¦ ERP</span>` : ''}
+                        `<br><span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded mt-1 inline-block">ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ ERP</span>` : ''}
                 </td>
                 <td class="px-4 py-3 border-b text-sm font-mono text-blue-600">#${item.id}</td>
                 <td class="px-4 py-3 border-b text-sm">
@@ -5640,6 +5671,37 @@ window.exportAllRequests = exportAllRequests;        // PDF Export
             } else if (tabName === 'erp') {
                 console.log(' ERP tab clicked, loading dashboard...');
                 loadERPDashboard();
+            }
+        });
+    });
+
+    // History Sub-tab switching
+    document.querySelectorAll('.history-subtab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const subtabName = btn.dataset.subtab;
+            console.log('History sub-tab clicked:', subtabName);
+            
+            // Update button styles
+            document.querySelectorAll('.history-subtab-btn').forEach(b => {
+                b.classList.remove('border-blue-500', 'text-blue-600', 'font-medium');
+                b.classList.add('border-transparent', 'text-gray-500');
+            });
+            btn.classList.remove('border-transparent', 'text-gray-500');
+            btn.classList.add('border-blue-500', 'text-blue-600', 'font-medium');
+            
+            // Show/hide content
+            document.querySelectorAll('.history-subtab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(`${subtabName}-subtab`).classList.remove('hidden');
+            
+            // Load specific subtab data
+            if (subtabName === 'item-codes') {
+                loadUserHistory();
+            } else if (subtabName === 'standard-values') {
+                loadStandardValueRequests();
+            } else if (subtabName === 'combination-requests') {
+                loadCombinationRequests();
             }
         });
     });
@@ -7955,7 +8017,7 @@ async function loadUserRequests() {
             itemCodes: (codeRequests || []).map(req => ({
                 ...req,
                 type: 'Item Code',
-                typeIcon: 'ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â¢',
+                typeIcon: 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒâ€šÃ‚Â¢',
                 title: req.item_code || 'Pending Code Generation',
                 subtitle: `${req.project?.division_code || ''} - ${req.project?.project_name || 'Unknown Project'}`,
                 erpStatus: erpStatusMap[req.item_code] || null
@@ -7979,7 +8041,7 @@ async function loadUserRequests() {
             manufacturers: (manufacturerRequests || []).map(req => ({
                 ...req,
                 type: 'Manufacturer',
-                typeIcon: 'ÃƒÂ°Ã…Â¸Ã‚ÂÃ‚Â­',
+                typeIcon: 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚ÂÃƒâ€šÃ‚Â­',
                 title: req.manufacturer_name,
                 subtitle: `${req.project?.project_name || 'Unknown Project'}`,
                 erpStatus: null // Manufacturer requests don't have direct ERP integration
@@ -7996,7 +8058,7 @@ async function loadUserRequests() {
             organizedRequests.standardValues.length +
             organizedRequests.manufacturers.length;
 
-        console.log('ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â  Loaded comprehensive requests:', {
+        console.log('ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒâ€¦Ã‚Â  Loaded comprehensive requests:', {
             itemCodes: organizedRequests.itemCodes.length,
             blockCombinations: organizedRequests.blockCombinations.length,
             standardValues: organizedRequests.standardValues.length,
@@ -8145,7 +8207,7 @@ function renderEnhancedRequestsCards(organizedRequests) {
     if (totalRequests === 0) {
         container.innerHTML = `
             <div class="text-center py-12">
-                <div class="text-gray-400 text-6xl mb-4">ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â</div>
+                <div class="text-gray-400 text-6xl mb-4">ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒâ€šÃ‚Â</div>
                 <h3 class="text-xl font-medium text-gray-900 mb-2">No Requests Found</h3>
                 <p class="text-gray-500">You haven't made any requests yet. Start by generating an item code!</p>
             </div>
@@ -8183,7 +8245,7 @@ function renderEnhancedRequestsCards(organizedRequests) {
         renderRequestSection('Item Code Requests', 'itemCodes', organizedRequests.itemCodes, '', 'blue'),
         renderRequestSection('Combination Requests', 'blockCombinations', organizedRequests.blockCombinations, '', 'purple'),
         renderRequestSection('Standard Value Requests', 'standardValues', organizedRequests.standardValues, '', 'green'),
-        renderRequestSection('Manufacturer Requests', 'manufacturers', organizedRequests.manufacturers, 'Ã‚Â­', 'orange')
+        renderRequestSection('Manufacturer Requests', 'manufacturers', organizedRequests.manufacturers, 'Ãƒâ€šÃ‚Â­', 'orange')
     ].join('');
 
     container.innerHTML = summaryHtml + sectionsHtml;
@@ -8235,7 +8297,7 @@ function renderSingleRequestCard(request, sectionType, index, color) {
         <div class="mt-3 p-3 rounded-lg ${request.erpStatus.erp_integrated ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}">
             <div class="flex items-center gap-2">
                 <span class="text-sm font-medium ${request.erpStatus.erp_integrated ? 'text-green-800' : 'text-yellow-800'}">
-                    ${request.erpStatus.erp_integrated ? 'Ã¢â‚¬Â¦ ERP INTEGRATED' : 'PENDING ERP INTEGRATION'}
+                    ${request.erpStatus.erp_integrated ? 'ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ ERP INTEGRATED' : 'PENDING ERP INTEGRATION'}
                 </span>
             </div>
             ${request.erpStatus.erp_integrated && request.erpStatus.erp_integrated_at ? `
@@ -8295,17 +8357,17 @@ function renderSingleRequestCard(request, sectionType, index, color) {
                     ${isApproved ? `
                         <button onclick="exportRequestToPDF('${sectionType}', ${index})" 
                                 class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors">
-                            ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Å¾ PDF
+                            ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾ PDF
                         </button>
                         <button onclick="exportRequestToExcel('${sectionType}', ${index})" 
                                 class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors">
-                            ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â  Excel
+                            ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒâ€¦Ã‚Â  Excel
                         </button>
                     ` : ''}
                     ${isRejected ? `
                         <button onclick="regenerateFromRejected('${sectionType}', ${index})" 
                                 class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded transition-colors">
-                            ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬Å¾ Regenerate Request
+                            ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾ Regenerate Request
                         </button>
                     ` : ''}
                 </div>
@@ -8418,11 +8480,11 @@ function getEnhancedStatusInfo(status) {
             description: 'Approved by reviewer, awaiting admin'
         },
         'admin_approved': {
-            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Ã¢â‚¬Â¦ Admin Approved</span>',
+            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Admin Approved</span>',
             description: 'Fully approved'
         },
         'approved': {
-            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Ã¢â‚¬Â¦ Approved</span>',
+            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Approved</span>',
             description: 'Fully approved'
         },
         'reviewer_rejected': {
@@ -8470,7 +8532,7 @@ function renderWorkflowProgress(status) {
                     <div class="flex items-center ${index < steps.length - 1 ? 'flex-1' : ''}">
                         <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium
                             ${isCompleted ? 'bg-green-500 text-white' : isActive ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-600'}">
-                            ${isCompleted ? 'Ã¢â‚¬Å“' : index + 1}
+                            ${isCompleted ? 'ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ' : index + 1}
                         </div>
                         <div class="ml-1 text-xs ${isCompleted ? 'text-green-600 font-medium' : isActive ? 'text-blue-600 font-medium' : 'text-gray-500'}">
                             ${step.name}
@@ -8631,7 +8693,7 @@ function generateEnhancedRequestPDF(request, sectionType) {
     workflowSteps.forEach((step, index) => {
         const isCompleted = completedSteps[index];
         doc.setFont(undefined, isCompleted ? 'bold' : 'normal');
-        doc.text(`${index + 1}. ${step} ${isCompleted ? 'Ã¢â‚¬Å“' : ''}`, 20, yPosition);
+        doc.text(`${index + 1}. ${step} ${isCompleted ? 'ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ' : ''}`, 20, yPosition);
         yPosition += 6;
     });
     
@@ -10896,12 +10958,23 @@ function exportERPData(type) {
 
 // ===== USER HISTORY TAB - BRAND NEW IMPLEMENTATION =====
 
+// Add loading state management
+window.isLoadingUserHistory = false;
+
 async function loadUserHistory() {
+    if (window.isLoadingUserHistory) {
+        console.log('loadUserHistory already in progress, skipping...');
+        return;
+    }
+    
+    window.isLoadingUserHistory = true;
+    console.log('=== loadUserHistory START ===');
     console.log('Loading User History - Enhanced Card View');
     
     const content = document.getElementById('user-history-content');
     if (!content) {
         console.error('user-history-content not found');
+        window.isLoadingUserHistory = false;
         return;
     }
     
@@ -10919,21 +10992,45 @@ async function loadUserHistory() {
         let requests = null;
         let totalRequests = 0;
         let totalPages = 0;
-        let currentPage = window.currentRequestsPage || 1;
+        let currentPage = Math.max(1, parseInt(window.currentRequestsPage) || 1);
+        
+        console.log('=== PAGINATION DEBUG START ===');
+        console.log('Initial currentPage from window.currentRequestsPage:', window.currentRequestsPage);
+        console.log('Parsed currentPage:', currentPage);
         
         try {
-            const { data: totalCount } = await supabase
+            const { count: totalCount, error: countError } = await supabase
                 .from('item_code_workflow')
-                .select('id', { count: 'exact', head: true })
+                .select('*', { count: 'exact', head: true })
                 .eq('created_by', currentUser.id);
+            
+            if (countError) {
+                console.error('Error getting total count:', countError);
+            }
                 
             totalRequests = totalCount || 0;
             const itemsPerPage = 10;
             totalPages = Math.ceil(totalRequests / itemsPerPage);
-            currentPage = window.currentRequestsPage || 1;
+            
+            console.log('COUNT QUERY RESULT - totalCount:', totalCount, 'error:', countError);
+            
+            // Ensure currentPage is within valid bounds
+            if (currentPage > totalPages && totalPages > 0) {
+                console.log(`Current page ${currentPage} exceeds total pages ${totalPages}, adjusting to page ${totalPages}`);
+                currentPage = totalPages;
+                window.currentRequestsPage = currentPage;
+            }
+            
             const offset = (currentPage - 1) * itemsPerPage;
             
-            console.log(`Loading page ${currentPage} of ${totalPages} (${totalRequests} total requests)`);
+            console.log('=== PAGINATION DETAILS ===');
+            console.log(`Total requests: ${totalRequests}`);
+            console.log(`Items per page: ${itemsPerPage}`);
+            console.log(`Total pages: ${totalPages}`);
+            console.log(`Current page: ${currentPage}`);
+            console.log(`Offset: ${offset}`);
+            console.log(`Range: ${offset} to ${offset + itemsPerPage - 1}`);
+            console.log('=== PAGINATION DEBUG END ===');
             
             // Try enhanced query first
             let { data: requestsData, error: requestsError } = await supabase
@@ -10973,6 +11070,15 @@ async function loadUserHistory() {
                 itemsPerPage: 10
             };
             
+            console.log('=== QUERY RESULTS DEBUG ===');
+            console.log('Query successful. Results:');
+            console.log('- Requested offset:', offset);
+            console.log('- Requested range:', offset, 'to', offset + 10 - 1);
+            console.log('- Actual results returned:', requests?.length || 0);
+            console.log('- First result ID:', requests?.[0]?.id);
+            console.log('- Last result ID:', requests?.[requests.length - 1]?.id);
+            console.log('=== QUERY RESULTS DEBUG END ===');
+            
         } catch (queryError) {
             console.error('=== DATABASE ERROR DETAILS ===');
             console.error('Full error object:', queryError);
@@ -11005,7 +11111,7 @@ async function loadUserHistory() {
         if (!requests || requests.length === 0) {
             content.innerHTML = 
                 '<div class="text-center py-12">' +
-                    '<div class="text-gray-400 text-6xl mb-4">ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹</div>' +
+                    '<div class="text-gray-400 text-6xl mb-4">ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹</div>' +
                     '<h3 class="text-xl font-medium text-gray-900 mb-2">No Request History</h3>' +
                     '<p class="text-gray-500">You have not submitted any item code requests yet.</p>' +
                     '<p class="text-gray-400 text-sm mt-2">Start by generating your first item code!</p>' +
@@ -11013,7 +11119,17 @@ async function loadUserHistory() {
             return;
         }
         
-        // Generate pagination controls and cards
+        // Generate pagination controls with safe page calculations
+        const prevPage = Math.max(1, currentPage - 1);
+        const nextPage = Math.min(totalPages || 1, currentPage + 1);
+        
+        // Debug: Add test buttons to verify pagination works
+        console.log('=== GENERATING PAGINATION BUTTONS ===');
+        console.log('prevPage will be:', prevPage);
+        console.log('nextPage will be:', nextPage);
+        console.log('currentPage is:', currentPage);
+        console.log('totalPages is:', totalPages);
+        
         let cardsHtml = `
             <div class="mb-6 flex items-center justify-between">
                 <div>
@@ -11022,17 +11138,25 @@ async function loadUserHistory() {
                         Showing ${requests.length} of ${totalRequests} requests 
                         (Page ${currentPage} of ${totalPages})
                     </p>
+                    <!-- DEBUG: Add test buttons -->
+                    <div class="mt-2 text-xs text-gray-500">
+                        <button onclick="console.log('TEST: Setting page to 1'); window.currentRequestsPage = 1; loadUserHistory();" 
+                                class="mr-2 px-2 py-1 bg-gray-200 rounded text-xs">TEST: Go to Page 1</button>
+                        <button onclick="console.log('TEST: Setting page to 2'); window.currentRequestsPage = 2; loadUserHistory();" 
+                                class="mr-2 px-2 py-1 bg-gray-200 rounded text-xs">TEST: Go to Page 2</button>
+                        <span class="text-gray-400">Current: window.currentRequestsPage = ${window.currentRequestsPage}</span>
+                    </div>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <button onclick="loadRequestsPage(${currentPage - 1})" 
-                            ${currentPage <= 1 ? 'disabled' : ''}
-                            class="px-3 py-1 text-sm border rounded ${currentPage <= 1 ? 'bg-gray-100 text-gray-400' : 'bg-white text-blue-600 hover:bg-blue-50'}">
+                    <button onclick="loadRequestsPage(${prevPage})" 
+                            style="cursor: ${currentPage <= 1 ? 'not-allowed' : 'pointer'};"
+                            class="px-3 py-1 text-sm border rounded transition-colors ${currentPage <= 1 ? 'bg-gray-100 text-gray-400 border-gray-300 opacity-50' : 'bg-white text-blue-600 hover:bg-blue-50 border-blue-300 hover:border-blue-400'}">
                         Previous
                     </button>
                     <span class="px-2 py-1 text-sm text-gray-600">${currentPage} / ${totalPages}</span>
-                    <button onclick="loadRequestsPage(${currentPage + 1})"
-                            ${currentPage >= totalPages ? 'disabled' : ''}
-                            class="px-3 py-1 text-sm border rounded ${currentPage >= totalPages ? 'bg-gray-100 text-gray-400' : 'bg-white text-blue-600 hover:bg-blue-50'}">
+                    <button onclick="loadRequestsPage(${nextPage})"
+                            style="cursor: ${currentPage >= totalPages ? 'not-allowed' : 'pointer'};"
+                            class="px-3 py-1 text-sm border rounded transition-colors ${currentPage >= totalPages ? 'bg-gray-100 text-gray-400 border-gray-300 opacity-50' : 'bg-white text-blue-600 hover:bg-blue-50 border-blue-300 hover:border-blue-400'}">
                         Next 
                     </button>
                 </div>
@@ -11049,26 +11173,26 @@ async function loadUserHistory() {
             <!-- Bottom Pagination -->
             <div class="mt-8 flex items-center justify-center space-x-2">
                 <button onclick="loadRequestsPage(1)" 
-                        ${currentPage <= 1 ? 'disabled' : ''}
-                        class="px-3 py-2 text-sm border rounded ${currentPage <= 1 ? 'bg-gray-100 text-gray-400' : 'bg-white text-blue-600 hover:bg-blue-50'}">
+                        style="cursor: ${currentPage <= 1 ? 'not-allowed' : 'pointer'};"
+                        class="px-3 py-2 text-sm border rounded transition-colors ${currentPage <= 1 ? 'bg-gray-100 text-gray-400 border-gray-300 opacity-50' : 'bg-white text-blue-600 hover:bg-blue-50 border-blue-300 hover:border-blue-400'}">
                     First
                 </button>
-                <button onclick="loadRequestsPage(${currentPage - 1})" 
-                        ${currentPage <= 1 ? 'disabled' : ''}
-                        class="px-3 py-2 text-sm border rounded ${currentPage <= 1 ? 'bg-gray-100 text-gray-400' : 'bg-white text-blue-600 hover:bg-blue-50'}">
+                <button onclick="loadRequestsPage(${prevPage})" 
+                        style="cursor: ${currentPage <= 1 ? 'not-allowed' : 'pointer'};"
+                        class="px-3 py-2 text-sm border rounded transition-colors ${currentPage <= 1 ? 'bg-gray-100 text-gray-400 border-gray-300 opacity-50' : 'bg-white text-blue-600 hover:bg-blue-50 border-blue-300 hover:border-blue-400'}">
                      Previous
                 </button>
                 
                 ${generatePageNumbers(currentPage, totalPages)}
                 
-                <button onclick="loadRequestsPage(${currentPage + 1})"
-                        ${currentPage >= totalPages ? 'disabled' : ''}
-                        class="px-3 py-2 text-sm border rounded ${currentPage >= totalPages ? 'bg-gray-100 text-gray-400' : 'bg-white text-blue-600 hover:bg-blue-50'}">
+                <button onclick="loadRequestsPage(${nextPage})"
+                        style="cursor: ${currentPage >= totalPages ? 'not-allowed' : 'pointer'};"
+                        class="px-3 py-2 text-sm border rounded transition-colors ${currentPage >= totalPages ? 'bg-gray-100 text-gray-400 border-gray-300 opacity-50' : 'bg-white text-blue-600 hover:bg-blue-50 border-blue-300 hover:border-blue-400'}">
                     Next
                 </button>
-                <button onclick="loadRequestsPage(${totalPages})"
-                        ${currentPage >= totalPages ? 'disabled' : ''}
-                        class="px-3 py-2 text-sm border rounded ${currentPage >= totalPages ? 'bg-gray-100 text-gray-400' : 'bg-white text-blue-600 hover:bg-blue-50'}">
+                <button onclick="loadRequestsPage(${totalPages || 1})"
+                        style="cursor: ${currentPage >= totalPages ? 'not-allowed' : 'pointer'};"
+                        class="px-3 py-2 text-sm border rounded transition-colors ${currentPage >= totalPages ? 'bg-gray-100 text-gray-400 border-gray-300 opacity-50' : 'bg-white text-blue-600 hover:bg-blue-50 border-blue-300 hover:border-blue-400'}">
                     Last
                 </button>
             </div>`;
@@ -11076,6 +11200,7 @@ async function loadUserHistory() {
         content.innerHTML = cardsHtml;
         
         console.log('Enhanced User History cards rendered successfully');
+        console.log('=== loadUserHistory END ===');
         
     } catch (error) {
         console.error('Error loading enhanced user history:', error);
@@ -11087,8 +11212,291 @@ async function loadUserHistory() {
                     'Try Again' +
                 '</button>' +
             '</div>';
+    } finally {
+        window.isLoadingUserHistory = false;
     }
 }
+
+// ===== STANDARD VALUE REQUESTS HISTORY =====
+async function loadStandardValueRequests() {
+    console.log('Loading Standard Value Requests History');
+    
+    const content = document.getElementById('standard-values-content');
+    if (!content) {
+        console.error('standard-values-content not found');
+        return;
+    }
+    
+    // Show loading state
+    content.innerHTML = 
+        '<div class="text-center py-8">' +
+            '<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>' +
+            '<p class="text-gray-600">Loading your standard value requests...</p>' +
+        '</div>';
+    
+    try {
+        console.log('Fetching standard value requests for user:', currentUser.id);
+        
+        // Pagination setup
+        let currentPage = window.currentStandardValuesPage || 1;
+        const itemsPerPage = 10;
+        
+        // Get total count
+        const { count: totalCount, error: countError } = await supabase
+            .from('standard_value_requests')
+            .select('*', { count: 'exact', head: true })
+            .eq('created_by', currentUser.id);
+        
+        if (countError) {
+            console.error('Error getting standard values count:', countError);
+        }
+            
+        const totalRequests = totalCount || 0;
+        const totalPages = Math.ceil(totalRequests / itemsPerPage);
+        const offset = (currentPage - 1) * itemsPerPage;
+        
+        // Fetch requests with related data
+        let { data: requests, error } = await supabase
+            .from('standard_value_requests')
+            .select(`
+                *,
+                project:classification_projects(project_name),
+                reviewer_user:users!standard_value_requests_reviewed_by_fkey(username, email),
+                admin_user:users!standard_value_requests_admin_reviewed_by_fkey(username, email),
+                created_by_user:users!standard_value_requests_created_by_fkey(username, email)
+            `)
+            .eq('created_by', currentUser.id)
+            .order('created_at', { ascending: false })
+            .range(offset, offset + itemsPerPage - 1);
+        
+        if (error) {
+            console.error('Error fetching standard value requests:', error);
+            throw error;
+        }
+        
+        console.log('Found standard value requests:', requests?.length || 0);
+        
+        if (!requests || requests.length === 0) {
+            content.innerHTML = 
+                '<div class="text-center py-12">' +
+                    '<div class="text-gray-400 text-6xl mb-4">📋</div>' +
+                    '<h3 class="text-xl font-medium text-gray-900 mb-2">No Standard Value Requests</h3>' +
+                    '<p class="text-gray-500">You have not submitted any standard value requests yet.</p>' +
+                    '<p class="text-gray-400 text-sm mt-2">Standard value requests allow you to add new values to dropdown lists!</p>' +
+                '</div>';
+            return;
+        }
+        
+        // Generate content with safe page calculations
+        const prevPage = Math.max(1, currentPage - 1);
+        const nextPage = Math.min(totalPages || 1, currentPage + 1);
+        
+        let cardsHtml = `
+            <div class="mb-6 flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">Your Standard Value Requests</h3>
+                    <p class="text-gray-600 text-sm">
+                        Showing ${requests.length} of ${totalRequests} requests 
+                        (Page ${currentPage} of ${totalPages})
+                    </p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="loadStandardValuesPage(${prevPage})" 
+                            style="cursor: ${currentPage <= 1 ? 'not-allowed' : 'pointer'};"
+                            class="px-3 py-1 text-sm border rounded transition-colors ${currentPage <= 1 ? 'bg-gray-100 text-gray-400 border-gray-300 opacity-50' : 'bg-white text-blue-600 hover:bg-blue-50 border-blue-300 hover:border-blue-400'}">
+                        Previous
+                    </button>
+                    <span class="px-2 py-1 text-sm text-gray-600">${currentPage} / ${totalPages}</span>
+                    <button onclick="loadStandardValuesPage(${nextPage})"
+                            style="cursor: ${currentPage >= totalPages ? 'not-allowed' : 'pointer'};"
+                            class="px-3 py-1 text-sm border rounded transition-colors ${currentPage >= totalPages ? 'bg-gray-100 text-gray-400 border-gray-300 opacity-50' : 'bg-white text-blue-600 hover:bg-blue-50 border-blue-300 hover:border-blue-400'}">
+                        Next 
+                    </button>
+                </div>
+            </div>
+            <div class="grid gap-6 lg:grid-cols-1">`;
+        
+        requests.forEach((request, index) => {
+            cardsHtml += generateStandardValueRequestCard(request, index);
+        });
+        
+        cardsHtml += `</div>`;
+        
+        content.innerHTML = cardsHtml;
+        console.log('Standard Value Requests cards rendered successfully');
+        
+    } catch (error) {
+        console.error('Error loading standard value requests:', error);
+        content.innerHTML = 
+            '<div class="text-center py-8 text-red-500">' +
+                '<h3 class="text-lg font-semibold mb-2">Error Loading Standard Value Requests</h3>' +
+                '<p class="text-sm">' + error.message + '</p>' +
+                '<button onclick="loadStandardValueRequests()" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">' +
+                    'Try Again' +
+                '</button>' +
+            '</div>';
+    }
+}
+
+// ===== COMBINATION REQUESTS HISTORY =====
+async function loadCombinationRequests() {
+    console.log('Loading Combination Requests History');
+    
+    const content = document.getElementById('combination-requests-content');
+    if (!content) {
+        console.error('combination-requests-content not found');
+        return;
+    }
+    
+    // Show loading state
+    content.innerHTML = 
+        '<div class="text-center py-8">' +
+            '<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>' +
+            '<p class="text-gray-600">Loading your combination requests...</p>' +
+        '</div>';
+    
+    try {
+        console.log('Fetching combination requests for user:', currentUser.id);
+        
+        // Pagination setup
+        let currentPage = window.currentCombinationRequestsPage || 1;
+        const itemsPerPage = 10;
+        
+        // Get total count
+        const { count: totalCount, error: countError } = await supabase
+            .from('combination_requests')
+            .select('*', { count: 'exact', head: true })
+            .eq('created_by', currentUser.id);
+        
+        if (countError) {
+            console.error('Error getting combination requests count:', countError);
+        }
+            
+        const totalRequests = totalCount || 0;
+        const totalPages = Math.ceil(totalRequests / itemsPerPage);
+        const offset = (currentPage - 1) * itemsPerPage;
+        
+        // Fetch requests with related data
+        let { data: requests, error } = await supabase
+            .from('combination_requests')
+            .select(`
+                *,
+                project:classification_projects(project_name),
+                reviewer_user:users!combination_requests_reviewed_by_fkey(username, email),
+                admin_user:users!combination_requests_admin_reviewed_by_fkey(username, email),
+                created_by_user:users!combination_requests_created_by_fkey(username, email)
+            `)
+            .eq('created_by', currentUser.id)
+            .order('created_at', { ascending: false })
+            .range(offset, offset + itemsPerPage - 1);
+        
+        if (error) {
+            console.error('Error fetching combination requests:', error);
+            throw error;
+        }
+        
+        console.log('Found combination requests:', requests?.length || 0);
+        
+        if (!requests || requests.length === 0) {
+            content.innerHTML = 
+                '<div class="text-center py-12">' +
+                    '<div class="text-gray-400 text-6xl mb-4">🔗</div>' +
+                    '<h3 class="text-xl font-medium text-gray-900 mb-2">No Combination Requests</h3>' +
+                    '<p class="text-gray-500">You have not submitted any combination requests yet.</p>' +
+                    '<p class="text-gray-400 text-sm mt-2">Combination requests allow you to generate or block specific attribute combinations!</p>' +
+                '</div>';
+            return;
+        }
+        
+        // Generate content with safe page calculations
+        const prevPage = Math.max(1, currentPage - 1);
+        const nextPage = Math.min(totalPages || 1, currentPage + 1);
+        
+        let cardsHtml = `
+            <div class="mb-6 flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">Your Combination Requests</h3>
+                    <p class="text-gray-600 text-sm">
+                        Showing ${requests.length} of ${totalRequests} requests 
+                        (Page ${currentPage} of ${totalPages})
+                    </p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="loadCombinationRequestsPage(${prevPage})" 
+                            style="cursor: ${currentPage <= 1 ? 'not-allowed' : 'pointer'};"
+                            class="px-3 py-1 text-sm border rounded transition-colors ${currentPage <= 1 ? 'bg-gray-100 text-gray-400 border-gray-300 opacity-50' : 'bg-white text-blue-600 hover:bg-blue-50 border-blue-300 hover:border-blue-400'}">
+                        Previous
+                    </button>
+                    <span class="px-2 py-1 text-sm text-gray-600">${currentPage} / ${totalPages}</span>
+                    <button onclick="loadCombinationRequestsPage(${nextPage})"
+                            style="cursor: ${currentPage >= totalPages ? 'not-allowed' : 'pointer'};"
+                            class="px-3 py-1 text-sm border rounded transition-colors ${currentPage >= totalPages ? 'bg-gray-100 text-gray-400 border-gray-300 opacity-50' : 'bg-white text-blue-600 hover:bg-blue-50 border-blue-300 hover:border-blue-400'}">
+                        Next 
+                    </button>
+                </div>
+            </div>
+            <div class="grid gap-6 lg:grid-cols-1">`;
+        
+        requests.forEach((request, index) => {
+            cardsHtml += generateCombinationRequestCard(request, index);
+        });
+        
+        cardsHtml += `</div>`;
+        
+        content.innerHTML = cardsHtml;
+        console.log('Combination Requests cards rendered successfully');
+        
+    } catch (error) {
+        console.error('Error loading combination requests:', error);
+        content.innerHTML = 
+            '<div class="text-center py-8 text-red-500">' +
+                '<h3 class="text-lg font-semibold mb-2">Error Loading Combination Requests</h3>' +
+                '<p class="text-sm">' + error.message + '</p>' +
+                '<button onclick="loadCombinationRequests()" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">' +
+                    'Try Again' +
+                '</button>' +
+            '</div>';
+    }
+}
+
+// ===== PAGINATION FUNCTIONS FOR SUB-TABS =====
+function loadStandardValuesPage(pageNumber) {
+    console.log('loadStandardValuesPage called with pageNumber:', pageNumber);
+    
+    // Ensure we have a valid positive integer
+    const validPageNumber = parseInt(pageNumber);
+    if (!validPageNumber || validPageNumber < 1) {
+        console.error('Invalid page number for standard values:', pageNumber, 'converted to:', validPageNumber);
+        console.log('Defaulting to page 1');
+        window.currentStandardValuesPage = 1;
+        loadStandardValueRequests();
+        return;
+    }
+    
+    window.currentStandardValuesPage = validPageNumber;
+    console.log('Set window.currentStandardValuesPage to:', window.currentStandardValuesPage);
+    loadStandardValueRequests();
+}
+
+function loadCombinationRequestsPage(pageNumber) {
+    console.log('loadCombinationRequestsPage called with pageNumber:', pageNumber);
+    
+    // Ensure we have a valid positive integer
+    const validPageNumber = parseInt(pageNumber);
+    if (!validPageNumber || validPageNumber < 1) {
+        console.error('Invalid page number for combination requests:', pageNumber, 'converted to:', validPageNumber);
+        console.log('Defaulting to page 1');
+        window.currentCombinationRequestsPage = 1;
+        loadCombinationRequests();
+        return;
+    }
+    
+    window.currentCombinationRequestsPage = validPageNumber;
+    console.log('Set window.currentCombinationRequestsPage to:', window.currentCombinationRequestsPage);
+    loadCombinationRequests();
+}
+
+
 
 function generateRequestCard(request, index) {
     const statusInfo = getRequestStatusInfo(request.status);
@@ -11097,7 +11505,7 @@ function generateRequestCard(request, index) {
     
     // Debug logging for ERP status
     if (request.status === 'admin_approved') {
-        console.log(`🔍 Debug - Request #${request.id}:`, {
+        console.log(`ðŸ” Debug - Request #${request.id}:`, {
             item_code: request.item_code,
             status: request.status,
             erp_integrated: request.erp_integrated,
@@ -11139,7 +11547,7 @@ function generateRequestCard(request, index) {
                     <span class="text-xs bg-white px-2 py-1 rounded-full">${getApprovalStage(request.status, request.erp_integrated)}</span>
                 </div>
                 
-                <!-- 4-Stage Progress Line: Submit → Reviewer → Admin → ERP Integration -->
+                <!-- 4-Stage Progress Line: Submit â†’ Reviewer â†’ Admin â†’ ERP Integration -->
                 <div class="relative">
                     <div class="flex items-center justify-between">
                         <!-- Stage 1: Submitted -->
@@ -11296,54 +11704,69 @@ function getApprovalStage(status, erpIntegrated = false) {
         'submitted': 'Stage 1 of 4',
         'pending': 'Stage 2 of 4', 
         'under_review': 'Stage 2 of 4',
+        'reviewer_approved': 'Stage 3 of 4',
         'reviewer_rejected': 'Rejected at Stage 2',
-        'admin_approved': erpIntegrated ? 'Completed' : 'Stage 3 of 4'
+        'admin_approved': erpIntegrated ? 'Completed (Stage 4)' : 'Stage 4 of 4',
+        'admin_rejected': 'Rejected at Stage 3'
     };
     
     return stageMap[status] || 'In Process';
 }
 
 function getMilestoneStyle(milestone, currentStatus, erpIntegrated = false) {
-    // Determine which milestones are reached based on status
-    const isSubmitted = ['submitted', 'pending', 'under_review', 'reviewer_rejected', 'admin_approved'].includes(currentStatus);
-    const reachedReviewer = ['reviewer_rejected', 'admin_approved'].includes(currentStatus);
-    const reachedAdmin = ['admin_approved'].includes(currentStatus);
-    const reachedERP = erpIntegrated === true;
-    const wasRejected = currentStatus === 'reviewer_rejected';
+    // Enhanced status checking with proper rejection handling
+    const statusChecks = {
+        isSubmitted: ['submitted', 'pending', 'under_review', 'reviewer_approved', 'reviewer_rejected', 'admin_approved', 'admin_rejected'].includes(currentStatus),
+        isAtReviewer: ['pending', 'under_review'].includes(currentStatus),
+        reviewerApproved: ['reviewer_approved', 'admin_approved', 'admin_rejected'].includes(currentStatus),
+        reviewerRejected: currentStatus === 'reviewer_rejected',
+        isAtAdmin: ['reviewer_approved'].includes(currentStatus),
+        adminApproved: currentStatus === 'admin_approved',
+        adminRejected: currentStatus === 'admin_rejected',
+        erpIntegrated: erpIntegrated === true
+    };
     
     const styles = {
         submit: {
-            dot: isSubmitted ? 'bg-green-500 border-2 border-green-200' : 'bg-gray-300 border-2 border-gray-200',
-            text: isSubmitted ? 'text-green-600' : 'text-gray-400',
-            icon: isSubmitted ? '<div class="w-2 h-2 bg-white rounded-full"></div>' : '<div class="w-2 h-2 bg-gray-400 rounded-full"></div>'
+            dot: statusChecks.isSubmitted ? 'bg-green-500 border-2 border-green-200' : 'bg-gray-300 border-2 border-gray-200',
+            text: statusChecks.isSubmitted ? 'text-green-600' : 'text-gray-400',
+            icon: statusChecks.isSubmitted ? '<svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"></path></svg>' : '<div class="w-2 h-2 bg-gray-400 rounded-full"></div>'
         },
         reviewer: {
-            dot: reachedReviewer ? 
-                 (wasRejected ? 'bg-red-500 border-2 border-red-200' : 'bg-green-500 border-2 border-green-200') :
-                 (['pending', 'under_review'].includes(currentStatus) ? 'bg-blue-500 border-2 border-blue-200 animate-pulse' : 'bg-gray-300 border-2 border-gray-200'),
-            text: reachedReviewer ? 
-                  (wasRejected ? 'text-red-600' : 'text-green-600') :
-                  (['pending', 'under_review'].includes(currentStatus) ? 'text-blue-600' : 'text-gray-400'),
-            icon: reachedReviewer ? 
-                  (wasRejected ? '<svg class="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"></path></svg>' :
-                             '<svg class="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"></path></svg>') :
-                  (['pending', 'under_review'].includes(currentStatus) ? '<div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>' : '<div class="w-2 h-2 bg-gray-400 rounded-full"></div>')
+            dot: statusChecks.reviewerRejected ? 'bg-red-500 border-2 border-red-200' :
+                 statusChecks.reviewerApproved ? 'bg-green-500 border-2 border-green-200' :
+                 statusChecks.isAtReviewer ? 'bg-blue-500 border-2 border-blue-200 animate-pulse' :
+                 'bg-gray-300 border-2 border-gray-200',
+            text: statusChecks.reviewerRejected ? 'text-red-600' :
+                  statusChecks.reviewerApproved ? 'text-green-600' :
+                  statusChecks.isAtReviewer ? 'text-blue-600' :
+                  'text-gray-400',
+            icon: statusChecks.reviewerRejected ? '<svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"></path></svg>' :
+                  statusChecks.reviewerApproved ? '<svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"></path></svg>' :
+                  statusChecks.isAtReviewer ? '<div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>' :
+                  '<div class="w-2 h-2 bg-gray-400 rounded-full"></div>'
         },
         admin: {
-            dot: reachedAdmin ? 'bg-green-500 border-2 border-green-200' : 
-                 (!wasRejected && reachedReviewer ? 'bg-blue-500 border-2 border-blue-200 animate-pulse' : 'bg-gray-300 border-2 border-gray-200'),
-            text: reachedAdmin ? 'text-green-600' : 
-                  (!wasRejected && reachedReviewer ? 'text-blue-600' : 'text-gray-400'),
-            icon: reachedAdmin ? '<svg class="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"></path></svg>' :
-                  (!wasRejected && reachedReviewer ? '<div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>' : '<div class="w-2 h-2 bg-gray-400 rounded-full"></div>')
+            dot: statusChecks.adminRejected ? 'bg-red-500 border-2 border-red-200' :
+                 statusChecks.adminApproved ? 'bg-green-500 border-2 border-green-200' :
+                 statusChecks.isAtAdmin ? 'bg-blue-500 border-2 border-blue-200 animate-pulse' :
+                 'bg-gray-300 border-2 border-gray-200',
+            text: statusChecks.adminRejected ? 'text-red-600' :
+                  statusChecks.adminApproved ? 'text-green-600' :
+                  statusChecks.isAtAdmin ? 'text-blue-600' :
+                  'text-gray-400',
+            icon: statusChecks.adminRejected ? '<svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"></path></svg>' :
+                  statusChecks.adminApproved ? '<svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"></path></svg>' :
+                  statusChecks.isAtAdmin ? '<div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>' :
+                  '<div class="w-2 h-2 bg-gray-400 rounded-full"></div>'
         },
         erp: {
-            dot: reachedERP ? 'bg-green-500 border-2 border-green-200' : 
-                 (!wasRejected && reachedAdmin ? 'bg-blue-500 border-2 border-blue-200 animate-pulse' : 'bg-gray-300 border-2 border-gray-200'),
-            text: reachedERP ? 'text-green-600' : 
-                  (!wasRejected && reachedAdmin ? 'text-blue-600' : 'text-gray-400'),
-            icon: reachedERP ? '<svg class="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"></path></svg>' :
-                  (!wasRejected && reachedAdmin ? '<div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>' : '<div class="w-2 h-2 bg-gray-400 rounded-full"></div>')
+            dot: statusChecks.erpIntegrated ? 'bg-green-500 border-2 border-green-200' : 
+                 (statusChecks.adminApproved && !statusChecks.erpIntegrated ? 'bg-blue-500 border-2 border-blue-200 animate-pulse' : 'bg-gray-300 border-2 border-gray-200'),
+            text: statusChecks.erpIntegrated ? 'text-green-600' : 
+                  (statusChecks.adminApproved && !statusChecks.erpIntegrated ? 'text-blue-600' : 'text-gray-400'),
+            icon: statusChecks.erpIntegrated ? '<svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"></path></svg>' :
+                  (statusChecks.adminApproved && !statusChecks.erpIntegrated ? '<div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>' : '<div class="w-2 h-2 bg-gray-400 rounded-full"></div>')
         }
     };
     
@@ -11351,60 +11774,77 @@ function getMilestoneStyle(milestone, currentStatus, erpIntegrated = false) {
 }
 
 function getApprovalProgress(status, erpIntegrated = false) {
+    // Precise progress calculation based on 4 milestones: Submit(0%) -> Reviewer(33%) -> Admin(66%) -> ERP(100%)
     const progressMap = {
-        'submitted': 0,           // Just submitted, no progress (0%)
-        'pending': 25,            // At reviewer stage (25%)
-        'under_review': 25,       // At reviewer stage (25%)
-        'reviewer_rejected': 50,  // Rejected by reviewer (50% - stopped at stage 2)
-        'admin_approved': erpIntegrated ? 100 : 75  // Admin approved (75%), ERP integrated (100%)
+        'submitted': 15,              // Just submitted (15% - halfway to reviewer)
+        'pending': 33,                // At reviewer stage (33% - at reviewer milestone)
+        'under_review': 33,           // Being reviewed (33% - at reviewer milestone)
+        'reviewer_approved': 50,      // Reviewer approved, halfway to admin (50%)
+        'reviewer_rejected': 33,      // Rejected at reviewer (33% - stops at reviewer milestone)
+        'admin_approved': erpIntegrated ? 100 : 66,  // Admin approved (66%), ERP integrated (100%)
+        'admin_rejected': 66          // Rejected at admin (66% - stops at admin milestone)
     };
     
     return progressMap[status] || 0;
 }
 
 function getApprovalLineColor(status) {
+    // Enhanced color mapping for rejection states
     const colorMap = {
-        'submitted': 'from-gray-300 to-gray-400',
+        'submitted': 'from-blue-300 to-blue-400',
         'pending': 'from-blue-400 to-blue-500',
-        'under_review': 'from-blue-400 to-blue-500', 
+        'under_review': 'from-blue-400 to-blue-500',
+        'reviewer_approved': 'from-green-400 to-green-500',
         'reviewer_rejected': 'from-red-400 to-red-500',
-        'admin_approved': 'from-green-400 to-green-500'
+        'admin_approved': 'from-green-400 to-green-500',
+        'admin_rejected': 'from-red-400 to-red-500'
     };
     
     return colorMap[status] || 'from-gray-300 to-gray-400';
 }
 
+
 function getApprovalStatusBadge(status, erpIntegrated = false) {
     const badgeMap = {
         'submitted': { 
-            label: 'ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â Submitted - Awaiting Reviewer', 
+            label: 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒâ€šÃ‚Â Submitted - Awaiting Reviewer', 
             bg: 'bg-blue-50', 
             text: 'text-blue-700' 
         },
         'pending': { 
-            label: 'ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ¢â€šÂ¬ Under Review by Reviewer', 
+            label: 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ Under Review by Reviewer', 
             bg: 'bg-yellow-50', 
             text: 'text-yellow-700' 
         },
         'under_review': { 
-            label: 'ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â Being Reviewed', 
+            label: 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒâ€šÃ‚Â Being Reviewed', 
             bg: 'bg-orange-50', 
             text: 'text-orange-700' 
         },
         'reviewer_rejected': { 
-            label: '❌ Rejected by Reviewer', 
+            label: 'âŒ Rejected by Reviewer', 
             bg: 'bg-red-50', 
             text: 'text-red-700' 
         },
         'admin_approved': { 
-            label: erpIntegrated ? '✅ Fully Complete - ERP Integrated' : '⏳ Approved - Awaiting ERP Integration', 
+            label: erpIntegrated ? 'âœ… Fully Complete - ERP Integrated' : 'â³ Approved - Awaiting ERP Integration', 
             bg: erpIntegrated ? 'bg-green-50' : 'bg-blue-50', 
             text: erpIntegrated ? 'text-green-700' : 'text-blue-700' 
+        },
+        'reviewer_approved': { 
+            label: 'Reviewer Approved - Awaiting Admin', 
+            bg: 'bg-green-50', 
+            text: 'text-green-700' 
+        },
+        'admin_rejected': { 
+            label: 'Rejected by Admin', 
+            bg: 'bg-red-50', 
+            text: 'text-red-700' 
         }
     };
     
     return badgeMap[status] || { 
-        label: `📋 Status: ${status ? status.replace('_', ' ') : 'Unknown'}`, 
+        label: `ðŸ“‹ Status: ${status ? status.replace('_', ' ') : 'Unknown'}`, 
         bg: 'bg-gray-50', 
         text: 'text-gray-700' 
     };
@@ -11426,7 +11866,8 @@ function generatePageNumbers(currentPage, totalPages) {
         const isActive = i === currentPage;
         pageNumbers += `
             <button onclick="loadRequestsPage(${i})" 
-                    class="px-3 py-2 text-sm border rounded ${isActive ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 hover:bg-blue-50'}">
+                    style="cursor: pointer;"
+                    class="px-3 py-2 text-sm border rounded transition-colors ${isActive ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-600 hover:bg-blue-50 border-blue-300 hover:border-blue-400'}">
                 ${i}
             </button>`;
     }
@@ -11435,7 +11876,26 @@ function generatePageNumbers(currentPage, totalPages) {
 }
 
 function loadRequestsPage(pageNumber) {
-    window.currentRequestsPage = pageNumber;
+    console.log('=== loadRequestsPage CALLED ===');
+    console.log('Input pageNumber:', pageNumber, 'Type:', typeof pageNumber);
+    console.log('Current window.currentRequestsPage before:', window.currentRequestsPage);
+    
+    // Ensure we have a valid positive integer
+    const validPageNumber = parseInt(pageNumber);
+    console.log('Parsed validPageNumber:', validPageNumber);
+    
+    if (!validPageNumber || validPageNumber < 1) {
+        console.error('Invalid page number:', pageNumber, 'converted to:', validPageNumber);
+        console.log('Defaulting to page 1');
+        window.currentRequestsPage = 1;
+    } else {
+        window.currentRequestsPage = validPageNumber;
+    }
+    
+    console.log('Final window.currentRequestsPage:', window.currentRequestsPage);
+    console.log('About to call loadUserHistory()');
+    console.log('=== loadRequestsPage END ===');
+    
     loadUserHistory();
 }
 
@@ -11444,6 +11904,264 @@ function loadRequestsPage(pageNumber) {
 function showRequestDetails(requestId) {
     // TODO: Implement detailed view modal
     alert('Request details view - ID: ' + requestId + '\\n(This will open a detailed modal in the next enhancement)');
+}
+
+// ===== CARD GENERATION FUNCTIONS FOR SUB-TABS =====
+
+function generateStandardValueRequestCard(request, index) {
+    const statusInfo = getRequestStatusInfo(request.status);
+    const createdDate = new Date(request.created_at).toLocaleDateString();
+    const updatedDate = request.updated_at ? new Date(request.updated_at).toLocaleDateString() : null;
+    
+    return `
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="flex-shrink-0">
+                            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                <span class="text-purple-600 font-semibold text-sm">#${request.id}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900">
+                                ${request.attribute_name}
+                            </h4>
+                            <p class="text-sm text-gray-500">
+                                New Value: "${request.new_value}"
+                            </p>
+                            <p class="text-xs text-gray-400">
+                                Project: ${request.project?.project_name || 'Unknown'}
+                            </p>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1 text-xs font-semibold rounded-full ${statusInfo.bgColor} ${statusInfo.textColor}">
+                        ${statusInfo.label}
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Approval Process -->
+            <div class="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100">
+                <div class="flex items-center justify-between text-sm text-gray-600 mb-3">
+                    <span class="font-medium">Approval Process</span>
+                    <span class="text-xs text-gray-500">${getApprovalStage(request.status)}</span>
+                </div>
+                
+                <!-- Enhanced Progress Timeline -->
+                <div class="relative mb-4">
+                    <!-- Background Progress Line -->
+                    <div class="absolute top-6 left-6 right-6 h-0.5 bg-gray-200"></div>
+                    
+                    <!-- Active Progress Line -->
+                    <div class="absolute top-6 left-6 h-0.5 bg-gradient-to-r ${getApprovalLineColor(request.status)}" 
+                         style="width: calc(${getApprovalProgress(request.status)}% * (100% - 3rem) / 100);"></div>
+                    
+                    <!-- Milestone Container -->
+                    <div class="relative flex items-center justify-between">
+                        <!-- Submit Milestone -->
+                        <div class="flex flex-col items-center z-10">
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center ${getMilestoneStyle('submit', request.status).dot} bg-white">
+                                ${getMilestoneStyle('submit', request.status).icon}
+                            </div>
+                            <span class="text-xs mt-1 ${getMilestoneStyle('submit', request.status).text}">Submit</span>
+                        </div>
+                        
+                        <!-- Reviewer Milestone -->
+                        <div class="flex flex-col items-center z-10">
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center ${getMilestoneStyle('reviewer', request.status).dot} bg-white">
+                                ${getMilestoneStyle('reviewer', request.status).icon}
+                            </div>
+                            <span class="text-xs mt-1 ${getMilestoneStyle('reviewer', request.status).text}">Reviewer</span>
+                        </div>
+                        
+                        <!-- Admin Milestone -->
+                        <div class="flex flex-col items-center z-10">
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center ${getMilestoneStyle('admin', request.status).dot} bg-white">
+                                ${getMilestoneStyle('admin', request.status).icon}
+                            </div>
+                            <span class="text-xs mt-1 ${getMilestoneStyle('admin', request.status).text}">Admin</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Status Badge -->
+                <div class="mt-3">
+                    <div class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${getApprovalStatusBadge(request.status).bg} ${getApprovalStatusBadge(request.status).text}">
+                        ${getApprovalStatusBadge(request.status).label}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Details -->
+            <div class="px-6 py-4">
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="font-medium text-gray-600">Reason:</span>
+                        <div class="text-gray-900 mt-1">${request.reason || 'No reason provided'}</div>
+                    </div>
+                    <div>
+                        <span class="font-medium text-gray-600">Submitted:</span>
+                        <div class="text-gray-900">${createdDate}</div>
+                    </div>
+                </div>
+                
+                ${request.reviewer_comments ? `
+                    <div class="mt-4 p-3 bg-yellow-50 rounded-lg">
+                        <div class="font-medium text-yellow-800 text-sm">Reviewer Comments:</div>
+                        <div class="text-yellow-700 text-sm mt-1">${request.reviewer_comments}</div>
+                    </div>
+                ` : ''}
+                
+                ${request.admin_comments ? `
+                    <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                        <div class="font-medium text-blue-800 text-sm">Admin Comments:</div>
+                        <div class="text-blue-700 text-sm mt-1">${request.admin_comments}</div>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+function generateCombinationRequestCard(request, index) {
+    const statusInfo = getRequestStatusInfo(request.status);
+    const createdDate = new Date(request.created_at).toLocaleDateString();
+    const updatedDate = request.updated_at ? new Date(request.updated_at).toLocaleDateString() : null;
+    
+    return `
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="flex-shrink-0">
+                            <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                                <span class="text-orange-600 font-semibold text-sm">#${request.id}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900">
+                                ${request.request_type === 'block' ? 'Block Combination' : 'Generate Combination'}
+                            </h4>
+                            <p class="text-sm text-gray-500">
+                                Signature: ${request.combination_signature.substring(0, 40)}${request.combination_signature.length > 40 ? '...' : ''}
+                            </p>
+                            <p class="text-xs text-gray-400">
+                                Project: ${request.project?.project_name || 'Unknown'}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full ${statusInfo.bgColor} ${statusInfo.textColor}">
+                            ${statusInfo.label}
+                        </span>
+                        <div class="mt-1">
+                            <span class="px-2 py-1 text-xs font-semibold rounded ${request.request_type === 'block' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
+                                ${request.request_type.toUpperCase()}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Approval Process -->
+            <div class="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100">
+                <div class="flex items-center justify-between text-sm text-gray-600 mb-3">
+                    <span class="font-medium">Approval Process</span>
+                    <span class="text-xs text-gray-500">${getApprovalStage(request.status)}</span>
+                </div>
+                
+                <!-- Enhanced Progress Timeline -->
+                <div class="relative mb-4">
+                    <!-- Background Progress Line -->
+                    <div class="absolute top-6 left-6 right-6 h-0.5 bg-gray-200"></div>
+                    
+                    <!-- Active Progress Line -->
+                    <div class="absolute top-6 left-6 h-0.5 bg-gradient-to-r ${getApprovalLineColor(request.status)}" 
+                         style="width: calc(${getApprovalProgress(request.status)}% * (100% - 3rem) / 100);"></div>
+                    
+                    <!-- Milestone Container -->
+                    <div class="relative flex items-center justify-between">
+                        <!-- Submit Milestone -->
+                        <div class="flex flex-col items-center z-10">
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center ${getMilestoneStyle('submit', request.status).dot} bg-white">
+                                ${getMilestoneStyle('submit', request.status).icon}
+                            </div>
+                            <span class="text-xs mt-1 ${getMilestoneStyle('submit', request.status).text}">Submit</span>
+                        </div>
+                        
+                        <!-- Reviewer Milestone -->
+                        <div class="flex flex-col items-center z-10">
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center ${getMilestoneStyle('reviewer', request.status).dot} bg-white">
+                                ${getMilestoneStyle('reviewer', request.status).icon}
+                            </div>
+                            <span class="text-xs mt-1 ${getMilestoneStyle('reviewer', request.status).text}">Reviewer</span>
+                        </div>
+                        
+                        <!-- Admin Milestone -->
+                        <div class="flex flex-col items-center z-10">
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center ${getMilestoneStyle('admin', request.status).dot} bg-white">
+                                ${getMilestoneStyle('admin', request.status).icon}
+                            </div>
+                            <span class="text-xs mt-1 ${getMilestoneStyle('admin', request.status).text}">Admin</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Status Badge -->
+                <div class="mt-3">
+                    <div class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${getApprovalStatusBadge(request.status).bg} ${getApprovalStatusBadge(request.status).text}">
+                        ${getApprovalStatusBadge(request.status).label}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Details -->
+            <div class="px-6 py-4">
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="font-medium text-gray-600">UoM:</span>
+                        <div class="text-gray-900">${request.uom || 'Not specified'}</div>
+                    </div>
+                    <div>
+                        <span class="font-medium text-gray-600">Country:</span>
+                        <div class="text-gray-900">${request.country_of_origin || 'Not specified'}</div>
+                    </div>
+                    <div>
+                        <span class="font-medium text-gray-600">Model:</span>
+                        <div class="text-gray-900">${request.model_number || 'Not specified'}</div>
+                    </div>
+                    <div>
+                        <span class="font-medium text-gray-600">Submitted:</span>
+                        <div class="text-gray-900">${createdDate}</div>
+                    </div>
+                </div>
+                
+                ${request.reason ? `
+                    <div class="mt-4">
+                        <span class="font-medium text-gray-600">Reason:</span>
+                        <div class="text-gray-900 mt-1">${request.reason}</div>
+                    </div>
+                ` : ''}
+                
+                ${request.reviewer_comments ? `
+                    <div class="mt-4 p-3 bg-yellow-50 rounded-lg">
+                        <div class="font-medium text-yellow-800 text-sm">Reviewer Comments:</div>
+                        <div class="text-yellow-700 text-sm mt-1">${request.reviewer_comments}</div>
+                    </div>
+                ` : ''}
+                
+                ${request.admin_comments ? `
+                    <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                        <div class="font-medium text-blue-800 text-sm">Admin Comments:</div>
+                        <div class="text-blue-700 text-sm mt-1">${request.admin_comments}</div>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
 }
 
 // ===== END USER HISTORY TAB =====
