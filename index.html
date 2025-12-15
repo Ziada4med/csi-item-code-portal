@@ -1124,7 +1124,7 @@ function md5(string) {
 // Enhanced function to get next variation number including pending requests
 async function getNextVariationNumber(projectId, baseSignature) {
     try {
-        console.log('🔍 Getting next variation number for base signature:', baseSignature);
+        console.log('ðŸ” Getting next variation number for base signature:', baseSignature);
         
         // Query ALL variations (approved AND pending) with same base signature
         const { data: existingVariations, error } = await supabase
@@ -1260,14 +1260,14 @@ async function checkCombinationExists(combination, uom, country, modelNumber, un
                 // Base combination exists but different variation - can create variation
                 const baseItem = baseMatches.find(code => !code.is_variation) || baseMatches[0];
                 
-                console.log('🔍 Base combination exists, checking for ALL variations including pending...');
+                console.log('ðŸ” Base combination exists, checking for ALL variations including pending...');
                 
                 // Get next variation number using the enhanced function that checks ALL statuses
                 const nextVariationNumber = await getNextVariationNumber(currentProject.id, baseSignature);
                 
-                console.log('✅ Base combination exists, can create variation');
-                console.log('📊 Approved variations found:', baseMatches.length);
-                console.log('🔢 Next variation number will be:', nextVariationNumber);
+                console.log('âœ… Base combination exists, can create variation');
+                console.log('ðŸ“Š Approved variations found:', baseMatches.length);
+                console.log('ðŸ”¢ Next variation number will be:', nextVariationNumber);
                 
                 return { 
                     exists: false, 
@@ -3487,7 +3487,15 @@ async function getAdditionalLevelOrder(divisionCode, sectionCode, detailedSectio
 
 // Update preview
 async function updatePreview() {
-    const code = await generateItemCodeWithVariations(); // Enhanced with variation support
+    let code;
+    
+    // Show existing item code if regenerating, otherwise generate new one
+    if (window.regeneratingRequestId && window.regeneratingItemCode) {
+        code = window.regeneratingItemCode + ' (reusing existing code)';
+    } else {
+        code = await generateItemCodeWithVariations(); // Enhanced with variation support
+    }
+    
     const desc1 = generateDescription1();
     const desc2 = generateDescription2();
     
@@ -3560,7 +3568,7 @@ async function checkForDuplicates() {
             );
             
             if (exactDuplicate) {
-                console.log('🚫 EXACT DUPLICATE FOUND (same attributes + same UOM/manufacturer/model/country):', exactDuplicate.item_code);
+                console.log('ðŸš« EXACT DUPLICATE FOUND (same attributes + same UOM/manufacturer/model/country):', exactDuplicate.item_code);
                 showDuplicateStatusEnhanced('approved_code', exactDuplicate.item_code, 'signature_based');
                 return true;
             }
@@ -3572,7 +3580,7 @@ async function checkForDuplicates() {
             );
             
             if (baseMatch) {
-                console.log('✅ VARIATION DETECTED: Same attributes but different UOM/manufacturer/model/country');
+                console.log('âœ… VARIATION DETECTED: Same attributes but different UOM/manufacturer/model/country');
                 console.log(`   Base item: ${baseMatch.item_code} (UOM: ${baseMatch.uom}, Manufacturer: ${baseMatch.manufacturer})`);
                 console.log(`   Your item will be: NEW VARIATION (UOM: ${uom}, Manufacturer: ${manufacturer})`);
                 // This is ALLOWED - it's a variation, not a duplicate
@@ -3615,7 +3623,7 @@ async function checkForDuplicates() {
                 const isFieldDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                 
                 if (isFieldDuplicate) {
-                    console.log('🚫 LEGACY FIELD DUPLICATE DETECTED:', {
+                    console.log('ðŸš« LEGACY FIELD DUPLICATE DETECTED:', {
                         code: code.item_code,
                         attributesMatch,
                         uomMatch,
@@ -3660,7 +3668,7 @@ async function checkForDuplicates() {
             );
             
             if (exactRequestDuplicate) {
-                console.log('🚫 EXACT DUPLICATE FOUND in requests (same attributes + same UOM/manufacturer/model/country):', exactRequestDuplicate.item_code);
+                console.log('ðŸš« EXACT DUPLICATE FOUND in requests (same attributes + same UOM/manufacturer/model/country):', exactRequestDuplicate.item_code);
                 showDuplicateStatusEnhanced('pending_request', exactRequestDuplicate.item_code, 'signature_based');
                 return true;
             }
@@ -3672,7 +3680,7 @@ async function checkForDuplicates() {
             );
             
             if (baseRequestMatch) {
-                console.log('✅ PENDING VARIATION DETECTED: Same attributes but different UOM/manufacturer/model/country');
+                console.log('âœ… PENDING VARIATION DETECTED: Same attributes but different UOM/manufacturer/model/country');
                 console.log(`   Pending item: ${baseRequestMatch.item_code} (UOM: ${baseRequestMatch.uom}, Manufacturer: ${baseRequestMatch.manufacturer})`);
                 console.log(`   Your item will be: NEW VARIATION (UOM: ${uom}, Manufacturer: ${manufacturer})`);
                 // This is ALLOWED - it's a variation, not a duplicate
@@ -3715,7 +3723,7 @@ async function checkForDuplicates() {
                 const isFieldDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                 
                 if (isFieldDuplicate) {
-                    console.log('🚫 LEGACY FIELD DUPLICATE DETECTED in requests:', {
+                    console.log('ðŸš« LEGACY FIELD DUPLICATE DETECTED in requests:', {
                         code: req.item_code,
                         attributesMatch,
                         uomMatch,
@@ -3736,12 +3744,12 @@ async function checkForDuplicates() {
         }
         
         // No duplicates found
-        console.log('✅ NO DUPLICATES FOUND - UNIQUE COMBINATION');
+        console.log('âœ… NO DUPLICATES FOUND - UNIQUE COMBINATION');
         showUniqueStatusEnhanced(uom, country, modelNumber, manufacturer);
         return false;
         
     } catch (error) {
-        console.error("⚠️ Error in enhanced duplicate detection:", error);
+        console.error("âš ï¸ Error in enhanced duplicate detection:", error);
         showErrorStatusEnhanced(error.message);
         return false; // Allow submission on error to avoid blocking due to technical issues
     }
@@ -3790,7 +3798,7 @@ function showDuplicateStatusEnhanced(type, itemCode, method) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.854-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
             </svg>
             <div class="text-red-800">
-                <div class="font-bold text-lg mb-2">⚠️ DUPLICATE DETECTED</div>
+                <div class="font-bold text-lg mb-2">âš ï¸ DUPLICATE DETECTED</div>
                 <div class="mb-2">
                     This combination already exists as <strong>${formatDuplicateTypeEnhanced(type)}</strong>:
                 </div>
@@ -3801,7 +3809,7 @@ function showDuplicateStatusEnhanced(type, itemCode, method) {
                     Detection method: ${formatDetectionMethodEnhanced(method)}
                 </div>
                 <div class="text-red-600 font-medium text-sm">
-                    ⚠️ Cannot submit identical combination. Please modify your selections.
+                    âš ï¸ Cannot submit identical combination. Please modify your selections.
                 </div>
             </div>
         </div>
@@ -3847,13 +3855,13 @@ function showErrorStatusEnhanced(errorMessage) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
             <div class="text-yellow-800">
-                <div class="font-bold text-lg mb-2">⚠️ DUPLICATE CHECK ERROR</div>
+                <div class="font-bold text-lg mb-2">âš ï¸ DUPLICATE CHECK ERROR</div>
                 <div class="mb-2">Error checking for duplicates:</div>
                 <div class="bg-yellow-200 p-2 rounded font-mono text-sm mb-2">
                     ${errorMessage}
                 </div>
                 <div class="text-yellow-600 font-medium text-sm">
-                    ⚠️ Proceeding with caution. Manual verification recommended.
+                    âš ï¸ Proceeding with caution. Manual verification recommended.
                 </div>
             </div>
         </div>
@@ -4108,7 +4116,7 @@ function getFormattedCombination() {
             .eq('is_blocked', false);
         
         if (finalApprovedError) {
-            console.error("⚠️ Final approved codes check error:", finalApprovedError);
+            console.error("âš ï¸ Final approved codes check error:", finalApprovedError);
             alert('Final duplicate check failed: ' + finalApprovedError.message);
             return;
         }
@@ -4137,7 +4145,7 @@ function getFormattedCombination() {
                 const isTrueDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                 
                 if (attributesMatch && !isTrueDuplicate) {
-                    console.log('✅ VARIATION ALLOWED: Same attributes but different variation fields');
+                    console.log('âœ… VARIATION ALLOWED: Same attributes but different variation fields');
                     console.log(`   Existing: UOM=${code.uom}, Manufacturer=${code.manufacturer}, Model=${code.model_number}`);
                     console.log(`   New: UOM=${uom}, Manufacturer=${manufacturer}, Model=${modelNumber}`);
                 }
@@ -4146,7 +4154,7 @@ function getFormattedCombination() {
             });
             
             if (approvedDuplicate) {
-                console.log('🚫 FINAL CHECK BLOCKED - TRUE DUPLICATE:', approvedDuplicate);
+                console.log('ðŸš« FINAL CHECK BLOCKED - TRUE DUPLICATE:', approvedDuplicate);
                 alert(`SUBMISSION BLOCKED\n\nEXACT DUPLICATE DETECTED: This combination already exists as approved code: ${approvedDuplicate.item_code}\n\nAll fields (attributes + UOM + manufacturer + model + country) are identical.\n\nPlease modify your combination and try again.`);
                 showDuplicateStatusEnhanced('approved_code', approvedDuplicate.item_code, 'field_based');
                 return;
@@ -4161,7 +4169,7 @@ function getFormattedCombination() {
             .in('status', ['pending', 'reviewer_approved']);
         
         if (finalRequestError) {
-            console.error("⚠️ Final requests check error:", finalRequestError);
+            console.error("âš ï¸ Final requests check error:", finalRequestError);
             alert('Final duplicate check failed: ' + finalRequestError.message);
             return;
         }
@@ -4190,7 +4198,7 @@ function getFormattedCombination() {
                 const isTrueDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                 
                 if (attributesMatch && !isTrueDuplicate) {
-                    console.log('✅ PENDING VARIATION ALLOWED: Same attributes but different variation fields');
+                    console.log('âœ… PENDING VARIATION ALLOWED: Same attributes but different variation fields');
                     console.log(`   Pending: UOM=${req.uom}, Manufacturer=${req.manufacturer}, Model=${req.model_number}`);
                     console.log(`   New: UOM=${uom}, Manufacturer=${manufacturer}, Model=${modelNumber}`);
                 }
@@ -4199,7 +4207,7 @@ function getFormattedCombination() {
             });
             
             if (requestDuplicate) {
-                console.log('🚫 FINAL CHECK BLOCKED - TRUE DUPLICATE IN REQUESTS:', requestDuplicate);
+                console.log('ðŸš« FINAL CHECK BLOCKED - TRUE DUPLICATE IN REQUESTS:', requestDuplicate);
                 alert(`SUBMISSION BLOCKED\n\nEXACT DUPLICATE DETECTED: This combination already exists as pending request: ${requestDuplicate.item_code}\n\nAll fields (attributes + UOM + manufacturer + model + country) are identical.\n\nPlease modify your combination and try again.`);
                 showDuplicateStatusEnhanced('pending_request', requestDuplicate.item_code, 'field_based');
                 return;
@@ -4209,7 +4217,7 @@ function getFormattedCombination() {
         console.log(' Final duplicate check passed - proceeding with submission');
         
     } catch (error) {
-        console.error("⚠️ Final duplicate check exception:", error);
+        console.error("âš ï¸ Final duplicate check exception:", error);
         const proceed = confirm(`DUPLICATE CHECK FAILED\n\nError: ${error.message}\n\nDo you want to proceed anyway? (Not recommended)`);
         if (!proceed) {
             return;
@@ -4258,8 +4266,8 @@ function getFormattedCombination() {
         }
 
         // Enhanced comprehensive duplicate check instead of old method
-        if (!window.modifyingRequestId) {
-            console.log(' Comprehensive duplicate validation before submission...');
+        if (!window.modifyingRequestId && !window.regeneratingRequestId) {
+            console.log('📋 Comprehensive duplicate validation before submission...');
             
             // Generate current combination for comparison
             let currentAttrString = '';
@@ -4279,7 +4287,7 @@ function getFormattedCombination() {
                 .eq('is_blocked', false);
             
             if (submitApprovedError) {
-                console.error("⚠️ Submit approved check error:", submitApprovedError);
+                console.error("âš ï¸ Submit approved check error:", submitApprovedError);
                 alert('Duplicate validation failed: ' + submitApprovedError.message);
                 return;
             }
@@ -4307,7 +4315,7 @@ function getFormattedCombination() {
                     const isTrueDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                     
                     if (attributesMatch && !isTrueDuplicate) {
-                        console.log('✅ SUBMIT VARIATION ALLOWED: Same attributes but different variation fields');
+                        console.log('âœ… SUBMIT VARIATION ALLOWED: Same attributes but different variation fields');
                         console.log(`   Existing: UOM=${code.uom}, Manufacturer=${code.manufacturer}`);
                         console.log(`   New: UOM=${uom}, Manufacturer=${manufacturer}`);
                     }
@@ -4316,7 +4324,7 @@ function getFormattedCombination() {
                 });
                 
                 if (approvedDuplicate) {
-                    console.log('🚫 SUBMIT CHECK BLOCKED - TRUE DUPLICATE:', approvedDuplicate);
+                    console.log('ðŸš« SUBMIT CHECK BLOCKED - TRUE DUPLICATE:', approvedDuplicate);
                     alert(`SUBMISSION BLOCKED\n\nEXACT DUPLICATE: This combination already exists as approved code: ${approvedDuplicate.item_code}\n\nAll fields are identical. Please modify your combination.`);
                     showDuplicateStatusEnhanced('approved_code', approvedDuplicate.item_code, 'field_based');
                     return;
@@ -4331,13 +4339,19 @@ function getFormattedCombination() {
                 .in('status', ['pending', 'reviewer_approved']);
             
             if (submitRequestError) {
-                console.error("⚠️ Submit request check error:", submitRequestError);
+                console.error("âš ï¸ Submit request check error:", submitRequestError);
                 alert('Duplicate validation failed: ' + submitRequestError.message);
                 return;
             }
             
             if (submitRequestCheck?.length > 0) {
                 const requestDuplicate = submitRequestCheck.find(req => {
+                    // Skip the request we're regenerating to avoid false duplicate
+                    if (window.regeneratingRequestId && req.id === window.regeneratingRequestId) {
+                        console.log('🔄 SKIPPING: Regenerating request ID', req.id, 'in duplicate check');
+                        return false;
+                    }
+                    
                     // Generate attribute strings for comparison
                     let existingAttrString = '';
                     if (req.attribute_selections) {
@@ -4368,7 +4382,7 @@ function getFormattedCombination() {
                 });
                 
                 if (requestDuplicate) {
-                    console.log('🚫 SUBMIT DUPLICATE CHECK BLOCKED (REQUEST):', requestDuplicate);
+                    console.log('ðŸš« SUBMIT DUPLICATE CHECK BLOCKED (REQUEST):', requestDuplicate);
                     alert(`SUBMISSION BLOCKED\n\nExact duplicate detected: ${requestDuplicate.item_code} already exists as pending request\n\nAll fields are identical.`);
                     showDuplicateStatusEnhanced('pending_request', requestDuplicate.item_code, 'field_based');
                     return;
@@ -4381,7 +4395,15 @@ function getFormattedCombination() {
         nextSerial = correctSerial;
         
         // Generate the item code with variation support
-        const itemCode = await generateItemCodeWithVariations();
+        let itemCode;
+        if (window.regeneratingRequestId && window.regeneratingItemCode) {
+            // For regeneration, use the existing item code instead of generating a new one
+            itemCode = window.regeneratingItemCode;
+            console.log('🔄 REGENERATING: Reusing existing item code:', itemCode);
+        } else {
+            itemCode = await generateItemCodeWithVariations();
+        }
+        
         const description1 = generateDescription1();
         const description2 = generateDescription2();
         
@@ -4460,6 +4482,100 @@ function getFormattedCombination() {
                     alert('This exact combination already exists. Please modify your selection.');
                 } else {
                     alert('Error updating request: ' + modifyError.message);
+                }
+                return;
+            }
+        }
+
+        // Check if we're regenerating a rejected request
+        if (window.regeneratingRequestId && window.regeneratingItemCode) {
+            console.log('🔄 REGENERATING: Updating rejected request with same item code:', window.regeneratingRequestId, window.regeneratingItemCode);
+            
+            try {
+                // Validate reviewer selection for non-admin users
+                let reviewerId = null;
+                if (currentUser.role !== 'admin') {
+                    reviewerId = parseInt(document.getElementById('reviewer-select').value);
+                    if (!reviewerId) {
+                        alert('Please select a reviewer before submitting the regenerated request.');
+                        return;
+                    }
+                }
+                
+                // Update the existing rejected request with new data but same item code
+                const { data, error } = await supabase
+                    .from('item_code_workflow')
+                    .update({
+                        // Keep the same item_code (window.regeneratingItemCode)
+                        description1: description1,
+                        description2: description2 + `\n\n[Regenerated by ${currentUser.username || currentUser.email} on ${new Date().toLocaleString()}]`,
+                        combination_signature: combination,
+                        attribute_selections: attributeSelections,
+                        duplicate_check_hash: submissionHash,
+                        attribute_order: attributeOrder,
+                        include_headers_config: includeHeaders,
+                        uom: uom,
+                        country_of_origin: country,
+                        model_number: modelNumber,
+                        unit_price: unitPrice ? parseFloat(unitPrice) : null,
+                        currency_code: currency,
+                        manufacturer: manufacturer,
+                        // Reset to pending status for re-review
+                        status: 'pending',
+                        reviewed_by: currentUser.role === 'admin' ? null : parseInt(document.getElementById('reviewer-select').value),
+                        reviewed_at: null,
+                        reviewer_comments: null,
+                        admin_reviewed_by: null,
+                        admin_reviewed_at: null,
+                        admin_comments: null,
+                        approved_by: null,
+                        approved_at: null,
+                        updated_at: new Date().toISOString()
+                        // Note: We keep the original created_by to maintain audit trail
+                    })
+                    .eq('id', window.regeneratingRequestId)
+                    .select();
+                
+                if (error) {
+                    if (error.code === '23505') {
+                        alert('This exact combination already exists. Please modify your selection.');
+                        return;
+                    }
+                    throw error;
+                }
+                
+                if (data && data.length > 0) {
+                    const reviewerSelect = document.getElementById('reviewer-select');
+                    const reviewerText = reviewerSelect ? reviewerSelect.selectedOptions[0]?.textContent : '';
+                    
+                    let successMessage = `✅ Request regenerated and resubmitted successfully with item code: ${window.regeneratingItemCode}`;
+                    if (currentUser.role !== 'admin' && reviewerText) {
+                        successMessage += `\n📋 Assigned to reviewer: ${reviewerText}`;
+                    }
+                    
+                    alert(successMessage);
+                    
+                    // Clear the regeneration tracking
+                    window.regeneratingRequestId = null;
+                    window.regeneratingItemCode = null;
+                    
+                    // Remove the regeneration notice
+                    const notice = document.getElementById('regeneration-notice');
+                    if (notice) notice.remove();
+                    
+                    // Reload and reset
+                    loadProjectHistory();
+                    checkReorderability();
+                    resetForm();
+                    updatePreview();
+                    return; // Exit early, don't create new request
+                }
+            } catch (regenerateError) {
+                console.error('Error regenerating request:', regenerateError);
+                if (regenerateError.code === '23505') {
+                    alert('This exact combination already exists. Please modify your selection.');
+                } else {
+                    alert('Error regenerating request: ' + regenerateError.message);
                 }
                 return;
             }
@@ -4828,7 +4944,7 @@ async function submitBlockRequest() {
             throw workflowError;
         }
 
-        console.log("📊 Data loaded from unified workflow table:", (allWorkflowItems || []).length);
+        console.log("ðŸ“Š Data loaded from unified workflow table:", (allWorkflowItems || []).length);
 
         // Transform for display compatibility
         historyData = (allWorkflowItems || []).map(item => ({
@@ -4838,7 +4954,7 @@ async function submitBlockRequest() {
             review_comments: item.reviewer_comments,
             // Determine display properties
             source: item.status === 'admin_approved' ? 'admin' : 'request',
-            sourceIcon: item.status === 'admin_approved' ? '📋✅' : '📋⏳',
+            sourceIcon: item.status === 'admin_approved' ? 'ðŸ“‹âœ…' : 'ðŸ“‹â³',
             sourceDescription: item.status === 'admin_approved' ? 'Admin Generated' : 'User Request',
             isApproved: item.status === 'admin_approved',
             displayStatus: item.status,
@@ -4850,7 +4966,7 @@ async function submitBlockRequest() {
             } : null
         }));
         
-        console.log("✅ Complete project history loaded:");
+        console.log("âœ… Complete project history loaded:");
         console.log('  - Total records:', historyData.length);
         console.log('  - Pending items:', historyData.filter(h => h.status === 'pending').length);
         console.log('  - Reviewer approved:', historyData.filter(h => h.status === 'reviewer_approved').length);  
@@ -4928,7 +5044,7 @@ function renderHistoryTable() {
                             <span class="text-lg">${item.sourceIcon}</span>
                             <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">${item.sourceDescription}</span>
                             ${item.erpStatus && item.erpStatus.erp_integrated ? 
-                                `<span class="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded">✅ ERP Integrated</span>` : ""}
+                                `<span class="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded">âœ… ERP Integrated</span>` : ""}
                         </div>
                         <h4 class="text-lg font-semibold text-gray-900 font-mono">${item.item_code}</h4>
                         <div class="flex items-center mt-1">
@@ -4947,7 +5063,7 @@ function renderHistoryTable() {
                         <button onclick="exportSingleItem(${index}, 'pdf')" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm">
                             PDF
                         </button>
-                        ${(item.status === 'rejected' || item.status === 'reviewer_rejected' || item.status === 'admin_rejected') && currentUser && currentUser.id === item.created_by && item.source === 'request' ? `
+                        ${(item.status === 'rejected' || item.status === 'reviewer_rejected' || item.status === 'admin_rejected') && currentUser ? `
                             <button onclick="regenerateFromRejected(${index})" class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-sm">
                                 <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
@@ -5037,10 +5153,32 @@ function renderHistoryTable() {
                             <p class="text-gray-800 bg-yellow-50 p-2 rounded border">${item.review_comments}</p>
                         </div>
                     ` : ''}
+                    
+                    ${/* Add prominent regenerate section for rejected items */ (item.status === 'rejected' || item.status === 'reviewer_rejected' || item.status === 'admin_rejected') && currentUser ? `
+                        <div class="bg-orange-50 border-2 border-orange-200 rounded-lg p-4 mt-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h5 class="font-semibold text-orange-900 mb-1">🔄 Request Rejected - Regeneration Available</h5>
+                                    <p class="text-sm text-orange-700">Any user can regenerate this request with corrections while keeping the same item code.</p>
+                                    <p class="text-xs text-orange-600 mt-1">Original creator: ${item.created_by_user?.username || 'Unknown'}</p>
+                                </div>
+                                <div class="flex flex-col gap-2">
+                                    <button onclick="regenerateFromRejected(${index})" 
+                                            class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm">
+                                        🔄 Regenerate Request
+                                    </button>
+                                    <button onclick="console.log('DEBUG - Item ${index} attribute data:', ${JSON.stringify(item.attribute_selections).replace(/"/g, '&quot;')}); alert('Check browser console (F12) for attribute data')" 
+                                            class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs">
+                                        🔍 Debug Attributes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
                     ${item.erpStatus && item.erpStatus.erp_integrated && item.erpStatus.erp_integrated_at ? `
                         <div>
                             <span class="font-medium text-gray-600">ERP Integration:</span>
-                            <p class="text-green-800 bg-green-50 p-2 rounded border">✅ Integrated on ${new Date(item.erpStatus.erp_integrated_at).toLocaleDateString()}</p>
+                            <p class="text-green-800 bg-green-50 p-2 rounded border">âœ… Integrated on ${new Date(item.erpStatus.erp_integrated_at).toLocaleDateString()}</p>
                         </div>
                     ` : ''}
                 </div>
@@ -5069,7 +5207,7 @@ function renderHistoryTable() {
                 <td class="px-4 py-3 border-b text-sm">
                     <span class="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">${item.sourceDescription}</span>
                     ${item.erpStatus && item.erpStatus.erp_integrated ? 
-                        `<br><span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded mt-1 inline-block">✅ ERP</span>` : ""}
+                        `<br><span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded mt-1 inline-block">âœ… ERP</span>` : ""}
                 </td>
                 <td class="px-4 py-3 border-b text-sm font-mono text-blue-600">#${item.id}</td>
                 <td class="px-4 py-3 border-b text-sm">
@@ -5103,7 +5241,7 @@ function renderHistoryTable() {
                         <button onclick="exportSingleItem(${index}, 'pdf')" class="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded text-xs">
                             PDF
                         </button>
-                        ${(item.status === 'rejected' || item.status === 'reviewer_rejected' || item.status === 'admin_rejected') && currentUser && currentUser.id === item.created_by && item.source === 'request' ? `
+                        ${(item.status === 'rejected' || item.status === 'reviewer_rejected' || item.status === 'admin_rejected') && currentUser ? `
                             <button onclick="regenerateFromRejected(${index})" class="bg-orange-600 hover:bg-orange-700 text-white px-2 py-1 rounded text-xs">
                                 Regenerate
                             </button>
@@ -8142,7 +8280,7 @@ async function loadUserRequests() {
             itemCodes: (codeRequests || []).map(req => ({
                 ...req,
                 type: 'Item Code',
-                typeIcon: '📋',
+                typeIcon: 'ðŸ“‹',
                 title: req.item_code || 'Pending Code Generation',
                 subtitle: `${req.project?.division_code || ''} - ${req.project?.project_name || 'Unknown Project'}`,
                 erpStatus: erpStatusMap[req.item_code] || null
@@ -8166,7 +8304,7 @@ async function loadUserRequests() {
             manufacturers: (manufacturerRequests || []).map(req => ({
                 ...req,
                 type: 'Manufacturer',
-                typeIcon: '🚫',
+                typeIcon: 'ðŸš«',
                 title: req.manufacturer_name,
                 subtitle: `${req.project?.project_name || 'Unknown Project'}`,
                 erpStatus: null // Manufacturer requests don't have direct ERP integration
@@ -8183,7 +8321,7 @@ async function loadUserRequests() {
             organizedRequests.standardValues.length +
             organizedRequests.manufacturers.length;
 
-        console.log("📋 Loaded comprehensive requests:", {
+        console.log("ðŸ“‹ Loaded comprehensive requests:", {
             itemCodes: organizedRequests.itemCodes.length,
             blockCombinations: organizedRequests.blockCombinations.length,
             standardValues: organizedRequests.standardValues.length,
@@ -8332,7 +8470,7 @@ function renderEnhancedRequestsCards(organizedRequests) {
     if (totalRequests === 0) {
         container.innerHTML = `
             <div class="text-center py-12">
-                <div class="text-gray-400 text-6xl mb-4">📋</div>
+                <div class="text-gray-400 text-6xl mb-4">ðŸ“‹</div>
                 <h3 class="text-xl font-medium text-gray-900 mb-2">No Requests Found</h3>
                 <p class="text-gray-500">You haven't made any requests yet. Start by generating an item code!</p>
             </div>
@@ -8370,7 +8508,7 @@ function renderEnhancedRequestsCards(organizedRequests) {
         renderRequestSection('Item Code Requests', 'itemCodes', organizedRequests.itemCodes, '', 'blue'),
         renderRequestSection('Combination Requests', 'blockCombinations', organizedRequests.blockCombinations, '', 'purple'),
         renderRequestSection('Standard Value Requests', 'standardValues', organizedRequests.standardValues, '', 'green'),
-        renderRequestSection('Manufacturer Requests', 'manufacturers', organizedRequests.manufacturers, '🏭', 'orange')
+        renderRequestSection('Manufacturer Requests', 'manufacturers', organizedRequests.manufacturers, 'ðŸ­', 'orange')
     ].join('');
 
     container.innerHTML = summaryHtml + sectionsHtml;
@@ -8422,7 +8560,7 @@ function renderSingleRequestCard(request, sectionType, index, color) {
         <div class="mt-3 p-3 rounded-lg ${request.erpStatus.erp_integrated ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}">
             <div class="flex items-center gap-2">
                 <span class="text-sm font-medium ${request.erpStatus.erp_integrated ? 'text-green-800' : 'text-yellow-800'}">
-                    ${request.erpStatus.erp_integrated ? "✅ ERP INTEGRATED" : "PENDING ERP INTEGRATION"}
+                    ${request.erpStatus.erp_integrated ? "âœ… ERP INTEGRATED" : "PENDING ERP INTEGRATION"}
                 </span>
             </div>
             ${request.erpStatus.erp_integrated && request.erpStatus.erp_integrated_at ? `
@@ -8482,17 +8620,17 @@ function renderSingleRequestCard(request, sectionType, index, color) {
                     ${isApproved ? `
                         <button onclick="exportRequestToPDF('${sectionType}', ${index})" 
                                 class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors">
-                            📄 PDF
+                            ðŸ“„ PDF
                         </button>
                         <button onclick="exportRequestToExcel('${sectionType}', ${index})" 
                                 class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors">
-                            📊 Excel
+                            ðŸ“Š Excel
                         </button>
                     ` : ''}
                     ${isRejected ? `
                         <button onclick="regenerateFromRejected('${sectionType}', ${index})" 
                                 class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded transition-colors">
-                            🔄 Regenerate Request
+                            ðŸ”„ Regenerate Request
                         </button>
                     ` : ''}
                 </div>
@@ -8605,11 +8743,11 @@ function getEnhancedStatusInfo(status) {
             description: 'Approved by reviewer, awaiting admin'
         },
         'admin_approved': {
-            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">✅ Admin Approved</span>',
+            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">âœ… Admin Approved</span>',
             description: 'Fully approved'
         },
         'approved': {
-            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">✅ Approved</span>',
+            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">âœ… Approved</span>',
             description: 'Fully approved'
         },
         'reviewer_rejected': {
@@ -8657,7 +8795,7 @@ function renderWorkflowProgress(status) {
                     <div class="flex items-center ${index < steps.length - 1 ? 'flex-1' : ''}">
                         <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium
                             ${isCompleted ? 'bg-green-500 text-white' : isActive ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-600'}">
-                            ${isCompleted ? "✅" : index + 1}
+                            ${isCompleted ? "âœ…" : index + 1}
                         </div>
                         <div class="ml-1 text-xs ${isCompleted ? 'text-green-600 font-medium' : isActive ? 'text-blue-600 font-medium' : 'text-gray-500'}">
                             ${step.name}
@@ -8818,7 +8956,7 @@ function generateEnhancedRequestPDF(request, sectionType) {
     workflowSteps.forEach((step, index) => {
         const isCompleted = completedSteps[index];
         doc.setFont(undefined, isCompleted ? 'bold' : 'normal');
-        doc.text(`${index + 1}. ${step} ${isCompleted ? "✅" : ""}`, 20, yPosition);
+        doc.text(`${index + 1}. ${step} ${isCompleted ? "âœ…" : ""}`, 20, yPosition);
         yPosition += 6;
     });
     
@@ -9083,9 +9221,17 @@ async function regenerateFromRejected(index, source = 'history') {
             return;
         }
         
-        // Verify ownership
-        if (rejectedRequest.created_by !== currentUser.id) {
-            alert('You can only regenerate your own rejected requests');
+        // Debug information for regeneration
+        console.log('🔍 Regeneration attempt:', {
+            requestCreatedBy: rejectedRequest.created_by,
+            currentUserId: currentUser?.id,
+            requestSource: rejectedRequest.source,
+            requestStatus: rejectedRequest.status,
+            itemCode: rejectedRequest.item_code
+        });
+        
+        if (!currentUser) {
+            alert('You must be logged in to regenerate requests');
             return;
         }
         
@@ -9107,13 +9253,20 @@ async function regenerateFromRejected(index, source = 'history') {
                 <h3 class="text-2xl font-bold mb-6 text-gray-900">Regenerate Item Code Request</h3>
                 
                 <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded">
-                    <h4 class="font-semibold text-blue-900 mb-2"> What will happen:</h4>
+                    <h4 class="font-semibold text-blue-900 mb-2">🔄 What will happen:</h4>
                     <ul class="text-sm text-blue-800 space-y-2 list-disc list-inside">
-                        <li>A <strong>new item code request</strong> will be created with a new serial number</li>
-                        <li>All your previous selections and data will be pre-filled in the generator</li>
-                        <li>You can make corrections before generating the new code</li>
-                        <li>The old rejected request (${rejectedRequest.item_code}) will remain as a historical record</li>
+                        <li><strong>The same item code (${rejectedRequest.item_code}) will be reused</strong> - no new serial number will be generated</li>
+                        <li>All previous selections and data will be pre-filled in the generator for you to review</li>
+                        <li>You can make corrections and resubmit the request with the same code</li>
+                        <li>The request status will be updated to "pending" for re-review</li>
+                        <li><strong>You will be credited as the person who regenerated this request</strong></li>
                     </ul>
+                </div>
+                
+                <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded">
+                    <h4 class="font-semibold text-yellow-900 mb-2">📋 Original Request Info:</h4>
+                    <p class="text-sm text-yellow-700">Originally created by: <strong>${rejectedRequest.created_by_user?.username || 'Unknown User'}</strong></p>
+                    <p class="text-sm text-yellow-700">You are regenerating this request on their behalf</p>
                 </div>
                 
                 <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded">
@@ -9180,8 +9333,29 @@ async function regenerateFromRejected(index, source = 'history') {
     }
 }
 
+// Function to wait for project attributes to be loaded
+async function waitForAttributesToLoad(maxWait = 5000) {
+    console.log('🔄 REGENERATION: Waiting for attributes to load...');
+    
+    const startTime = Date.now();
+    while (Date.now() - startTime < maxWait) {
+        // Check if attribute radio buttons are available
+        const radioButtons = document.querySelectorAll('input[type="radio"][name^="attr-"]');
+        if (radioButtons.length > 0) {
+            console.log(`✅ Found ${radioButtons.length} attribute radio buttons`);
+            return true;
+        }
+        
+        // Wait 100ms before checking again
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    console.warn('⚠️ Timeout waiting for attributes to load');
+    return false;
+}
+
 // Proceed with regeneration - pre-fill the generator form
-function proceedWithRegeneration(index, source) {
+async function proceedWithRegeneration(index, source) {
     try {
         let rejectedRequest;
         
@@ -9195,6 +9369,19 @@ function proceedWithRegeneration(index, source) {
         // Close the modal
         document.querySelectorAll('.fixed.inset-0').forEach(modal => modal.remove());
         
+        // Set global regeneration tracking
+        window.regeneratingRequestId = rejectedRequest.id;
+        window.regeneratingItemCode = rejectedRequest.item_code;
+        
+        // Ensure the correct project is selected
+        if (rejectedRequest.project_id && (!currentProject || currentProject.id !== rejectedRequest.project_id)) {
+            console.log('🔄 REGENERATION: Need to select project', rejectedRequest.project_id);
+            // The project should already be selected, but let's make sure
+            if (window.currentProject && window.currentProject.id === rejectedRequest.project_id) {
+                currentProject = window.currentProject;
+            }
+        }
+        
         // Switch to the Generate tab (make sure we're on the right tab)
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
         document.getElementById('generate-tab')?.classList.remove('hidden');
@@ -9206,11 +9393,88 @@ function proceedWithRegeneration(index, source) {
         });
         document.querySelector('[data-tab="generate-tab"]')?.classList.add('border-blue-500', 'text-blue-600');
         
+        // Ensure reviewers are loaded for non-admin users
+        if (currentUser && currentUser.role !== 'admin') {
+            try {
+                console.log('🔄 REGENERATION: Loading reviewers for regeneration...');
+                const { data, error } = await supabase.rpc('get_reviewers');
+                if (error) {
+                    console.error('Error loading reviewers for regeneration:', error);
+                } else {
+                    const reviewerSelect = document.getElementById('reviewer-select');
+                    if (reviewerSelect && data) {
+                        reviewerSelect.innerHTML = '<option value="">Select reviewer...</option>';
+                        data.forEach(reviewer => {
+                            const option = document.createElement('option');
+                            option.value = reviewer.user_id;
+                            option.textContent = `${reviewer.username} (${reviewer.email})`;
+                            reviewerSelect.appendChild(option);
+                        });
+                        console.log('✅ Loaded reviewers for regeneration');
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load reviewers during regeneration:', err);
+            }
+        }
+        
         // Scroll to top of generator
         window.scrollTo({ top: 0, behavior: 'smooth' });
         
-        // Pre-fill the form fields
+        // Add regeneration notice banner
         setTimeout(() => {
+            let existingNotice = document.getElementById('regeneration-notice');
+            if (existingNotice) existingNotice.remove();
+            
+            const regenerationNotice = document.createElement('div');
+            regenerationNotice.id = 'regeneration-notice';
+            regenerationNotice.className = 'mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg shadow-md';
+            regenerationNotice.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-orange-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" clip-rule="evenodd"/>
+                        </svg>
+                        <div>
+                            <h4 class="font-semibold text-orange-900">Regenerating Request</h4>
+                            <p class="text-sm text-orange-700">You are regenerating rejected item code: <span class="font-mono font-bold">${rejectedRequest.item_code}</span></p>
+                            <p class="text-xs text-orange-600 mt-1">Make your corrections and click "Generate Item Code" to resubmit with the same code.</p>
+                        </div>
+                    </div>
+                    <button onclick="cancelRegeneration()" class="text-orange-600 hover:text-orange-800">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            // Insert at the top of the generate tab
+            const generateTab = document.getElementById('generate-tab');
+            if (generateTab) {
+                generateTab.insertBefore(regenerationNotice, generateTab.firstChild);
+            }
+        }, 100);
+        
+        // Pre-fill the form fields with better timing
+        setTimeout(async () => {
+            console.log('🔄 REGENERATION: Starting form pre-fill...');
+            
+            // Wait for the project attributes to be loaded
+            await waitForAttributesToLoad();
+            
+            // Description 1
+            const desc1Input = document.getElementById('description1');
+            if (desc1Input && rejectedRequest.description1) {
+                desc1Input.value = rejectedRequest.description1;
+            }
+            
+            // Description 2
+            const desc2Input = document.getElementById('description2');
+            if (desc2Input && rejectedRequest.description2) {
+                desc2Input.value = rejectedRequest.description2;
+            }
+            
             // UOM
             const uomSelect = document.getElementById('uom-select');
             if (uomSelect && rejectedRequest.uom) {
@@ -9229,6 +9493,24 @@ function proceedWithRegeneration(index, source) {
                 modelInput.value = rejectedRequest.model_number;
             }
             
+            // Unit Price
+            const priceInput = document.getElementById('unit-price');
+            if (priceInput && rejectedRequest.unit_price) {
+                priceInput.value = rejectedRequest.unit_price;
+            }
+            
+            // Currency
+            const currencySelect = document.getElementById('currency-select');
+            if (currencySelect && rejectedRequest.currency_code) {
+                currencySelect.value = rejectedRequest.currency_code;
+            }
+            
+            // Manufacturer
+            const manufacturerSelect = document.getElementById('manufacturer-select');
+            if (manufacturerSelect && rejectedRequest.manufacturer) {
+                manufacturerSelect.value = rejectedRequest.manufacturer;
+            }
+            
             // Restore attribute selections
             if (rejectedRequest.attribute_selections) {
                 let selections = {};
@@ -9237,21 +9519,104 @@ function proceedWithRegeneration(index, source) {
                         ? JSON.parse(rejectedRequest.attribute_selections) 
                         : rejectedRequest.attribute_selections;
                     
-                    // Set the global attributeSelections
-                    attributeSelections = selections;
+                    console.log('🔄 REGENERATION: Restoring attribute selections:', selections);
                     
-                    // Check radio buttons
-                    Object.entries(selections).forEach(([attrName, data]) => {
-                        const radioButton = document.querySelector(`input[name="attr-${attrName}"][value="${data.value}"]`);
-                        if (radioButton) {
-                            radioButton.checked = true;
-                        }
-                    });
+                    // Wait for radio buttons to be fully rendered
+                    setTimeout(() => {
+                        console.log('🔄 REGENERATION: Starting attribute restoration...');
+                        
+                        // Get all radio buttons to understand the mapping
+                        const allRadios = document.querySelectorAll('input[type="radio"]');
+                        console.log('📋 Found radio buttons:', allRadios.length);
+                        
+                        // Create a mapping of attribute ID to radio button index
+                        const attributeIdToIndex = {};
+                        allRadios.forEach(radio => {
+                            const onchangeAttr = radio.getAttribute('onchange');
+                            if (onchangeAttr) {
+                                // Extract attribute ID from onchange="selectAttribute(4445, '1800 (LPS)', 4, '')"
+                                const match = onchangeAttr.match(/selectAttribute\((\d+),/);
+                                if (match) {
+                                    const attrId = match[1];
+                                    // Extract index from name="attr-0"
+                                    const nameMatch = radio.name.match(/attr-(\d+)/);
+                                    if (nameMatch) {
+                                        const index = nameMatch[1];
+                                        attributeIdToIndex[attrId] = index;
+                                    }
+                                }
+                            }
+                        });
+                        
+                        console.log('🗺️ Attribute ID to Index mapping:', attributeIdToIndex);
+                        
+                        // Now restore selections using the correct mapping
+                        Object.entries(selections).forEach(([attrId, data]) => {
+                            console.log(`🔄 Restoring attribute ${attrId}:`, data);
+                            
+                            const radioIndex = attributeIdToIndex[attrId];
+                            if (!radioIndex && radioIndex !== '0') {
+                                console.warn(`❌ No radio index found for attribute ID ${attrId}`);
+                                return;
+                            }
+                            
+                            let targetValue = data.value;
+                            console.log(`🎯 Looking for radio button: name="attr-${radioIndex}" value="${targetValue}"`);
+                            
+                            // Find the specific radio button
+                            const radioButton = document.querySelector(`input[name="attr-${radioIndex}"][value="${targetValue}"]`);
+                            
+                            if (radioButton) {
+                                // Check the radio button
+                                radioButton.checked = true;
+                                console.log(`✅ SUCCESS: Checked radio button for attr-${radioIndex}: ${targetValue}`);
+                                
+                                // Trigger the onchange event to call selectAttribute
+                                try {
+                                    if (radioButton.onchange) {
+                                        radioButton.onchange();
+                                        console.log(`✅ Triggered onchange for ${targetValue}`);
+                                    } else {
+                                        // Manually call selectAttribute if onchange doesn't work
+                                        const onchangeAttr = radioButton.getAttribute('onchange');
+                                        if (onchangeAttr) {
+                                            eval(onchangeAttr);
+                                            console.log(`✅ Manually executed: ${onchangeAttr}`);
+                                        }
+                                    }
+                                } catch (err) {
+                                    console.warn(`⚠️ Could not trigger onchange:`, err);
+                                }
+                            } else {
+                                console.warn(`❌ Radio button not found for attr-${radioIndex} value "${targetValue}"`);
+                                
+                                // Show available values for this attribute
+                                const availableRadios = document.querySelectorAll(`input[name="attr-${radioIndex}"]`);
+                                console.log(`Available values for attr-${radioIndex}:`, 
+                                    Array.from(availableRadios).map(r => r.value));
+                            }
+                        });
+                        
+                        // Force update the global attributeSelections
+                        attributeSelections = {...attributeSelections, ...selections};
+                        
+                        // Update UI components with delays
+                        setTimeout(() => {
+                            if (typeof updatePreview === 'function') {
+                                updatePreview();
+                                console.log('🔄 Updated preview');
+                            }
+                        }, 200);
+                        
+                        setTimeout(() => {
+                            if (typeof checkGenerateButton === 'function') {
+                                checkGenerateButton();
+                                console.log('🔄 Checked generate button');
+                            }
+                        }, 400);
+                        
+                    }, 1200); // Increased timeout for reliable loading
                     
-                    // Update the preview
-                    if (typeof updatePreview === 'function') {
-                        updatePreview();
-                    }
                 } catch (e) {
                     console.error('Error restoring selections:', e);
                 }
@@ -9278,6 +9643,42 @@ function proceedWithRegeneration(index, source) {
         console.error('Error in proceedWithRegeneration:', error);
         alert('Error pre-filling form: ' + error.message);
     }
+}
+
+// Function to cancel regeneration and clear flags
+function cancelRegeneration() {
+    // Clear regeneration tracking
+    window.regeneratingRequestId = null;
+    window.regeneratingItemCode = null;
+    
+    // Remove regeneration notice
+    const notice = document.getElementById('regeneration-notice');
+    if (notice) notice.remove();
+    
+    // Reset form
+    if (typeof resetForm === 'function') {
+        resetForm();
+    }
+    
+    // Update preview
+    if (typeof updatePreview === 'function') {
+        updatePreview();
+    }
+    
+    // Show cancellation notification
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-gray-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+            <span>Regeneration cancelled. Form reset.</span>
+        </div>
+    `;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.remove(), 3000);
 }
 // Function to edit and resubmit rejected requests
 async function editAndResubmitRequest(source, index) {
@@ -11236,7 +11637,7 @@ async function loadUserHistory() {
         if (!requests || requests.length === 0) {
             content.innerHTML = 
                 '<div class="text-center py-12">' +
-                    '<div class="text-gray-400 text-6xl mb-4">📋</div>' +
+                    '<div class="text-gray-400 text-6xl mb-4">ðŸ“‹</div>' +
                     '<h3 class="text-xl font-medium text-gray-900 mb-2">No Request History</h3>' +
                     '<p class="text-gray-500">You have not submitted any item code requests yet.</p>' +
                     '<p class="text-gray-400 text-sm mt-2">Start by generating your first item code!</p>' +
@@ -11404,7 +11805,7 @@ async function loadStandardValueRequests() {
         if (!requests || requests.length === 0) {
             content.innerHTML = 
                 '<div class="text-center py-12">' +
-                    '<div class="text-gray-400 text-6xl mb-4">📋</div>' +
+                    '<div class="text-gray-400 text-6xl mb-4">ðŸ“‹</div>' +
                     '<h3 class="text-xl font-medium text-gray-900 mb-2">No Standard Value Requests</h3>' +
                     '<p class="text-gray-500">You have not submitted any standard value requests yet.</p>' +
                     '<p class="text-gray-400 text-sm mt-2">Standard value requests allow you to add new values to dropdown lists!</p>' +
@@ -11525,7 +11926,7 @@ async function loadCombinationRequests() {
         if (!requests || requests.length === 0) {
             content.innerHTML = 
                 '<div class="text-center py-12">' +
-                    '<div class="text-gray-400 text-6xl mb-4">🔗</div>' +
+                    '<div class="text-gray-400 text-6xl mb-4">ðŸ”—</div>' +
                     '<h3 class="text-xl font-medium text-gray-900 mb-2">No Combination Requests</h3>' +
                     '<p class="text-gray-500">You have not submitted any combination requests yet.</p>' +
                     '<p class="text-gray-400 text-sm mt-2">Combination requests allow you to generate or block specific attribute combinations!</p>' +
@@ -11630,7 +12031,7 @@ function generateRequestCard(request, index) {
     
     // Debug logging for ERP status
     if (request.status === 'admin_approved') {
-        console.log(`Ã°Å¸â€Â Debug - Request #${request.id}:`, {
+        console.log(`ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â Debug - Request #${request.id}:`, {
             item_code: request.item_code,
             status: request.status,
             erp_integrated: request.erp_integrated,
@@ -11672,7 +12073,7 @@ function generateRequestCard(request, index) {
                     <span class="text-xs bg-white px-2 py-1 rounded-full">${getApprovalStage(request.status, request.erp_integrated)}</span>
                 </div>
                 
-                <!-- 4-Stage Progress Line: Submit Ã¢â€ â€™ Reviewer Ã¢â€ â€™ Admin Ã¢â€ â€™ ERP Integration -->
+                <!-- 4-Stage Progress Line: Submit ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Reviewer ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Admin ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ERP Integration -->
                 <div class="relative">
                     <div class="flex items-center justify-between">
                         <!-- Stage 1: Submitted -->
@@ -11932,27 +12333,27 @@ function getApprovalLineColor(status) {
 function getApprovalStatusBadge(status, erpIntegrated = false) {
     const badgeMap = {
         'submitted': { 
-            label: "📝 Submitted - Awaiting Reviewer",
+            label: "ðŸ“ Submitted - Awaiting Reviewer",
             bg: 'bg-blue-50', 
             text: 'text-blue-700' 
         },
         'pending': { 
-            label: "👀 Under Review by Reviewer",
+            label: "ðŸ‘€ Under Review by Reviewer",
             bg: 'bg-yellow-50', 
             text: 'text-yellow-700' 
         },
         'under_review': { 
-            label: "⏳ Being Reviewed",
+            label: "â³ Being Reviewed",
             bg: 'bg-orange-50', 
             text: 'text-orange-700' 
         },
         'reviewer_rejected': { 
-            label: 'Ã¢ÂÅ’ Rejected by Reviewer', 
+            label: 'ÃƒÂ¢Ã‚ÂÃ…â€™ Rejected by Reviewer', 
             bg: 'bg-red-50', 
             text: 'text-red-700' 
         },
         'admin_approved': { 
-            label: erpIntegrated ? 'Ã¢Å“â€¦ Fully Complete - ERP Integrated' : 'Ã¢ÂÂ³ Approved - Awaiting ERP Integration', 
+            label: erpIntegrated ? 'ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Fully Complete - ERP Integrated' : 'ÃƒÂ¢Ã‚ÂÃ‚Â³ Approved - Awaiting ERP Integration', 
             bg: erpIntegrated ? 'bg-green-50' : 'bg-blue-50', 
             text: erpIntegrated ? 'text-green-700' : 'text-blue-700' 
         },
@@ -11969,7 +12370,7 @@ function getApprovalStatusBadge(status, erpIntegrated = false) {
     };
     
     return badgeMap[status] || { 
-        label: `Ã°Å¸â€œâ€¹ Status: ${status ? status.replace('_', ' ') : 'Unknown'}`, 
+        label: `ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹ Status: ${status ? status.replace('_', ' ') : 'Unknown'}`, 
         bg: 'bg-gray-50', 
         text: 'text-gray-700' 
     };
