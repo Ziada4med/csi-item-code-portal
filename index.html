@@ -967,15 +967,17 @@
 
     <script>
         // Supabase configuration
-        const SUPABASE_URL = 'https://mvftaaxgdygeyzcvzqfr.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12ZnRhYXhnZHlnZXl6Y3Z6cWZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2MjI3OTQsImV4cCI6MjA3NDE5ODc5NH0.nj5c_AAEg4U2qlcE1vQDMWt0nfXpmUYR1lrTR6KCIDY';
-        
-        // Initialize supabase with safety check to prevent redeclaration errors
-        let supabase;
-        if (typeof window !== 'undefined' && window.supabase && !supabase) {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        }
+        // Supabase configuration
+const SUPABASE_URL = 'https://mvftaaxgdygeyzcvzqfr.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12ZnRhYXhnZHlnZXl6Y3Z6cWZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2MjI3OTQsImV4cCI6MjA3NDE5ODc5NH0.nj5c_AAEg4U2qlcE1vQDMWt0nfXpmUYR1lrTR6KCIDY';
 
+// Use window property to avoid "already declared" identifier errors
+if (window.supabase && !window.supabaseClient) {
+    window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+// Map the local variable to the global client instance
+var supabase = window.supabaseClient;
         // Global state
         let currentUser = null;
         let currentProject = null;
