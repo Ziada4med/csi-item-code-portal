@@ -148,6 +148,72 @@
         </div>
     </div>
 
+    <!-- Attribute Display Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center p-4 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-[95vw] min-h-[90vh] flex flex-col my-4">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Attribute Display Settings (Admin Only)</h2>
+            
+            <!-- Project Context -->
+            <div id="settings-context" class="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6 flex-shrink-0">
+                <h4 class="font-semibold text-blue-800 mb-2">Current Project</h4>
+                <p id="settings-project-info" class="text-sm text-blue-700">
+                    <!-- Will be updated by JavaScript -->
+                </p>
+            </div>
+            
+            <!-- Instructions -->
+            <div class="mb-6 flex-shrink-0">
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">Configure Attribute Display</h3>
+                <p class="text-sm text-gray-600">
+                    For each attribute, choose whether to include the attribute name in Description 2. 
+                    These settings apply to all users working on this project.
+                </p>
+            </div>
+            
+            <!-- Bulk Actions -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200 flex-shrink-0">
+                <h4 class="font-medium text-gray-700 mb-3">Bulk Actions</h4>
+                <div class="flex gap-4">
+                    <button id="bulk-include-all" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium">
+                        Include All Attribute Names
+                    </button>
+                    <button id="bulk-exclude-all" class="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-md text-sm font-medium">
+                        Exclude All Attribute Names (Values Only)
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Individual Attribute Settings - Much larger viewing area -->
+            <div class="flex-1 flex flex-col mb-6" style="min-height: 500px;">
+                <h4 class="font-medium text-gray-700 mb-4 text-lg flex-shrink-0">Individual Attribute Settings</h4>
+                <div class="flex-1 overflow-y-auto border-2 border-gray-300 rounded-lg bg-white" style="min-height: 450px;">
+                    <div id="attribute-settings-list" class="p-6 space-y-6">
+                        <!-- Attribute settings will be populated by JavaScript -->
+                        <div class="text-center text-gray-500 py-8">Loading attributes...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Preview Section -->
+            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-6 flex-shrink-0">
+                <h4 class="font-medium text-gray-700 mb-3 text-lg">Live Preview</h4>
+                <div id="attribute-format-preview" class="text-base text-gray-900 font-mono bg-white p-4 rounded border-2 border-gray-300">
+                    <!-- Preview will be updated by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Modal Actions -->
+            <div class="flex justify-end space-x-4 pt-4 border-t-2 border-gray-200 flex-shrink-0">
+                <button id="settings-cancel-btn" class="px-8 py-3 text-gray-600 hover:text-gray-800 border-2 border-gray-300 rounded-md font-medium">
+                    Cancel
+                </button>
+                <button id="settings-save-btn" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium">
+                    Save Settings
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Container -->
     <div id="main-container" class="container bg-white p-6 rounded-xl shadow-lg mt-8 hidden">
         <!-- Header -->
@@ -155,6 +221,9 @@
             <h1 class="text-3xl font-bold text-gray-800">CSI Item Code Generator</h1>
             <div class="flex items-center space-x-4">
                 <span id="user-info" class="text-sm text-gray-600"></span>
+                <button id="settings-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm hidden">
+                    ⚙️ Attribute Settings
+                </button>
                 <button id="logout-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm">
                     Logout
                 </button>
@@ -983,7 +1052,8 @@ var supabase = window.supabaseClient;
         let currentProject = null;
         let attributeSelections = {};
         let attributeOrder = [];
-        let includeHeaders = {};
+        let includeHeaders = {}; // Now used for per-attribute admin settings
+        let attributeDisplaySettings = {}; // New: stores per-attribute display settings
         let uomList = [];
         let countriesList = [];
         let allProjects = [];
@@ -1130,7 +1200,7 @@ function md5(string) {
 // Enhanced function to get next variation number including pending requests
 async function getNextVariationNumber(projectId, baseSignature) {
     try {
-        console.log('ðŸ” Getting next variation number for base signature:', baseSignature);
+        console.log('Ã°Å¸â€Â Getting next variation number for base signature:', baseSignature);
         
         // Query ALL variations (approved AND pending) with same base signature
         const { data: existingVariations, error } = await supabase
@@ -1266,14 +1336,14 @@ async function checkCombinationExists(combination, uom, country, modelNumber, un
                 // Base combination exists but different variation - can create variation
                 const baseItem = baseMatches.find(code => !code.is_variation) || baseMatches[0];
                 
-                console.log('ðŸ” Base combination exists, checking for ALL variations including pending...');
+                console.log('Ã°Å¸â€Â Base combination exists, checking for ALL variations including pending...');
                 
                 // Get next variation number using the enhanced function that checks ALL statuses
                 const nextVariationNumber = await getNextVariationNumber(currentProject.id, baseSignature);
                 
-                console.log('âœ… Base combination exists, can create variation');
-                console.log('ðŸ“Š Approved variations found:', baseMatches.length);
-                console.log('ðŸ”¢ Next variation number will be:', nextVariationNumber);
+                console.log('Ã¢Å“â€¦ Base combination exists, can create variation');
+                console.log('Ã°Å¸â€œÅ  Approved variations found:', baseMatches.length);
+                console.log('Ã°Å¸â€Â¢ Next variation number will be:', nextVariationNumber);
                 
                 return { 
                     exists: false, 
@@ -1569,8 +1639,9 @@ async function initializeApp() {
         
         // Show admin tab if admin
 if (currentUser.role === 'admin') {
-    console.log(' Admin user detected, showing admin tab');
+    console.log(' Admin user detected, showing admin tab and settings');
     document.getElementById('admin-tab').classList.remove('hidden');
+    document.getElementById('settings-btn').classList.remove('hidden');
 }
 
 // Show ERP tab if ERP data entry or admin
@@ -1623,6 +1694,14 @@ if (currentUser.role === 'erp_data_entry' || currentUser.role === 'admin') {
 
         console.log('Setting up event listeners...');
         setupEventListeners();
+        
+        // Load attribute display settings after everything else is set up
+        console.log('Loading attribute display settings...');
+        await loadAttributeDisplaySettings();
+        
+        // Initialize attribute settings modal (admin only)
+        console.log('Initializing attribute settings modal...');
+        initializeAttributeSettingsModal();
         
         console.log('App initialization completed successfully');
         
@@ -2514,6 +2593,11 @@ getNextSerialNumber().then(serial => {
     nextSerial = 1; // Fallback
     updatePreview();
 });
+
+// Load project-specific attribute display settings
+loadAttributeDisplaySettings().catch(error => {
+    console.error('Error loading attribute display settings for project:', error);
+});
     
     // CRITICAL FIX: Ensure we have an 'id' field for database queries
 // The RPC returns 'project_id', but we need 'id' for queries
@@ -2971,22 +3055,7 @@ function renderAttributes() {
                 </div>
         `;
 
-        // Add header checkbox for non-manual entry attributes
-        if (!attr.is_manual_entry) {
-            html += `
-                <div class="mb-2">
-                    <label class="flex items-center">
-                        <input type="checkbox" class="header-checkbox mr-2" 
-                               data-attr-id="${attr.attribute_id}"
-                               ${includeHeaders[attr.attribute_id] ? 'checked' : ''}
-                               <input type=\"checkbox\" class=\"header-checkbox mr-2\" 
-       data-attr-id=\"${attr.attribute_id}\"
-       ${includeHeaders[attr.attribute_id] ? 'checked' : ''}>
-                        <span class="text-sm text-gray-600">Include "${attr.attribute_name}" in Description 2</span>
-                    </label>
-                </div>
-            `;
-        }
+        // Header checkbox functionality removed - now controlled by global user preference
 
         html += '<div class="flex flex-wrap gap-3 mb-2">';;
 
@@ -3129,14 +3198,7 @@ if (attr.standard_values && Array.isArray(attr.standard_values) && attr.standard
         }
     });
 
-    // Add event listeners for header checkboxes (non-manual entry attributes only)
-    document.querySelectorAll('.header-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
-            const attrId = e.target.dataset.attrId;
-            includeHeaders[attrId] = e.target.checked;
-            updatePreview();
-        });
-    });
+    // Header checkbox event listeners removed - now controlled by global user preference
     
     console.log('Attributes rendered successfully');
 }
@@ -3566,7 +3628,7 @@ async function checkForDuplicates() {
             );
             
             if (exactDuplicate) {
-                console.log('ðŸš« EXACT DUPLICATE FOUND (same attributes + same UOM/manufacturer/model/country):', exactDuplicate.item_code);
+                console.log('Ã°Å¸Å¡Â« EXACT DUPLICATE FOUND (same attributes + same UOM/manufacturer/model/country):', exactDuplicate.item_code);
                 showDuplicateStatusEnhanced('approved_code', exactDuplicate.item_code, 'signature_based');
                 return true;
             }
@@ -3578,7 +3640,7 @@ async function checkForDuplicates() {
             );
             
             if (baseMatch) {
-                console.log('âœ… VARIATION DETECTED: Same attributes but different UOM/manufacturer/model/country');
+                console.log('Ã¢Å“â€¦ VARIATION DETECTED: Same attributes but different UOM/manufacturer/model/country');
                 console.log(`   Base item: ${baseMatch.item_code} (UOM: ${baseMatch.uom}, Manufacturer: ${baseMatch.manufacturer})`);
                 console.log(`   Your item will be: NEW VARIATION (UOM: ${uom}, Manufacturer: ${manufacturer})`);
                 // This is ALLOWED - it's a variation, not a duplicate
@@ -3621,7 +3683,7 @@ async function checkForDuplicates() {
                 const isFieldDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                 
                 if (isFieldDuplicate) {
-                    console.log('ðŸš« LEGACY FIELD DUPLICATE DETECTED:', {
+                    console.log('Ã°Å¸Å¡Â« LEGACY FIELD DUPLICATE DETECTED:', {
                         code: code.item_code,
                         attributesMatch,
                         uomMatch,
@@ -3666,7 +3728,7 @@ async function checkForDuplicates() {
             );
             
             if (exactRequestDuplicate) {
-                console.log('ðŸš« EXACT DUPLICATE FOUND in requests (same attributes + same UOM/manufacturer/model/country):', exactRequestDuplicate.item_code);
+                console.log('Ã°Å¸Å¡Â« EXACT DUPLICATE FOUND in requests (same attributes + same UOM/manufacturer/model/country):', exactRequestDuplicate.item_code);
                 showDuplicateStatusEnhanced('pending_request', exactRequestDuplicate.item_code, 'signature_based');
                 return true;
             }
@@ -3678,7 +3740,7 @@ async function checkForDuplicates() {
             );
             
             if (baseRequestMatch) {
-                console.log('âœ… PENDING VARIATION DETECTED: Same attributes but different UOM/manufacturer/model/country');
+                console.log('Ã¢Å“â€¦ PENDING VARIATION DETECTED: Same attributes but different UOM/manufacturer/model/country');
                 console.log(`   Pending item: ${baseRequestMatch.item_code} (UOM: ${baseRequestMatch.uom}, Manufacturer: ${baseRequestMatch.manufacturer})`);
                 console.log(`   Your item will be: NEW VARIATION (UOM: ${uom}, Manufacturer: ${manufacturer})`);
                 // This is ALLOWED - it's a variation, not a duplicate
@@ -3721,7 +3783,7 @@ async function checkForDuplicates() {
                 const isFieldDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                 
                 if (isFieldDuplicate) {
-                    console.log('ðŸš« LEGACY FIELD DUPLICATE DETECTED in requests:', {
+                    console.log('Ã°Å¸Å¡Â« LEGACY FIELD DUPLICATE DETECTED in requests:', {
                         code: req.item_code,
                         attributesMatch,
                         uomMatch,
@@ -3742,12 +3804,12 @@ async function checkForDuplicates() {
         }
         
         // No duplicates found
-        console.log('âœ… NO DUPLICATES FOUND - UNIQUE COMBINATION');
+        console.log('Ã¢Å“â€¦ NO DUPLICATES FOUND - UNIQUE COMBINATION');
         showUniqueStatusEnhanced(uom, country, modelNumber, manufacturer);
         return false;
         
     } catch (error) {
-        console.error("âš ï¸ Error in enhanced duplicate detection:", error);
+        console.error("Ã¢Å¡Â Ã¯Â¸Â Error in enhanced duplicate detection:", error);
         showErrorStatusEnhanced(error.message);
         return false; // Allow submission on error to avoid blocking due to technical issues
     }
@@ -3796,7 +3858,7 @@ function showDuplicateStatusEnhanced(type, itemCode, method) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.854-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
             </svg>
             <div class="text-red-800">
-                <div class="font-bold text-lg mb-2">âš ï¸ DUPLICATE DETECTED</div>
+                <div class="font-bold text-lg mb-2">Ã¢Å¡Â Ã¯Â¸Â DUPLICATE DETECTED</div>
                 <div class="mb-2">
                     This combination already exists as <strong>${formatDuplicateTypeEnhanced(type)}</strong>:
                 </div>
@@ -3807,7 +3869,7 @@ function showDuplicateStatusEnhanced(type, itemCode, method) {
                     Detection method: ${formatDetectionMethodEnhanced(method)}
                 </div>
                 <div class="text-red-600 font-medium text-sm">
-                    âš ï¸ Cannot submit identical combination. Please modify your selections.
+                    Ã¢Å¡Â Ã¯Â¸Â Cannot submit identical combination. Please modify your selections.
                 </div>
             </div>
         </div>
@@ -3853,13 +3915,13 @@ function showErrorStatusEnhanced(errorMessage) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
             <div class="text-yellow-800">
-                <div class="font-bold text-lg mb-2">âš ï¸ DUPLICATE CHECK ERROR</div>
+                <div class="font-bold text-lg mb-2">Ã¢Å¡Â Ã¯Â¸Â DUPLICATE CHECK ERROR</div>
                 <div class="mb-2">Error checking for duplicates:</div>
                 <div class="bg-yellow-200 p-2 rounded font-mono text-sm mb-2">
                     ${errorMessage}
                 </div>
                 <div class="text-yellow-600 font-medium text-sm">
-                    âš ï¸ Proceeding with caution. Manual verification recommended.
+                    Ã¢Å¡Â Ã¯Â¸Â Proceeding with caution. Manual verification recommended.
                 </div>
             </div>
         </div>
@@ -4016,7 +4078,10 @@ function generateDescription2() {
         const selection = attributeSelections[attr.attribute_id];
         
         if (selection && selection.value) {
-            if (includeHeaders[attr.attribute_id]) {
+            // Check per-attribute display setting
+            const includeAttributeName = attributeDisplaySettings[attr.attribute_id] !== false; // Default to true
+            
+            if (includeAttributeName) {
                 // Format: "Attribute Name: Value"
                 parts.push(`${attr.attribute_name}: ${selection.value}`);
             } else {
@@ -4114,7 +4179,7 @@ function getFormattedCombination() {
             .eq('is_blocked', false);
         
         if (finalApprovedError) {
-            console.error("âš ï¸ Final approved codes check error:", finalApprovedError);
+            console.error("Ã¢Å¡Â Ã¯Â¸Â Final approved codes check error:", finalApprovedError);
             alert('Final duplicate check failed: ' + finalApprovedError.message);
             return;
         }
@@ -4143,7 +4208,7 @@ function getFormattedCombination() {
                 const isTrueDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                 
                 if (attributesMatch && !isTrueDuplicate) {
-                    console.log('âœ… VARIATION ALLOWED: Same attributes but different variation fields');
+                    console.log('Ã¢Å“â€¦ VARIATION ALLOWED: Same attributes but different variation fields');
                     console.log(`   Existing: UOM=${code.uom}, Manufacturer=${code.manufacturer}, Model=${code.model_number}`);
                     console.log(`   New: UOM=${uom}, Manufacturer=${manufacturer}, Model=${modelNumber}`);
                 }
@@ -4152,7 +4217,7 @@ function getFormattedCombination() {
             });
             
             if (approvedDuplicate) {
-                console.log('ðŸš« FINAL CHECK BLOCKED - TRUE DUPLICATE:', approvedDuplicate);
+                console.log('Ã°Å¸Å¡Â« FINAL CHECK BLOCKED - TRUE DUPLICATE:', approvedDuplicate);
                 alert(`SUBMISSION BLOCKED\n\nEXACT DUPLICATE DETECTED: This combination already exists as approved code: ${approvedDuplicate.item_code}\n\nAll fields (attributes + UOM + manufacturer + model + country) are identical.\n\nPlease modify your combination and try again.`);
                 showDuplicateStatusEnhanced('approved_code', approvedDuplicate.item_code, 'field_based');
                 return;
@@ -4167,7 +4232,7 @@ function getFormattedCombination() {
             .in('status', ['pending', 'reviewer_approved']);
         
         if (finalRequestError) {
-            console.error("âš ï¸ Final requests check error:", finalRequestError);
+            console.error("Ã¢Å¡Â Ã¯Â¸Â Final requests check error:", finalRequestError);
             alert('Final duplicate check failed: ' + finalRequestError.message);
             return;
         }
@@ -4196,7 +4261,7 @@ function getFormattedCombination() {
                 const isTrueDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                 
                 if (attributesMatch && !isTrueDuplicate) {
-                    console.log('âœ… PENDING VARIATION ALLOWED: Same attributes but different variation fields');
+                    console.log('Ã¢Å“â€¦ PENDING VARIATION ALLOWED: Same attributes but different variation fields');
                     console.log(`   Pending: UOM=${req.uom}, Manufacturer=${req.manufacturer}, Model=${req.model_number}`);
                     console.log(`   New: UOM=${uom}, Manufacturer=${manufacturer}, Model=${modelNumber}`);
                 }
@@ -4205,7 +4270,7 @@ function getFormattedCombination() {
             });
             
             if (requestDuplicate) {
-                console.log('ðŸš« FINAL CHECK BLOCKED - TRUE DUPLICATE IN REQUESTS:', requestDuplicate);
+                console.log('Ã°Å¸Å¡Â« FINAL CHECK BLOCKED - TRUE DUPLICATE IN REQUESTS:', requestDuplicate);
                 alert(`SUBMISSION BLOCKED\n\nEXACT DUPLICATE DETECTED: This combination already exists as pending request: ${requestDuplicate.item_code}\n\nAll fields (attributes + UOM + manufacturer + model + country) are identical.\n\nPlease modify your combination and try again.`);
                 showDuplicateStatusEnhanced('pending_request', requestDuplicate.item_code, 'field_based');
                 return;
@@ -4215,7 +4280,7 @@ function getFormattedCombination() {
         console.log(' Final duplicate check passed - proceeding with submission');
         
     } catch (error) {
-        console.error("âš ï¸ Final duplicate check exception:", error);
+        console.error("Ã¢Å¡Â Ã¯Â¸Â Final duplicate check exception:", error);
         const proceed = confirm(`DUPLICATE CHECK FAILED\n\nError: ${error.message}\n\nDo you want to proceed anyway? (Not recommended)`);
         if (!proceed) {
             return;
@@ -4285,7 +4350,7 @@ function getFormattedCombination() {
                 .eq('is_blocked', false);
             
             if (submitApprovedError) {
-                console.error("âš ï¸ Submit approved check error:", submitApprovedError);
+                console.error("Ã¢Å¡Â Ã¯Â¸Â Submit approved check error:", submitApprovedError);
                 alert('Duplicate validation failed: ' + submitApprovedError.message);
                 return;
             }
@@ -4313,7 +4378,7 @@ function getFormattedCombination() {
                     const isTrueDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                     
                     if (attributesMatch && !isTrueDuplicate) {
-                        console.log('âœ… SUBMIT VARIATION ALLOWED: Same attributes but different variation fields');
+                        console.log('Ã¢Å“â€¦ SUBMIT VARIATION ALLOWED: Same attributes but different variation fields');
                         console.log(`   Existing: UOM=${code.uom}, Manufacturer=${code.manufacturer}`);
                         console.log(`   New: UOM=${uom}, Manufacturer=${manufacturer}`);
                     }
@@ -4322,7 +4387,7 @@ function getFormattedCombination() {
                 });
                 
                 if (approvedDuplicate) {
-                    console.log('ðŸš« SUBMIT CHECK BLOCKED - TRUE DUPLICATE:', approvedDuplicate);
+                    console.log('Ã°Å¸Å¡Â« SUBMIT CHECK BLOCKED - TRUE DUPLICATE:', approvedDuplicate);
                     alert(`SUBMISSION BLOCKED\n\nEXACT DUPLICATE: This combination already exists as approved code: ${approvedDuplicate.item_code}\n\nAll fields are identical. Please modify your combination.`);
                     showDuplicateStatusEnhanced('approved_code', approvedDuplicate.item_code, 'field_based');
                     return;
@@ -4337,7 +4402,7 @@ function getFormattedCombination() {
                 .in('status', ['pending', 'reviewer_approved']);
             
             if (submitRequestError) {
-                console.error("âš ï¸ Submit request check error:", submitRequestError);
+                console.error("Ã¢Å¡Â Ã¯Â¸Â Submit request check error:", submitRequestError);
                 alert('Duplicate validation failed: ' + submitRequestError.message);
                 return;
             }
@@ -4365,7 +4430,7 @@ function getFormattedCombination() {
                     const isTrueDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                     
                     if (attributesMatch && !isTrueDuplicate) {
-                        console.log('âœ… SUBMIT PENDING VARIATION ALLOWED: Same attributes but different variation fields');
+                        console.log('Ã¢Å“â€¦ SUBMIT PENDING VARIATION ALLOWED: Same attributes but different variation fields');
                         console.log(`   Pending: UOM=${req.uom}, Manufacturer=${req.manufacturer}`);
                         console.log(`   New: UOM=${uom}, Manufacturer=${manufacturer}`);
                     }
@@ -4374,7 +4439,7 @@ function getFormattedCombination() {
                 });
                 
                 if (requestDuplicate) {
-                    console.log('ðŸš« SUBMIT DUPLICATE CHECK BLOCKED (REQUEST):', requestDuplicate);
+                    console.log('Ã°Å¸Å¡Â« SUBMIT DUPLICATE CHECK BLOCKED (REQUEST):', requestDuplicate);
                     alert(`SUBMISSION BLOCKED\n\nExact duplicate detected: ${requestDuplicate.item_code} already exists as pending request\n\nAll fields are identical.`);
                     showDuplicateStatusEnhanced('pending_request', requestDuplicate.item_code, 'field_based');
                     return;
@@ -4834,7 +4899,7 @@ async function submitBlockRequest() {
             throw workflowError;
         }
 
-        console.log("ðŸ“Š Data loaded from unified workflow table:", (allWorkflowItems || []).length);
+        console.log("Ã°Å¸â€œÅ  Data loaded from unified workflow table:", (allWorkflowItems || []).length);
 
         // Transform for display compatibility
         historyData = (allWorkflowItems || []).map(item => ({
@@ -4844,7 +4909,7 @@ async function submitBlockRequest() {
             review_comments: item.reviewer_comments,
             // Determine display properties
             source: item.status === 'admin_approved' ? 'admin' : 'request',
-            sourceIcon: item.status === 'admin_approved' ? 'ðŸ“‹âœ…' : 'ðŸ“‹â³',
+            sourceIcon: item.status === 'admin_approved' ? 'Ã°Å¸â€œâ€¹Ã¢Å“â€¦' : 'Ã°Å¸â€œâ€¹Ã¢ÂÂ³',
             sourceDescription: item.status === 'admin_approved' ? 'Admin Generated' : 'User Request',
             isApproved: item.status === 'admin_approved',
             displayStatus: item.status,
@@ -4856,7 +4921,7 @@ async function submitBlockRequest() {
             } : null
         }));
         
-        console.log("âœ… Complete project history loaded:");
+        console.log("Ã¢Å“â€¦ Complete project history loaded:");
         console.log('  - Total records:', historyData.length);
         console.log('  - Pending items:', historyData.filter(h => h.status === 'pending').length);
         console.log('  - Reviewer approved:', historyData.filter(h => h.status === 'reviewer_approved').length);  
@@ -4934,7 +4999,7 @@ function renderHistoryTable() {
                             <span class="text-lg">${item.sourceIcon}</span>
                             <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">${item.sourceDescription}</span>
                             ${item.erpStatus && item.erpStatus.erp_integrated ? 
-                                `<span class="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded">âœ… ERP Integrated</span>` : ""}
+                                `<span class="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded">Ã¢Å“â€¦ ERP Integrated</span>` : ""}
                         </div>
                         <h4 class="text-lg font-semibold text-gray-900 font-mono">${item.item_code}</h4>
                         <div class="flex items-center mt-1">
@@ -5046,7 +5111,7 @@ function renderHistoryTable() {
                     ${item.erpStatus && item.erpStatus.erp_integrated && item.erpStatus.erp_integrated_at ? `
                         <div>
                             <span class="font-medium text-gray-600">ERP Integration:</span>
-                            <p class="text-green-800 bg-green-50 p-2 rounded border">âœ… Integrated on ${new Date(item.erpStatus.erp_integrated_at).toLocaleDateString()}</p>
+                            <p class="text-green-800 bg-green-50 p-2 rounded border">Ã¢Å“â€¦ Integrated on ${new Date(item.erpStatus.erp_integrated_at).toLocaleDateString()}</p>
                         </div>
                     ` : ''}
                 </div>
@@ -5075,7 +5140,7 @@ function renderHistoryTable() {
                 <td class="px-4 py-3 border-b text-sm">
                     <span class="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">${item.sourceDescription}</span>
                     ${item.erpStatus && item.erpStatus.erp_integrated ? 
-                        `<br><span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded mt-1 inline-block">âœ… ERP</span>` : ""}
+                        `<br><span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded mt-1 inline-block">Ã¢Å“â€¦ ERP</span>` : ""}
                 </td>
                 <td class="px-4 py-3 border-b text-sm font-mono text-blue-600">#${item.id}</td>
                 <td class="px-4 py-3 border-b text-sm">
@@ -8148,7 +8213,7 @@ async function loadUserRequests() {
             itemCodes: (codeRequests || []).map(req => ({
                 ...req,
                 type: 'Item Code',
-                typeIcon: 'ðŸ“‹',
+                typeIcon: 'Ã°Å¸â€œâ€¹',
                 title: req.item_code || 'Pending Code Generation',
                 subtitle: `${req.project?.division_code || ''} - ${req.project?.project_name || 'Unknown Project'}`,
                 erpStatus: erpStatusMap[req.item_code] || null
@@ -8172,7 +8237,7 @@ async function loadUserRequests() {
             manufacturers: (manufacturerRequests || []).map(req => ({
                 ...req,
                 type: 'Manufacturer',
-                typeIcon: 'ðŸš«',
+                typeIcon: 'Ã°Å¸Å¡Â«',
                 title: req.manufacturer_name,
                 subtitle: `${req.project?.project_name || 'Unknown Project'}`,
                 erpStatus: null // Manufacturer requests don't have direct ERP integration
@@ -8189,7 +8254,7 @@ async function loadUserRequests() {
             organizedRequests.standardValues.length +
             organizedRequests.manufacturers.length;
 
-        console.log("ðŸ“‹ Loaded comprehensive requests:", {
+        console.log("Ã°Å¸â€œâ€¹ Loaded comprehensive requests:", {
             itemCodes: organizedRequests.itemCodes.length,
             blockCombinations: organizedRequests.blockCombinations.length,
             standardValues: organizedRequests.standardValues.length,
@@ -8338,7 +8403,7 @@ function renderEnhancedRequestsCards(organizedRequests) {
     if (totalRequests === 0) {
         container.innerHTML = `
             <div class="text-center py-12">
-                <div class="text-gray-400 text-6xl mb-4">ðŸ“‹</div>
+                <div class="text-gray-400 text-6xl mb-4">Ã°Å¸â€œâ€¹</div>
                 <h3 class="text-xl font-medium text-gray-900 mb-2">No Requests Found</h3>
                 <p class="text-gray-500">You haven't made any requests yet. Start by generating an item code!</p>
             </div>
@@ -8376,7 +8441,7 @@ function renderEnhancedRequestsCards(organizedRequests) {
         renderRequestSection('Item Code Requests', 'itemCodes', organizedRequests.itemCodes, '', 'blue'),
         renderRequestSection('Combination Requests', 'blockCombinations', organizedRequests.blockCombinations, '', 'purple'),
         renderRequestSection('Standard Value Requests', 'standardValues', organizedRequests.standardValues, '', 'green'),
-        renderRequestSection('Manufacturer Requests', 'manufacturers', organizedRequests.manufacturers, 'ðŸ­', 'orange')
+        renderRequestSection('Manufacturer Requests', 'manufacturers', organizedRequests.manufacturers, 'Ã°Å¸ÂÂ­', 'orange')
     ].join('');
 
     container.innerHTML = summaryHtml + sectionsHtml;
@@ -8428,7 +8493,7 @@ function renderSingleRequestCard(request, sectionType, index, color) {
         <div class="mt-3 p-3 rounded-lg ${request.erpStatus.erp_integrated ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}">
             <div class="flex items-center gap-2">
                 <span class="text-sm font-medium ${request.erpStatus.erp_integrated ? 'text-green-800' : 'text-yellow-800'}">
-                    ${request.erpStatus.erp_integrated ? "âœ… ERP INTEGRATED" : "PENDING ERP INTEGRATION"}
+                    ${request.erpStatus.erp_integrated ? "Ã¢Å“â€¦ ERP INTEGRATED" : "PENDING ERP INTEGRATION"}
                 </span>
             </div>
             ${request.erpStatus.erp_integrated && request.erpStatus.erp_integrated_at ? `
@@ -8488,17 +8553,17 @@ function renderSingleRequestCard(request, sectionType, index, color) {
                     ${isApproved ? `
                         <button onclick="exportRequestToPDF('${sectionType}', ${index})" 
                                 class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors">
-                            ðŸ“„ PDF
+                            Ã°Å¸â€œâ€ž PDF
                         </button>
                         <button onclick="exportRequestToExcel('${sectionType}', ${index})" 
                                 class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors">
-                            ðŸ“Š Excel
+                            Ã°Å¸â€œÅ  Excel
                         </button>
                     ` : ''}
                     ${isRejected ? `
                         <button onclick="regenerateFromRejected('${sectionType}', ${index})" 
                                 class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded transition-colors">
-                            ðŸ”„ Regenerate Request
+                            Ã°Å¸â€â€ž Regenerate Request
                         </button>
                     ` : ''}
                 </div>
@@ -8611,11 +8676,11 @@ function getEnhancedStatusInfo(status) {
             description: 'Approved by reviewer, awaiting admin'
         },
         'admin_approved': {
-            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">âœ… Admin Approved</span>',
+            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Ã¢Å“â€¦ Admin Approved</span>',
             description: 'Fully approved'
         },
         'approved': {
-            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">âœ… Approved</span>',
+            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Ã¢Å“â€¦ Approved</span>',
             description: 'Fully approved'
         },
         'reviewer_rejected': {
@@ -8663,7 +8728,7 @@ function renderWorkflowProgress(status) {
                     <div class="flex items-center ${index < steps.length - 1 ? 'flex-1' : ''}">
                         <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium
                             ${isCompleted ? 'bg-green-500 text-white' : isActive ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-600'}">
-                            ${isCompleted ? "âœ…" : index + 1}
+                            ${isCompleted ? "Ã¢Å“â€¦" : index + 1}
                         </div>
                         <div class="ml-1 text-xs ${isCompleted ? 'text-green-600 font-medium' : isActive ? 'text-blue-600 font-medium' : 'text-gray-500'}">
                             ${step.name}
@@ -8824,7 +8889,7 @@ function generateEnhancedRequestPDF(request, sectionType) {
     workflowSteps.forEach((step, index) => {
         const isCompleted = completedSteps[index];
         doc.setFont(undefined, isCompleted ? 'bold' : 'normal');
-        doc.text(`${index + 1}. ${step} ${isCompleted ? "âœ…" : ""}`, 20, yPosition);
+        doc.text(`${index + 1}. ${step} ${isCompleted ? "Ã¢Å“â€¦" : ""}`, 20, yPosition);
         yPosition += 6;
     });
     
@@ -11242,7 +11307,7 @@ async function loadUserHistory() {
         if (!requests || requests.length === 0) {
             content.innerHTML = 
                 '<div class="text-center py-12">' +
-                    '<div class="text-gray-400 text-6xl mb-4">ðŸ“‹</div>' +
+                    '<div class="text-gray-400 text-6xl mb-4">Ã°Å¸â€œâ€¹</div>' +
                     '<h3 class="text-xl font-medium text-gray-900 mb-2">No Request History</h3>' +
                     '<p class="text-gray-500">You have not submitted any item code requests yet.</p>' +
                     '<p class="text-gray-400 text-sm mt-2">Start by generating your first item code!</p>' +
@@ -11410,7 +11475,7 @@ async function loadStandardValueRequests() {
         if (!requests || requests.length === 0) {
             content.innerHTML = 
                 '<div class="text-center py-12">' +
-                    '<div class="text-gray-400 text-6xl mb-4">ðŸ“‹</div>' +
+                    '<div class="text-gray-400 text-6xl mb-4">Ã°Å¸â€œâ€¹</div>' +
                     '<h3 class="text-xl font-medium text-gray-900 mb-2">No Standard Value Requests</h3>' +
                     '<p class="text-gray-500">You have not submitted any standard value requests yet.</p>' +
                     '<p class="text-gray-400 text-sm mt-2">Standard value requests allow you to add new values to dropdown lists!</p>' +
@@ -11531,7 +11596,7 @@ async function loadCombinationRequests() {
         if (!requests || requests.length === 0) {
             content.innerHTML = 
                 '<div class="text-center py-12">' +
-                    '<div class="text-gray-400 text-6xl mb-4">ðŸ”—</div>' +
+                    '<div class="text-gray-400 text-6xl mb-4">Ã°Å¸â€â€”</div>' +
                     '<h3 class="text-xl font-medium text-gray-900 mb-2">No Combination Requests</h3>' +
                     '<p class="text-gray-500">You have not submitted any combination requests yet.</p>' +
                     '<p class="text-gray-400 text-sm mt-2">Combination requests allow you to generate or block specific attribute combinations!</p>' +
@@ -11636,7 +11701,7 @@ function generateRequestCard(request, index) {
     
     // Debug logging for ERP status
     if (request.status === 'admin_approved') {
-        console.log(`ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â Debug - Request #${request.id}:`, {
+        console.log(`ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒâ€šÃ‚Â Debug - Request #${request.id}:`, {
             item_code: request.item_code,
             status: request.status,
             erp_integrated: request.erp_integrated,
@@ -11678,7 +11743,7 @@ function generateRequestCard(request, index) {
                     <span class="text-xs bg-white px-2 py-1 rounded-full">${getApprovalStage(request.status, request.erp_integrated)}</span>
                 </div>
                 
-                <!-- 4-Stage Progress Line: Submit ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Reviewer ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Admin ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ERP Integration -->
+                <!-- 4-Stage Progress Line: Submit ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Reviewer ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Admin ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ ERP Integration -->
                 <div class="relative">
                     <div class="flex items-center justify-between">
                         <!-- Stage 1: Submitted -->
@@ -11938,27 +12003,27 @@ function getApprovalLineColor(status) {
 function getApprovalStatusBadge(status, erpIntegrated = false) {
     const badgeMap = {
         'submitted': { 
-            label: "ðŸ“ Submitted - Awaiting Reviewer",
+            label: "Ã°Å¸â€œÂ Submitted - Awaiting Reviewer",
             bg: 'bg-blue-50', 
             text: 'text-blue-700' 
         },
         'pending': { 
-            label: "ðŸ‘€ Under Review by Reviewer",
+            label: "Ã°Å¸â€˜â‚¬ Under Review by Reviewer",
             bg: 'bg-yellow-50', 
             text: 'text-yellow-700' 
         },
         'under_review': { 
-            label: "â³ Being Reviewed",
+            label: "Ã¢ÂÂ³ Being Reviewed",
             bg: 'bg-orange-50', 
             text: 'text-orange-700' 
         },
         'reviewer_rejected': { 
-            label: 'ÃƒÂ¢Ã‚ÂÃ…â€™ Rejected by Reviewer', 
+            label: 'ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Rejected by Reviewer', 
             bg: 'bg-red-50', 
             text: 'text-red-700' 
         },
         'admin_approved': { 
-            label: erpIntegrated ? 'ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Fully Complete - ERP Integrated' : 'ÃƒÂ¢Ã‚ÂÃ‚Â³ Approved - Awaiting ERP Integration', 
+            label: erpIntegrated ? 'ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Fully Complete - ERP Integrated' : 'ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€šÃ‚Â³ Approved - Awaiting ERP Integration', 
             bg: erpIntegrated ? 'bg-green-50' : 'bg-blue-50', 
             text: erpIntegrated ? 'text-green-700' : 'text-blue-700' 
         },
@@ -11975,7 +12040,7 @@ function getApprovalStatusBadge(status, erpIntegrated = false) {
     };
     
     return badgeMap[status] || { 
-        label: `ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹ Status: ${status ? status.replace('_', ' ') : 'Unknown'}`, 
+        label: `ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹ Status: ${status ? status.replace('_', ' ') : 'Unknown'}`, 
         bg: 'bg-gray-50', 
         text: 'text-gray-700' 
     };
@@ -12296,6 +12361,415 @@ function generateCombinationRequestCard(request, index) {
 }
 
 // ===== END USER HISTORY TAB =====
+
+// ===== ATTRIBUTE DISPLAY SETTINGS MANAGEMENT =====
+
+// Load attribute display settings for current project
+async function loadAttributeDisplaySettings() {
+    if (!currentProject || !currentProject.project_id) {
+        console.log('No current project, using default settings');
+        attributeDisplaySettings = {};
+        return;
+    }
+    
+    try {
+        // Get attribute display settings for current project
+        const { data: settingsData, error } = await supabase
+            .from('attribute_display_settings')
+            .select('attribute_id, include_attribute_name')
+            .eq('project_id', currentProject.project_id);
+        
+        if (error) {
+            console.error('Error loading attribute display settings:', error);
+            attributeDisplaySettings = {};
+            return;
+        }
+        
+        // Convert array to object for quick lookup
+        attributeDisplaySettings = {};
+        if (settingsData && settingsData.length > 0) {
+            settingsData.forEach(setting => {
+                attributeDisplaySettings[setting.attribute_id] = setting.include_attribute_name;
+            });
+        }
+        
+        console.log(`Loaded attribute display settings for project ${currentProject.project_id}:`, attributeDisplaySettings);
+        
+    } catch (error) {
+        console.error('Error loading attribute display settings:', error);
+        attributeDisplaySettings = {};
+    }
+}
+
+// Save attribute display settings to database (admin only)
+async function saveAttributeDisplaySettings() {
+    if (!currentUser || currentUser.role !== 'admin') {
+        console.error('Only admin users can save attribute display settings');
+        return false;
+    }
+    
+    if (!currentProject || !currentProject.project_id) {
+        console.error('No current project selected');
+        return false;
+    }
+    
+    try {
+        const settingsToSave = [];
+        
+        // Prepare all attribute settings for upsert
+        Object.keys(attributeDisplaySettings).forEach(attributeId => {
+            settingsToSave.push({
+                project_id: currentProject.project_id,
+                attribute_id: parseInt(attributeId),
+                include_attribute_name: attributeDisplaySettings[attributeId],
+                updated_by: currentUser.id
+            });
+        });
+        
+        if (settingsToSave.length === 0) {
+            console.log('No settings to save');
+            return true;
+        }
+        
+        // Upsert all settings
+        const { error } = await supabase
+            .from('attribute_display_settings')
+            .upsert(settingsToSave, {
+                onConflict: 'project_id,attribute_id'
+            });
+        
+        if (error) {
+            console.error('Error saving attribute display settings:', error);
+            return false;
+        }
+        
+        console.log(`Saved ${settingsToSave.length} attribute display settings for project ${currentProject.project_id}`);
+        return true;
+        
+    } catch (error) {
+        console.error('Error saving attribute display settings:', error);
+        return false;
+    }
+}
+
+// Populate the settings modal with current project's attributes
+function populateAttributeSettingsModal() {
+    const projectInfoElement = document.getElementById('settings-project-info');
+    const attributesList = document.getElementById('attribute-settings-list');
+    
+    console.log('Populating attribute settings modal...');
+    console.log('Current project:', currentProject);
+    console.log('Current project attributes:', currentProject?.attributes);
+    
+    if (!currentProject) {
+        if (projectInfoElement) {
+            projectInfoElement.textContent = 'No project selected. Please select a project first.';
+        }
+        if (attributesList) {
+            attributesList.innerHTML = '<div class="text-center text-gray-500 py-8">No project selected</div>';
+        }
+        return;
+    }
+    
+    // Update project info
+    if (projectInfoElement) {
+        projectInfoElement.innerHTML = `
+            <strong>Project:</strong> ${currentProject.project_name}<br>
+            <strong>CSI Path:</strong> ${currentProject.division_code}-${currentProject.section_code}-${currentProject.detailed_section_code}-${currentProject.item_code}<br>
+            <span class="text-xs">Settings apply to all users working on this project.</span>
+        `;
+    }
+    
+    // Populate attributes list
+    if (!attributesList) {
+        console.error('Attributes list element not found!');
+        return;
+    }
+    
+    if (!currentProject.attributes || currentProject.attributes.length === 0) {
+        console.log('No attributes found for project');
+        attributesList.innerHTML = '<div class="text-center text-gray-500 py-8">No attributes found for this project</div>';
+        return;
+    }
+    
+    console.log(`Found ${currentProject.attributes.length} attributes:`, currentProject.attributes);
+    
+    let html = '';
+    currentProject.attributes.forEach((attr, index) => {
+        console.log(`Processing attribute ${index + 1}:`, attr);
+        
+        if (!attr || !attr.attribute_id) {
+            console.warn(`Skipping invalid attribute at index ${index}:`, attr);
+            return;
+        }
+        
+        const isIncluded = attributeDisplaySettings[attr.attribute_id] !== false; // Default to true
+        const attributeId = attr.attribute_id;
+        
+        html += `
+            <div class="border-2 border-gray-200 rounded-lg p-6 hover:bg-gray-50 transition-colors shadow-sm">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+                    <!-- Attribute Info -->
+                    <div class="lg:col-span-1">
+                        <h5 class="font-semibold text-gray-900 mb-3 text-lg">${attr.attribute_name || 'Unnamed Attribute'}</h5>
+                        <div class="flex flex-wrap gap-2">
+                            ${attr.is_mandatory 
+                                ? '<span class="text-xs bg-red-100 text-red-800 px-3 py-1 rounded-full font-medium">Mandatory</span>' 
+                                : '<span class="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full font-medium">Optional</span>'
+                            }
+                            ${attr.is_manual_entry 
+                                ? '<span class="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">Manual Entry</span>' 
+                                : '<span class="text-xs bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">Predefined Values</span>'
+                            }
+                        </div>
+                    </div>
+                    
+                    <!-- Format Controls -->
+                    <div class="lg:col-span-1">
+                        <h6 class="font-medium text-gray-700 mb-3">Display Format:</h6>
+                        <div class="space-y-3">
+                            <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors ${isIncluded ? 'bg-blue-50 border-blue-400' : ''}">
+                                <input type="radio" name="attr-${attributeId}" value="include" 
+                                       ${isIncluded ? 'checked' : ''} 
+                                       onchange="updateAttributeSetting(${attributeId}, true)"
+                                       class="mr-3 h-4 w-4">
+                                <div>
+                                    <div class="font-medium text-sm">Include Attribute Name</div>
+                                    <div class="text-xs text-gray-600">Show: "${attr.attribute_name || 'Attribute'}: [Value]"</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-orange-50 hover:border-orange-300 transition-colors ${!isIncluded ? 'bg-orange-50 border-orange-400' : ''}">
+                                <input type="radio" name="attr-${attributeId}" value="exclude" 
+                                       ${!isIncluded ? 'checked' : ''} 
+                                       onchange="updateAttributeSetting(${attributeId}, false)"
+                                       class="mr-3 h-4 w-4">
+                                <div>
+                                    <div class="font-medium text-sm">Values Only</div>
+                                    <div class="text-xs text-gray-600">Show: "[Value]"</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Current Format Preview -->
+                    <div class="lg:col-span-1">
+                        <h6 class="font-medium text-gray-700 mb-3">Current Setting:</h6>
+                        <div class="p-4 bg-gray-100 rounded-lg border">
+                            <div class="text-sm font-mono text-gray-900">
+                                ${isIncluded 
+                                    ? `<strong class="text-blue-600">"${attr.attribute_name || 'Attribute'}: [Value]"</strong>` 
+                                    : `<strong class="text-orange-600">"[Value]"</strong>`
+                                }
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                ${isIncluded ? 'Attribute name will be included' : 'Only the value will be shown'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    if (html === '') {
+        console.error('No HTML generated for attributes!');
+        html = '<div class="text-center text-red-500 py-8">Error: No valid attributes found</div>';
+    }
+    
+    console.log('Generated HTML length:', html.length);
+    console.log('First 200 chars of HTML:', html.substring(0, 200));
+    console.log('Setting innerHTML...');
+    
+    attributesList.innerHTML = html;
+    
+    console.log('HTML set. Attributes list now contains:', attributesList.children.length, 'elements');
+    
+    // Verify the HTML was actually set
+    setTimeout(() => {
+        console.log('Post-render check - Attributes list children:', attributesList.children.length);
+        if (attributesList.children.length === 0) {
+            console.error('CRITICAL: Attributes list is empty after render!');
+            // Try to recover
+            attributesList.innerHTML = '<div class="text-center text-red-500 py-8">Error: Failed to render attributes. Please refresh and try again.</div>';
+        }
+    }, 100);
+    
+    updateAttributeFormatPreview();
+}
+
+// Update individual attribute setting
+function updateAttributeSetting(attributeId, includeAttributeName) {
+    attributeDisplaySettings[attributeId] = includeAttributeName;
+    
+    // Update the format example for this specific attribute
+    const formatExamples = document.querySelectorAll(`input[name="attr-${attributeId}"]`).forEach(radio => {
+        const container = radio.closest('.border');
+        if (container) {
+            const formatDiv = container.querySelector('.text-xs.text-gray-500');
+            if (formatDiv && currentProject && currentProject.attributes) {
+                const attr = currentProject.attributes.find(a => a.attribute_id == attributeId);
+                if (attr) {
+                    formatDiv.innerHTML = includeAttributeName 
+                        ? `<strong>Format:</strong> "${attr.attribute_name}: [Value]"` 
+                        : `<strong>Format:</strong> "[Value]"`;
+                }
+            }
+        }
+    });
+    
+    updateAttributeFormatPreview();
+}
+
+// Update the format preview at the bottom of the modal
+function updateAttributeFormatPreview() {
+    const previewElement = document.getElementById('attribute-format-preview');
+    if (!previewElement || !currentProject || !currentProject.attributes) return;
+    
+    const sampleValues = {
+        'Material': 'Steel',
+        'Size': 'Large', 
+        'Color': 'Blue',
+        'Length': '10mm',
+        'Type': 'Premium'
+    };
+    
+    let parts = [];
+    currentProject.attributes.forEach(attr => {
+        const includeAttributeName = attributeDisplaySettings[attr.attribute_id] !== false;
+        const sampleValue = sampleValues[attr.attribute_name] || 'SampleValue';
+        
+        if (includeAttributeName) {
+            parts.push(`${attr.attribute_name}: ${sampleValue}`);
+        } else {
+            parts.push(sampleValue);
+        }
+    });
+    
+    const preview = parts.join(', ') + ', Model: ABC123';
+    previewElement.textContent = preview;
+}
+
+// Bulk actions
+function bulkSetAllAttributes(includeAttributeName) {
+    if (!currentProject || !currentProject.attributes) return;
+    
+    currentProject.attributes.forEach(attr => {
+        attributeDisplaySettings[attr.attribute_id] = includeAttributeName;
+    });
+    
+    // Re-populate the modal to reflect changes
+    populateAttributeSettingsModal();
+}
+
+// Settings modal event handlers (admin only)
+function initializeAttributeSettingsModal() {
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsModal = document.getElementById('settings-modal');
+    const settingsCancel = document.getElementById('settings-cancel-btn');
+    const settingsSave = document.getElementById('settings-save-btn');
+    const bulkIncludeAll = document.getElementById('bulk-include-all');
+    const bulkExcludeAll = document.getElementById('bulk-exclude-all');
+    
+    // Open settings modal (admin only, requires project)
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            console.log('Settings button clicked');
+            console.log('Current user:', currentUser);
+            console.log('Current project:', currentProject);
+            
+            if (currentUser.role !== 'admin') {
+                alert('Only administrators can access attribute settings.');
+                return;
+            }
+            
+            if (!currentProject) {
+                alert('Please select a project first to configure its attribute settings.');
+                return;
+            }
+            
+            console.log('About to populate settings modal...');
+            populateAttributeSettingsModal();
+            console.log('Settings modal populated, showing modal...');
+            settingsModal.classList.remove('hidden');
+        });
+    }
+    
+    // Close settings modal
+    if (settingsCancel) {
+        settingsCancel.addEventListener('click', () => {
+            settingsModal.classList.add('hidden');
+            // Reload original settings
+            loadAttributeDisplaySettings();
+        });
+    }
+    
+    // Save settings (admin only)
+    if (settingsSave) {
+        settingsSave.addEventListener('click', async () => {
+            if (currentUser.role !== 'admin') {
+                alert('Only administrators can save attribute settings.');
+                return;
+            }
+            
+            const saved = await saveAttributeDisplaySettings();
+            if (saved) {
+                settingsModal.classList.add('hidden');
+                // Update preview in main interface
+                updatePreview();
+                alert(`Attribute display settings saved successfully for "${currentProject.project_name}"!`);
+            } else {
+                alert('Error saving attribute settings. Please try again.');
+            }
+        });
+    }
+    
+    // Bulk actions
+    if (bulkIncludeAll) {
+        bulkIncludeAll.addEventListener('click', () => {
+            bulkSetAllAttributes(true);
+        });
+    }
+    
+    if (bulkExcludeAll) {
+        bulkExcludeAll.addEventListener('click', () => {
+            bulkSetAllAttributes(false);
+        });
+    }
+    
+    // Close modal when clicking outside
+    settingsModal.addEventListener('click', (e) => {
+        if (e.target === settingsModal) {
+            settingsModal.classList.add('hidden');
+            loadAttributeDisplaySettings(); // Reload original settings
+        }
+    });
+}
+
+// Make updateAttributeSetting globally available
+window.updateAttributeSetting = updateAttributeSetting;
+
+// Debug function - make it globally available for testing
+window.debugAttributeSettings = function() {
+    console.log('=== ATTRIBUTE SETTINGS DEBUG ===');
+    console.log('Current Project:', currentProject);
+    console.log('Current Project Attributes:', currentProject?.attributes);
+    console.log('Attributes length:', currentProject?.attributes?.length);
+    console.log('Attribute Display Settings:', attributeDisplaySettings);
+    
+    if (currentProject?.attributes) {
+        console.log('Detailed attributes:');
+        currentProject.attributes.forEach((attr, index) => {
+            console.log(`  ${index}: ID=${attr.attribute_id}, Name="${attr.attribute_name}", Mandatory=${attr.is_mandatory}, Manual=${attr.is_manual_entry}`);
+        });
+    }
+    
+    // Test modal population
+    console.log('Testing modal population...');
+    populateAttributeSettingsModal();
+};
+
+// ===== END ATTRIBUTE DISPLAY SETTINGS MANAGEMENT =====
 
     </script>
 </body>
