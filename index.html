@@ -121,6 +121,44 @@
             color: #6b7280;
             margin-top: 4px;
         }
+        
+        /* Master Search Field Styling */
+        #search-master {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border: 2px solid #3b82f6;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        #search-master:focus {
+            background: #ffffff;
+            border-color: #1d4ed8;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        #search-master::placeholder {
+            color: #6b7280;
+            font-weight: 400;
+        }
+        
+        /* Tag styling in search results */
+        .tag-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            margin: 1px;
+            background: #dbeafe;
+            color: #1e40af;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border: 1px solid #93c5fd;
+        }
+        
+        .tag-badge:hover {
+            background: #bfdbfe;
+            border-color: #60a5fa;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -148,72 +186,6 @@
         </div>
     </div>
 
-    <!-- Attribute Display Settings Modal -->
-    <div id="settings-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center p-4 hidden">
-        <div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-[95vw] min-h-[90vh] flex flex-col my-4">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">Attribute Display Settings (Admin Only)</h2>
-            
-            <!-- Project Context -->
-            <div id="settings-context" class="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6 flex-shrink-0">
-                <h4 class="font-semibold text-blue-800 mb-2">Current Project</h4>
-                <p id="settings-project-info" class="text-sm text-blue-700">
-                    <!-- Will be updated by JavaScript -->
-                </p>
-            </div>
-            
-            <!-- Instructions -->
-            <div class="mb-6 flex-shrink-0">
-                <h3 class="text-lg font-semibold text-gray-700 mb-2">Configure Attribute Display</h3>
-                <p class="text-sm text-gray-600">
-                    For each attribute, choose whether to include the attribute name in Description 2. 
-                    These settings apply to all users working on this project.
-                </p>
-            </div>
-            
-            <!-- Bulk Actions -->
-            <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200 flex-shrink-0">
-                <h4 class="font-medium text-gray-700 mb-3">Bulk Actions</h4>
-                <div class="flex gap-4">
-                    <button id="bulk-include-all" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium">
-                        Include All Attribute Names
-                    </button>
-                    <button id="bulk-exclude-all" class="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-md text-sm font-medium">
-                        Exclude All Attribute Names (Values Only)
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Individual Attribute Settings - Much larger viewing area -->
-            <div class="flex-1 flex flex-col mb-6" style="min-height: 500px;">
-                <h4 class="font-medium text-gray-700 mb-4 text-lg flex-shrink-0">Individual Attribute Settings</h4>
-                <div class="flex-1 overflow-y-auto border-2 border-gray-300 rounded-lg bg-white" style="min-height: 450px;">
-                    <div id="attribute-settings-list" class="p-6 space-y-6">
-                        <!-- Attribute settings will be populated by JavaScript -->
-                        <div class="text-center text-gray-500 py-8">Loading attributes...</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Preview Section -->
-            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-6 flex-shrink-0">
-                <h4 class="font-medium text-gray-700 mb-3 text-lg">Live Preview</h4>
-                <div id="attribute-format-preview" class="text-base text-gray-900 font-mono bg-white p-4 rounded border-2 border-gray-300">
-                    <!-- Preview will be updated by JavaScript -->
-                </div>
-            </div>
-            
-            <!-- Modal Actions -->
-            <div class="flex justify-end space-x-4 pt-4 border-t-2 border-gray-200 flex-shrink-0">
-                <button id="settings-cancel-btn" class="px-8 py-3 text-gray-600 hover:text-gray-800 border-2 border-gray-300 rounded-md font-medium">
-                    Cancel
-                </button>
-                <button id="settings-save-btn" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium">
-                    Save Settings
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- Main Container -->
     <div id="main-container" class="container bg-white p-6 rounded-xl shadow-lg mt-8 hidden">
         <!-- Header -->
@@ -221,9 +193,6 @@
             <h1 class="text-3xl font-bold text-gray-800">CSI Item Code Generator</h1>
             <div class="flex items-center space-x-4">
                 <span id="user-info" class="text-sm text-gray-600"></span>
-                <button id="settings-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm hidden">
-                    ⚙️ Attribute Settings
-                </button>
                 <button id="logout-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm">
                     Logout
                 </button>
@@ -304,7 +273,27 @@
     <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
         <h4 class="text-sm font-medium text-gray-700 mb-3">Advanced Project Search</h4>
         
+        <!-- Master Search Field (Full Width) -->
+        <div class="mb-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    🔍 Master Search
+                    <span class="text-xs font-normal text-gray-500">(searches across all fields simultaneously)</span>
+                </label>
+                <input type="text" id="search-master" placeholder="Search across all project data, tags, names, codes, attributes..." 
+                       class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-blue-50">
+            </div>
+        </div>
+        
+        <!-- Specific Search Fields -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Tags</label>
+                <input type="text" id="search-tags" placeholder="Search by project tags..." 
+                       class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-blue-500">
+                <div class="text-xs text-gray-500 mt-1">Search tags like 'electrical', 'HVAC', etc.</div>
+            </div>
+            
             <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">Project Name</label>
                 <input type="text" id="search-project-name" placeholder="Search by project name..." 
@@ -1052,8 +1041,7 @@ var supabase = window.supabaseClient;
         let currentProject = null;
         let attributeSelections = {};
         let attributeOrder = [];
-        let includeHeaders = {}; // Now used for per-attribute admin settings
-        let attributeDisplaySettings = {}; // New: stores per-attribute display settings
+        let includeHeaders = {};
         let uomList = [];
         let countriesList = [];
         let allProjects = [];
@@ -1639,9 +1627,8 @@ async function initializeApp() {
         
         // Show admin tab if admin
 if (currentUser.role === 'admin') {
-    console.log(' Admin user detected, showing admin tab and settings');
+    console.log(' Admin user detected, showing admin tab');
     document.getElementById('admin-tab').classList.remove('hidden');
-    document.getElementById('settings-btn').classList.remove('hidden');
 }
 
 // Show ERP tab if ERP data entry or admin
@@ -1695,14 +1682,6 @@ if (currentUser.role === 'erp_data_entry' || currentUser.role === 'admin') {
         console.log('Setting up event listeners...');
         setupEventListeners();
         
-        // Load attribute display settings after everything else is set up
-        console.log('Loading attribute display settings...');
-        await loadAttributeDisplaySettings();
-        
-        // Initialize attribute settings modal (admin only)
-        console.log('Initializing attribute settings modal...');
-        initializeAttributeSettingsModal();
-        
         console.log('App initialization completed successfully');
         
     } catch (error) {
@@ -1713,6 +1692,7 @@ if (currentUser.role === 'erp_data_entry' || currentUser.role === 'admin') {
         // Load approved projects and setup cascading dropdowns
 async function loadApprovedProjects() {
     try {
+        // First, load projects using the existing RPC
         const { data, error } = await supabase.rpc('get_all_approved_projects');
         
         if (error) {
@@ -1720,13 +1700,62 @@ async function loadApprovedProjects() {
             throw error;
         }
 
-        allProjects = data || [];
-        console.log('RAW PROJECT DATA:', allProjects);
+        let allProjectsData = data || [];
+        console.log('RAW PROJECT DATA:', allProjectsData);
+
+        // Try to enhance with tags data if available
+        try {
+            console.log('Attempting to enhance projects with tags...');
+            
+            // Get tags for approved projects using direct query
+            const { data: projectsWithTags, error: tagsError } = await supabase
+                .from('classification_projects')
+                .select('id, tags')
+                .eq('status', 'admin_approved')
+                .not('tags', 'is', null);
+            
+            if (!tagsError && projectsWithTags) {
+                console.log('Successfully loaded tags for', projectsWithTags.length, 'projects');
+                
+                // Create a map of project_id -> tags for quick lookup
+                const tagsMap = new Map();
+                projectsWithTags.forEach(project => {
+                    if (project.tags && project.tags.length > 0) {
+                        tagsMap.set(project.id, project.tags);
+                    }
+                });
+                
+                // Enhance project data with tags
+                allProjectsData = allProjectsData.map(project => ({
+                    ...project,
+                    tags: tagsMap.get(project.project_id) || []
+                }));
+                
+                console.log('Enhanced projects with tags:', allProjectsData.slice(0, 2));
+            } else {
+                console.log('Tags enhancement failed or no tags available:', tagsError);
+                // Ensure all projects have empty tags array
+                allProjectsData = allProjectsData.map(project => ({
+                    ...project,
+                    tags: []
+                }));
+            }
+        } catch (tagsError) {
+            console.warn('Failed to load tags, continuing without tag support:', tagsError);
+            // Ensure all projects have empty tags array
+            allProjectsData = allProjectsData.map(project => ({
+                ...project,
+                tags: []
+            }));
+        }
+
+        allProjects = allProjectsData;
 
         // Check what's actually in the first project
         if (allProjects.length > 0) {
             console.log('First project structure:', allProjects[0]);
             console.log('First project attributes:', allProjects[0].attributes);
+            console.log('First project tags:', allProjects[0].tags);
             console.log('=== ALL FIELD NAMES IN FIRST PROJECT ===');
             console.log('Available fields:', Object.keys(allProjects[0]));
             console.log('Division field value:', allProjects[0].division_code);
@@ -1753,6 +1782,11 @@ async function loadApprovedProjects() {
                 project.attributes = project.attributes.filter(attr => 
                     attr && attr.attribute_id && attr.attribute_name
                 );
+            }
+
+            // Ensure tags is always an array
+            if (!project.tags || !Array.isArray(project.tags)) {
+                project.tags = [];
             }
             
             return project;
@@ -2234,6 +2268,8 @@ function disableDropdown(elementId) {
 
 function clearAdvancedSearchInputs() {
     const searchInputs = [
+        'search-master',
+        'search-tags',
         'search-project-name',
         'search-creator', 
         'search-csi-code',
@@ -2351,6 +2387,8 @@ async function updateCascadingDropdownsForProject(project) {
 // Setup enhanced project search
 function setupProjectSearch() {
     const searchInputs = {
+        masterSearch: document.getElementById('search-master'),
+        tags: document.getElementById('search-tags'),
         projectName: document.getElementById('search-project-name'),
         creator: document.getElementById('search-creator'),
         csiCode: document.getElementById('search-csi-code'),
@@ -2363,14 +2401,18 @@ function setupProjectSearch() {
     
     // Add event listeners to all search inputs
     Object.values(searchInputs).forEach(input => {
-        input.addEventListener('input', debounce(performAdvancedSearch, 300));
-        input.addEventListener('focus', performAdvancedSearch);
+        if (input) { // Add null check for safety
+            input.addEventListener('input', debounce(performAdvancedSearch, 300));
+            input.addEventListener('focus', performAdvancedSearch);
+        }
     });
     
     // Clear search functionality
     clearBtn.addEventListener('click', () => {
         Object.values(searchInputs).forEach(input => {
-            input.value = '';
+            if (input) { // Add null check for safety
+                input.value = '';
+            }
         });
         resultsDropdown.classList.add('hidden');
     });
@@ -2394,11 +2436,13 @@ function setupProjectSearch() {
     }
     
     const criteria = {
-        projectName: searchInputs.projectName.value.toLowerCase().trim(),
-        creator: searchInputs.creator.value.toLowerCase().trim(),
-        csiCode: searchInputs.csiCode.value.toLowerCase().trim(),
-        attributeName: searchInputs.attributeName.value.toLowerCase().trim(),
-        standardValue: searchInputs.standardValue.value.toLowerCase().trim()
+        masterSearch: searchInputs.masterSearch?.value.toLowerCase().trim() || '',
+        tags: searchInputs.tags?.value.toLowerCase().trim() || '',
+        projectName: searchInputs.projectName?.value.toLowerCase().trim() || '',
+        creator: searchInputs.creator?.value.toLowerCase().trim() || '',
+        csiCode: searchInputs.csiCode?.value.toLowerCase().trim() || '',
+        attributeName: searchInputs.attributeName?.value.toLowerCase().trim() || '',
+        standardValue: searchInputs.standardValue?.value.toLowerCase().trim() || ''
     };
     
     console.log('Search criteria:', criteria);
@@ -2414,32 +2458,83 @@ function setupProjectSearch() {
     const filtered = allProjects.filter(project => {
         let matches = true;
         
-        // Project name search
-        if (criteria.projectName) {
+        // Master Search - searches across ALL fields
+        if (criteria.masterSearch) {
+            const masterSearchText = criteria.masterSearch;
+            
+            // Combine all searchable text from the project
+            const allProjectText = [
+                project.project_name || '',
+                project.creator_name || '',
+                project.division_code || '',
+                project.section_code || '',
+                project.detailed_section_code || '',
+                project.item_code || '',
+                project.division_description || '',
+                project.section_description || '',
+                project.detailed_section_description || '',
+                project.item_description || '',
+                project.additional_level_name || '',
+                project.additional_level_value || '',
+                // Add tags to master search
+                (project.tags && Array.isArray(project.tags) ? project.tags.join(' ') : ''),
+                // Add attribute names and values to master search
+                (project.attributes ? project.attributes.map(attr => {
+                    const attrText = [attr.attribute_name || ''];
+                    if (attr.standard_values && Array.isArray(attr.standard_values)) {
+                        attrText.push(...attr.standard_values.map(val => 
+                            typeof val === 'object' ? (val.name || val.value || '') : val
+                        ));
+                    }
+                    return attrText.join(' ');
+                }).join(' ') : '')
+            ].join(' ').toLowerCase();
+            
+            if (!allProjectText.includes(masterSearchText)) {
+                matches = false;
+            }
+        }
+        
+        // Tags search (specific field search)
+        if (criteria.tags && !criteria.masterSearch) {
+            if (!project.tags || !Array.isArray(project.tags)) {
+                matches = false;
+            } else {
+                const hasMatchingTag = project.tags.some(tag => 
+                    typeof tag === 'string' && tag.toLowerCase().includes(criteria.tags)
+                );
+                if (!hasMatchingTag) {
+                    matches = false;
+                }
+            }
+        }
+        
+        // Project name search (only if not using master search)
+        if (criteria.projectName && !criteria.masterSearch) {
             const projectName = (project.project_name || '').toLowerCase();
             if (!projectName.includes(criteria.projectName)) {
                 matches = false;
             }
         }
         
-        // Creator search (if available in project data)
-        if (criteria.creator) {
+        // Creator search (only if not using master search)
+        if (criteria.creator && !criteria.masterSearch) {
             const creatorName = (project.creator_name || '').toLowerCase();
             if (!creatorName.includes(criteria.creator)) {
                 matches = false;
             }
         }
         
-        // CSI Code search (search across all CSI levels)
-        if (criteria.csiCode) {
+        // CSI Code search (only if not using master search)
+        if (criteria.csiCode && !criteria.masterSearch) {
             const csiText = `${project.division_code || ''} ${project.section_code || ''} ${project.detailed_section_code || ''} ${project.item_code || ''}`.toLowerCase();
             if (!csiText.includes(criteria.csiCode)) {
                 matches = false;
             }
         }
         
-        // Attribute name search
-        if (criteria.attributeName && project.attributes) {
+        // Attribute name search (only if not using master search)
+        if (criteria.attributeName && !criteria.masterSearch && project.attributes) {
             const hasMatchingAttribute = project.attributes.some(attr => 
                 attr && attr.attribute_name && attr.attribute_name.toLowerCase().includes(criteria.attributeName)
             );
@@ -2448,13 +2543,14 @@ function setupProjectSearch() {
             }
         }
         
-        // Standard value search
-        if (criteria.standardValue && project.attributes) {
+        // Standard value search (only if not using master search)
+        if (criteria.standardValue && !criteria.masterSearch && project.attributes) {
             const hasMatchingValue = project.attributes.some(attr => 
                 attr && attr.standard_values && Array.isArray(attr.standard_values) && 
-                attr.standard_values.some(val => 
-                    val && val.name && val.name.toLowerCase().includes(criteria.standardValue)
-                )
+                attr.standard_values.some(val => {
+                    const valText = typeof val === 'object' ? (val.name || val.value || '') : val;
+                    return valText && valText.toString().toLowerCase().includes(criteria.standardValue);
+                })
             );
             if (!hasMatchingValue) {
                 matches = false;
@@ -2481,6 +2577,15 @@ let displayText = project.additional_level_value && project.additional_level_val
     : `${project.item_code} - ${project.item_description || 'No description'}`;
 
 const additionalLevelText = ''; // Remove this since it's now included in displayText
+
+            // Format tags for display
+            let tagsDisplay = '';
+            if (project.tags && Array.isArray(project.tags) && project.tags.length > 0) {
+                const tagsHtml = project.tags.map(tag => 
+                    `<span class="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full mr-1 mb-1">${tag}</span>`
+                ).join('');
+                tagsDisplay = `<div class="text-xs mt-2"><span class="text-gray-500">Tags:</span> ${tagsHtml}</div>`;
+            }
                 
             return `
                 <div class="project-option" onclick="selectProject(${project.project_id})">
@@ -2492,6 +2597,7 @@ const additionalLevelText = ''; // Remove this since it's now included in displa
     ${displayText}${additionalLevelText}
 </div>
 ${project.creator_name ? `<div class="text-xs text-blue-600">Creator: ${project.creator_name}</div>` : ''}
+${tagsDisplay}
 ${currentUser && currentUser.role === 'admin' ? `
     <div class="text-xs text-red-600">Admin View</div>
 ` : ''}
@@ -2592,11 +2698,6 @@ getNextSerialNumber().then(serial => {
     console.error('Error loading serial:', error);
     nextSerial = 1; // Fallback
     updatePreview();
-});
-
-// Load project-specific attribute display settings
-loadAttributeDisplaySettings().catch(error => {
-    console.error('Error loading attribute display settings for project:', error);
 });
     
     // CRITICAL FIX: Ensure we have an 'id' field for database queries
@@ -3055,7 +3156,22 @@ function renderAttributes() {
                 </div>
         `;
 
-        // Header checkbox functionality removed - now controlled by global user preference
+        // Add header checkbox for non-manual entry attributes
+        if (!attr.is_manual_entry) {
+            html += `
+                <div class="mb-2">
+                    <label class="flex items-center">
+                        <input type="checkbox" class="header-checkbox mr-2" 
+                               data-attr-id="${attr.attribute_id}"
+                               ${includeHeaders[attr.attribute_id] ? 'checked' : ''}
+                               <input type=\"checkbox\" class=\"header-checkbox mr-2\" 
+       data-attr-id=\"${attr.attribute_id}\"
+       ${includeHeaders[attr.attribute_id] ? 'checked' : ''}>
+                        <span class="text-sm text-gray-600">Include "${attr.attribute_name}" in Description 2</span>
+                    </label>
+                </div>
+            `;
+        }
 
         html += '<div class="flex flex-wrap gap-3 mb-2">';;
 
@@ -3198,7 +3314,14 @@ if (attr.standard_values && Array.isArray(attr.standard_values) && attr.standard
         }
     });
 
-    // Header checkbox event listeners removed - now controlled by global user preference
+    // Add event listeners for header checkboxes (non-manual entry attributes only)
+    document.querySelectorAll('.header-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            const attrId = e.target.dataset.attrId;
+            includeHeaders[attrId] = e.target.checked;
+            updatePreview();
+        });
+    });
     
     console.log('Attributes rendered successfully');
 }
@@ -4078,10 +4201,7 @@ function generateDescription2() {
         const selection = attributeSelections[attr.attribute_id];
         
         if (selection && selection.value) {
-            // Check per-attribute display setting
-            const includeAttributeName = attributeDisplaySettings[attr.attribute_id] !== false; // Default to true
-            
-            if (includeAttributeName) {
+            if (includeHeaders[attr.attribute_id]) {
                 // Format: "Attribute Name: Value"
                 parts.push(`${attr.attribute_name}: ${selection.value}`);
             } else {
@@ -12361,415 +12481,6 @@ function generateCombinationRequestCard(request, index) {
 }
 
 // ===== END USER HISTORY TAB =====
-
-// ===== ATTRIBUTE DISPLAY SETTINGS MANAGEMENT =====
-
-// Load attribute display settings for current project
-async function loadAttributeDisplaySettings() {
-    if (!currentProject || !currentProject.project_id) {
-        console.log('No current project, using default settings');
-        attributeDisplaySettings = {};
-        return;
-    }
-    
-    try {
-        // Get attribute display settings for current project
-        const { data: settingsData, error } = await supabase
-            .from('attribute_display_settings')
-            .select('attribute_id, include_attribute_name')
-            .eq('project_id', currentProject.project_id);
-        
-        if (error) {
-            console.error('Error loading attribute display settings:', error);
-            attributeDisplaySettings = {};
-            return;
-        }
-        
-        // Convert array to object for quick lookup
-        attributeDisplaySettings = {};
-        if (settingsData && settingsData.length > 0) {
-            settingsData.forEach(setting => {
-                attributeDisplaySettings[setting.attribute_id] = setting.include_attribute_name;
-            });
-        }
-        
-        console.log(`Loaded attribute display settings for project ${currentProject.project_id}:`, attributeDisplaySettings);
-        
-    } catch (error) {
-        console.error('Error loading attribute display settings:', error);
-        attributeDisplaySettings = {};
-    }
-}
-
-// Save attribute display settings to database (admin only)
-async function saveAttributeDisplaySettings() {
-    if (!currentUser || currentUser.role !== 'admin') {
-        console.error('Only admin users can save attribute display settings');
-        return false;
-    }
-    
-    if (!currentProject || !currentProject.project_id) {
-        console.error('No current project selected');
-        return false;
-    }
-    
-    try {
-        const settingsToSave = [];
-        
-        // Prepare all attribute settings for upsert
-        Object.keys(attributeDisplaySettings).forEach(attributeId => {
-            settingsToSave.push({
-                project_id: currentProject.project_id,
-                attribute_id: parseInt(attributeId),
-                include_attribute_name: attributeDisplaySettings[attributeId],
-                updated_by: currentUser.id
-            });
-        });
-        
-        if (settingsToSave.length === 0) {
-            console.log('No settings to save');
-            return true;
-        }
-        
-        // Upsert all settings
-        const { error } = await supabase
-            .from('attribute_display_settings')
-            .upsert(settingsToSave, {
-                onConflict: 'project_id,attribute_id'
-            });
-        
-        if (error) {
-            console.error('Error saving attribute display settings:', error);
-            return false;
-        }
-        
-        console.log(`Saved ${settingsToSave.length} attribute display settings for project ${currentProject.project_id}`);
-        return true;
-        
-    } catch (error) {
-        console.error('Error saving attribute display settings:', error);
-        return false;
-    }
-}
-
-// Populate the settings modal with current project's attributes
-function populateAttributeSettingsModal() {
-    const projectInfoElement = document.getElementById('settings-project-info');
-    const attributesList = document.getElementById('attribute-settings-list');
-    
-    console.log('Populating attribute settings modal...');
-    console.log('Current project:', currentProject);
-    console.log('Current project attributes:', currentProject?.attributes);
-    
-    if (!currentProject) {
-        if (projectInfoElement) {
-            projectInfoElement.textContent = 'No project selected. Please select a project first.';
-        }
-        if (attributesList) {
-            attributesList.innerHTML = '<div class="text-center text-gray-500 py-8">No project selected</div>';
-        }
-        return;
-    }
-    
-    // Update project info
-    if (projectInfoElement) {
-        projectInfoElement.innerHTML = `
-            <strong>Project:</strong> ${currentProject.project_name}<br>
-            <strong>CSI Path:</strong> ${currentProject.division_code}-${currentProject.section_code}-${currentProject.detailed_section_code}-${currentProject.item_code}<br>
-            <span class="text-xs">Settings apply to all users working on this project.</span>
-        `;
-    }
-    
-    // Populate attributes list
-    if (!attributesList) {
-        console.error('Attributes list element not found!');
-        return;
-    }
-    
-    if (!currentProject.attributes || currentProject.attributes.length === 0) {
-        console.log('No attributes found for project');
-        attributesList.innerHTML = '<div class="text-center text-gray-500 py-8">No attributes found for this project</div>';
-        return;
-    }
-    
-    console.log(`Found ${currentProject.attributes.length} attributes:`, currentProject.attributes);
-    
-    let html = '';
-    currentProject.attributes.forEach((attr, index) => {
-        console.log(`Processing attribute ${index + 1}:`, attr);
-        
-        if (!attr || !attr.attribute_id) {
-            console.warn(`Skipping invalid attribute at index ${index}:`, attr);
-            return;
-        }
-        
-        const isIncluded = attributeDisplaySettings[attr.attribute_id] !== false; // Default to true
-        const attributeId = attr.attribute_id;
-        
-        html += `
-            <div class="border-2 border-gray-200 rounded-lg p-6 hover:bg-gray-50 transition-colors shadow-sm">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
-                    <!-- Attribute Info -->
-                    <div class="lg:col-span-1">
-                        <h5 class="font-semibold text-gray-900 mb-3 text-lg">${attr.attribute_name || 'Unnamed Attribute'}</h5>
-                        <div class="flex flex-wrap gap-2">
-                            ${attr.is_mandatory 
-                                ? '<span class="text-xs bg-red-100 text-red-800 px-3 py-1 rounded-full font-medium">Mandatory</span>' 
-                                : '<span class="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full font-medium">Optional</span>'
-                            }
-                            ${attr.is_manual_entry 
-                                ? '<span class="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">Manual Entry</span>' 
-                                : '<span class="text-xs bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">Predefined Values</span>'
-                            }
-                        </div>
-                    </div>
-                    
-                    <!-- Format Controls -->
-                    <div class="lg:col-span-1">
-                        <h6 class="font-medium text-gray-700 mb-3">Display Format:</h6>
-                        <div class="space-y-3">
-                            <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors ${isIncluded ? 'bg-blue-50 border-blue-400' : ''}">
-                                <input type="radio" name="attr-${attributeId}" value="include" 
-                                       ${isIncluded ? 'checked' : ''} 
-                                       onchange="updateAttributeSetting(${attributeId}, true)"
-                                       class="mr-3 h-4 w-4">
-                                <div>
-                                    <div class="font-medium text-sm">Include Attribute Name</div>
-                                    <div class="text-xs text-gray-600">Show: "${attr.attribute_name || 'Attribute'}: [Value]"</div>
-                                </div>
-                            </label>
-                            
-                            <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-orange-50 hover:border-orange-300 transition-colors ${!isIncluded ? 'bg-orange-50 border-orange-400' : ''}">
-                                <input type="radio" name="attr-${attributeId}" value="exclude" 
-                                       ${!isIncluded ? 'checked' : ''} 
-                                       onchange="updateAttributeSetting(${attributeId}, false)"
-                                       class="mr-3 h-4 w-4">
-                                <div>
-                                    <div class="font-medium text-sm">Values Only</div>
-                                    <div class="text-xs text-gray-600">Show: "[Value]"</div>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <!-- Current Format Preview -->
-                    <div class="lg:col-span-1">
-                        <h6 class="font-medium text-gray-700 mb-3">Current Setting:</h6>
-                        <div class="p-4 bg-gray-100 rounded-lg border">
-                            <div class="text-sm font-mono text-gray-900">
-                                ${isIncluded 
-                                    ? `<strong class="text-blue-600">"${attr.attribute_name || 'Attribute'}: [Value]"</strong>` 
-                                    : `<strong class="text-orange-600">"[Value]"</strong>`
-                                }
-                            </div>
-                            <div class="text-xs text-gray-500 mt-1">
-                                ${isIncluded ? 'Attribute name will be included' : 'Only the value will be shown'}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    
-    if (html === '') {
-        console.error('No HTML generated for attributes!');
-        html = '<div class="text-center text-red-500 py-8">Error: No valid attributes found</div>';
-    }
-    
-    console.log('Generated HTML length:', html.length);
-    console.log('First 200 chars of HTML:', html.substring(0, 200));
-    console.log('Setting innerHTML...');
-    
-    attributesList.innerHTML = html;
-    
-    console.log('HTML set. Attributes list now contains:', attributesList.children.length, 'elements');
-    
-    // Verify the HTML was actually set
-    setTimeout(() => {
-        console.log('Post-render check - Attributes list children:', attributesList.children.length);
-        if (attributesList.children.length === 0) {
-            console.error('CRITICAL: Attributes list is empty after render!');
-            // Try to recover
-            attributesList.innerHTML = '<div class="text-center text-red-500 py-8">Error: Failed to render attributes. Please refresh and try again.</div>';
-        }
-    }, 100);
-    
-    updateAttributeFormatPreview();
-}
-
-// Update individual attribute setting
-function updateAttributeSetting(attributeId, includeAttributeName) {
-    attributeDisplaySettings[attributeId] = includeAttributeName;
-    
-    // Update the format example for this specific attribute
-    const formatExamples = document.querySelectorAll(`input[name="attr-${attributeId}"]`).forEach(radio => {
-        const container = radio.closest('.border');
-        if (container) {
-            const formatDiv = container.querySelector('.text-xs.text-gray-500');
-            if (formatDiv && currentProject && currentProject.attributes) {
-                const attr = currentProject.attributes.find(a => a.attribute_id == attributeId);
-                if (attr) {
-                    formatDiv.innerHTML = includeAttributeName 
-                        ? `<strong>Format:</strong> "${attr.attribute_name}: [Value]"` 
-                        : `<strong>Format:</strong> "[Value]"`;
-                }
-            }
-        }
-    });
-    
-    updateAttributeFormatPreview();
-}
-
-// Update the format preview at the bottom of the modal
-function updateAttributeFormatPreview() {
-    const previewElement = document.getElementById('attribute-format-preview');
-    if (!previewElement || !currentProject || !currentProject.attributes) return;
-    
-    const sampleValues = {
-        'Material': 'Steel',
-        'Size': 'Large', 
-        'Color': 'Blue',
-        'Length': '10mm',
-        'Type': 'Premium'
-    };
-    
-    let parts = [];
-    currentProject.attributes.forEach(attr => {
-        const includeAttributeName = attributeDisplaySettings[attr.attribute_id] !== false;
-        const sampleValue = sampleValues[attr.attribute_name] || 'SampleValue';
-        
-        if (includeAttributeName) {
-            parts.push(`${attr.attribute_name}: ${sampleValue}`);
-        } else {
-            parts.push(sampleValue);
-        }
-    });
-    
-    const preview = parts.join(', ') + ', Model: ABC123';
-    previewElement.textContent = preview;
-}
-
-// Bulk actions
-function bulkSetAllAttributes(includeAttributeName) {
-    if (!currentProject || !currentProject.attributes) return;
-    
-    currentProject.attributes.forEach(attr => {
-        attributeDisplaySettings[attr.attribute_id] = includeAttributeName;
-    });
-    
-    // Re-populate the modal to reflect changes
-    populateAttributeSettingsModal();
-}
-
-// Settings modal event handlers (admin only)
-function initializeAttributeSettingsModal() {
-    const settingsBtn = document.getElementById('settings-btn');
-    const settingsModal = document.getElementById('settings-modal');
-    const settingsCancel = document.getElementById('settings-cancel-btn');
-    const settingsSave = document.getElementById('settings-save-btn');
-    const bulkIncludeAll = document.getElementById('bulk-include-all');
-    const bulkExcludeAll = document.getElementById('bulk-exclude-all');
-    
-    // Open settings modal (admin only, requires project)
-    if (settingsBtn) {
-        settingsBtn.addEventListener('click', () => {
-            console.log('Settings button clicked');
-            console.log('Current user:', currentUser);
-            console.log('Current project:', currentProject);
-            
-            if (currentUser.role !== 'admin') {
-                alert('Only administrators can access attribute settings.');
-                return;
-            }
-            
-            if (!currentProject) {
-                alert('Please select a project first to configure its attribute settings.');
-                return;
-            }
-            
-            console.log('About to populate settings modal...');
-            populateAttributeSettingsModal();
-            console.log('Settings modal populated, showing modal...');
-            settingsModal.classList.remove('hidden');
-        });
-    }
-    
-    // Close settings modal
-    if (settingsCancel) {
-        settingsCancel.addEventListener('click', () => {
-            settingsModal.classList.add('hidden');
-            // Reload original settings
-            loadAttributeDisplaySettings();
-        });
-    }
-    
-    // Save settings (admin only)
-    if (settingsSave) {
-        settingsSave.addEventListener('click', async () => {
-            if (currentUser.role !== 'admin') {
-                alert('Only administrators can save attribute settings.');
-                return;
-            }
-            
-            const saved = await saveAttributeDisplaySettings();
-            if (saved) {
-                settingsModal.classList.add('hidden');
-                // Update preview in main interface
-                updatePreview();
-                alert(`Attribute display settings saved successfully for "${currentProject.project_name}"!`);
-            } else {
-                alert('Error saving attribute settings. Please try again.');
-            }
-        });
-    }
-    
-    // Bulk actions
-    if (bulkIncludeAll) {
-        bulkIncludeAll.addEventListener('click', () => {
-            bulkSetAllAttributes(true);
-        });
-    }
-    
-    if (bulkExcludeAll) {
-        bulkExcludeAll.addEventListener('click', () => {
-            bulkSetAllAttributes(false);
-        });
-    }
-    
-    // Close modal when clicking outside
-    settingsModal.addEventListener('click', (e) => {
-        if (e.target === settingsModal) {
-            settingsModal.classList.add('hidden');
-            loadAttributeDisplaySettings(); // Reload original settings
-        }
-    });
-}
-
-// Make updateAttributeSetting globally available
-window.updateAttributeSetting = updateAttributeSetting;
-
-// Debug function - make it globally available for testing
-window.debugAttributeSettings = function() {
-    console.log('=== ATTRIBUTE SETTINGS DEBUG ===');
-    console.log('Current Project:', currentProject);
-    console.log('Current Project Attributes:', currentProject?.attributes);
-    console.log('Attributes length:', currentProject?.attributes?.length);
-    console.log('Attribute Display Settings:', attributeDisplaySettings);
-    
-    if (currentProject?.attributes) {
-        console.log('Detailed attributes:');
-        currentProject.attributes.forEach((attr, index) => {
-            console.log(`  ${index}: ID=${attr.attribute_id}, Name="${attr.attribute_name}", Mandatory=${attr.is_mandatory}, Manual=${attr.is_manual_entry}`);
-        });
-    }
-    
-    // Test modal population
-    console.log('Testing modal population...');
-    populateAttributeSettingsModal();
-};
-
-// ===== END ATTRIBUTE DISPLAY SETTINGS MANAGEMENT =====
 
     </script>
 </body>
