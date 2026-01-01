@@ -222,7 +222,7 @@
             <div class="flex items-center space-x-4">
                 <span id="user-info" class="text-sm text-gray-600"></span>
                 <button id="settings-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm hidden">
-                    ⚙️ Attribute Settings
+                    âš™ï¸ Attribute Settings
                 </button>
                 <button id="logout-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm">
                     Logout
@@ -647,66 +647,203 @@
 
         <!-- Search Tab -->
         <div id="search-tab" class="tab-content hidden">
-            <!-- Search Controls -->
-            <div class="bg-white p-6 rounded-lg shadow-md mb-6">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4">Search Approved Item Codes</h2>
+            <!-- Phase 1: Search Method Selection -->
+            <div id="search-method-selection" class="bg-white p-6 rounded-lg shadow-md mb-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Search Item Codes</h2>
                 
-                <!-- Advanced Search Form -->
+                <!-- Search Method Tabs -->
+                <div class="border-b border-gray-200 mb-4">
+                    <nav class="-mb-px flex space-x-8" aria-label="Search methods">
+                        <button id="project-search-tab" class="search-method-tab border-b-2 border-blue-500 py-2 px-1 text-blue-600 font-medium text-sm" data-method="project">
+                            Search by Project
+                        </button>
+                        <button id="itemcode-search-tab" class="search-method-tab border-b-2 border-transparent py-2 px-1 text-gray-500 hover:text-gray-700 font-medium text-sm" data-method="itemcode">
+                            Search by Item Code
+                        </button>
+                    </nav>
+                </div>
+                
+                <!-- Project Search Method -->
+                <div id="project-search-method" class="search-method-content">
+                    <h3 class="text-lg font-medium text-gray-700 mb-3">Search by Project</h3>
+                    <p class="text-gray-600 mb-4">Select a project to search within its item codes using attribute filters.</p>
+                    
+                    <!-- Project Search Controls -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="relative">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Project Name or Tag</label>
+                            <input type="text" id="project-search-input" placeholder="Search by project name or tag..." 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
+                            <!-- Project Search Dropdown -->
+                            <div id="project-search-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                <!-- Project options will be populated here -->
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-end">
+                            <button id="clear-project-search-btn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md">
+                                Clear Search
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Selected Project Display -->
+                    <div id="selected-project-search-display" class="hidden bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        <div class="flex items-center justify-between">
+                            <div id="selected-project-search-info">
+                                <!-- Selected project info will be populated here -->
+                            </div>
+                            <button id="change-project-btn" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                Change Project
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Item Code Search Method -->
+                <div id="itemcode-search-method" class="search-method-content hidden">
+                    <h3 class="text-lg font-medium text-gray-700 mb-3">Search by Item Code</h3>
+                    <p class="text-gray-600 mb-4">Enter full or partial item codes to search across all projects.</p>
+                    
+                    <!-- Item Code Search Controls -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Item Code(s)</label>
+                            <input type="text" id="direct-item-code-search" placeholder="Enter item code(s)..." 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
+                            <p class="text-xs text-gray-500 mt-1">Tip: Use commas to separate multiple codes (e.g., 032100-1-00001, 032100-1-00002)</p>
+                        </div>
+                        
+                        <div class="flex items-end">
+                            <button id="clear-itemcode-search-btn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md mr-2">
+                                Clear
+                            </button>
+                            <button id="search-itemcode-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
+                                Search
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Results Info for Item Code Search -->
+                    <div id="itemcode-search-info" class="hidden bg-green-50 p-4 rounded-lg border border-green-200">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span id="itemcode-results-text" class="text-green-700 font-medium">Search completed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 2: Attribute-Based Search (Initially Hidden) -->
+            <div id="attribute-search-phase" class="bg-white p-6 rounded-lg shadow-md mb-6 hidden">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Search by Attribute Values</h3>
+                
+                <!-- Attribute Search Grid -->
+                <div id="attribute-search-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                    <!-- Attribute search fields will be dynamically populated here -->
+                </div>
+                
+                <!-- Additional Search Filters -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Description 1</label>
-                        <input type="text" id="search-desc1" placeholder="Search description 1..." 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
+                    <div class="relative">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Manufacturer</label>
+                        <div class="relative">
+                            <input type="text" id="search-manufacturer" placeholder="Search manufacturer..." 
+                                   class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 cursor-pointer"
+                                   readonly onclick="toggleSearchDropdown('manufacturer-search-dropdown', 'search-manufacturer')">
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <!-- Manufacturer Search Dropdown -->
+                        <div id="manufacturer-search-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                            <div class="p-2">
+                                <input type="text" id="manufacturer-search-input" placeholder="Type to search..." 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 text-sm">
+                            </div>
+                            <div id="manufacturer-options" class="max-h-48 overflow-y-auto">
+                                <!-- Manufacturer options will be populated here -->
+                            </div>
+                        </div>
                     </div>
                     
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Description 2</label>
-                        <input type="text" id="search-desc2" placeholder="Search description 2..." 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Item Code</label>
-                        <input type="text" id="search-item-code" placeholder="Search item code..." 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
-                        <input type="text" id="search-project-name-codes" placeholder="Search project name..." 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">CSI Path</label>
-                        <input type="text" id="search-csi-path" placeholder="Search CSI path..." 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Country of Origin</label>
-                        <input type="text" id="search-country" placeholder="Search country..." 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Model Number</label>
-                        <input type="text" id="search-model" placeholder="Search model..." 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
-                    </div>
-                    
-                    <div>
+                    <div class="relative">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Unit of Measurement</label>
-                        <input type="text" id="search-uom" placeholder="Search UOM..." 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
+                        <div class="relative">
+                            <input type="text" id="search-uom" placeholder="Search UOM..." 
+                                   class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 cursor-pointer"
+                                   readonly onclick="toggleSearchDropdown('uom-search-dropdown', 'search-uom')">
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <!-- UOM Search Dropdown -->
+                        <div id="uom-search-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                            <div class="p-2">
+                                <input type="text" id="uom-search-input" placeholder="Type to search..." 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 text-sm">
+                            </div>
+                            <div id="uom-options" class="max-h-48 overflow-y-auto">
+                                <!-- UOM options will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="relative">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Country of Origin</label>
+                        <div class="relative">
+                            <input type="text" id="search-country" placeholder="Search country..." 
+                                   class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 cursor-pointer"
+                                   readonly onclick="toggleSearchDropdown('country-search-dropdown', 'search-country')">
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <!-- Country Search Dropdown -->
+                        <div id="country-search-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                            <div class="p-2">
+                                <input type="text" id="country-search-input" placeholder="Type to search..." 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 text-sm">
+                            </div>
+                            <div id="country-options" class="max-h-48 overflow-y-auto">
+                                <!-- Country options will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="relative">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Model Number</label>
+                        <div class="relative">
+                            <input type="text" id="search-model" placeholder="Search model..." 
+                                   class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 cursor-pointer"
+                                   readonly onclick="toggleSearchDropdown('model-search-dropdown', 'search-model')">
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <!-- Model Search Dropdown -->
+                        <div id="model-search-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                            <div class="p-2">
+                                <input type="text" id="model-search-input" placeholder="Type to search..." 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 text-sm">
+                            </div>
+                            <div id="model-options" class="max-h-48 overflow-y-auto">
+                                <!-- Model options will be populated here -->
+                            </div>
+                        </div>
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Attribute/Standard Value</label>
-                        <input type="text" id="search-attributes" placeholder="Search attributes/values..." 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
-                    </div>
-                <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">ERP Status</label>
                         <select id="search-erp-status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
                             <option value="">All Statuses</option>
@@ -716,21 +853,111 @@
                     </div>
                 </div>
                 
+                <!-- Unit Price Search Section -->
+                <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                    <h3 class="text-lg font-medium text-gray-800 mb-3">Unit Price Search</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Comparison Type</label>
+                            <select id="price-comparison-type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
+                                <option value="">No Price Filter</option>
+                                <option value="equal">Equal to</option>
+                                <option value="greater">Greater than</option>
+                                <option value="less">Less than</option>
+                                <option value="between">Between</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Price Value</label>
+                            <input type="number" id="search-price-value" placeholder="Enter price..." 
+                                   step="0.01" min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
+                        </div>
+                        
+                        <div id="price-max-container" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Maximum Price</label>
+                            <input type="number" id="search-price-max" placeholder="Enter max price..." 
+                                   step="0.01" min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                            <select id="search-currency" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
+                                <option value="">All Currencies</option>
+                                <option value="USD">USD</option>
+                                <option value="SAR">SAR</option>
+                                <option value="EUR">EUR</option>
+                                <option value="GBP">GBP</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Search Actions -->
-                <div class="flex space-x-3">
-                    <button id="perform-search-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md">
-                        Search
-                    </button>
-                    <button id="clear-search-codes-btn" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-md">
-                        Clear All
+                <div class="flex space-x-3 flex-wrap">
+                    <button id="clear-attribute-search-btn" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-md">
+                        Clear Filters
                     </button>
                     <button id="toggle-view-btn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-md">
                         Toggle Hierarchy View
                     </button>
                     <button id="toggle-table-view-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md">
-                        Switch to Table View
+                        Switch to Card View
                     </button>
                     <!-- Enhanced Export Controls -->
+                    <div class="relative inline-block">
+                        <button id="export-dropdown-btn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
+                            </svg>
+                            Export Options
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div id="export-dropdown-menu" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                            <div class="p-4">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-3">Export Item Codes</h3>
+                                
+                                <!-- Filter Selection -->
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Status:</label>
+                                    <select id="export-filter-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
+                                        <option value="all">All Approved Item Codes</option>
+                                        <option value="erp_integrated">ERP Integrated Codes Only</option>
+                                        <option value="erp_pending">Pending ERP Integration</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Export Format Options -->
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button id="export-excel-btn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        Excel (.xlsx)
+                                    </button>
+                                    <button id="export-pdf-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        PDF
+                                    </button>
+                                </div>
+                                
+                                <div class="mt-3 text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                                    <p><strong>Note:</strong> PDF exports include automatic text wrapping to ensure all content is clearly visible.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="refresh-search-btn" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-md">
+                        Refresh Data
+                    </button>
+                </div>
+            </div>
                     <div class="relative inline-block">
                         <button id="export-dropdown-btn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -783,8 +1010,25 @@
                 </div>
             </div>
             
-            <!-- View Toggle Info -->
-            <div id="view-info" class="mb-4 p-3 bg-blue-50 rounded-lg">
+            <!-- Enhanced Search Info -->
+            <div id="search-workflow-info" class="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                <div class="flex items-start">
+                    <svg class="w-6 h-6 text-blue-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                    <div>
+                        <h4 class="font-semibold text-blue-800 mb-1">Enhanced Project-Based Search</h4>
+                        <div class="text-blue-700 text-sm space-y-1">
+                            <p><span class="font-medium">Phase 1:</span> Select a project by name or tags to focus your search</p>
+                            <p><span class="font-medium">Phase 2:</span> Search approved item codes using specific attribute values</p>
+                            <p class="text-blue-600"><span class="font-medium">Tip:</span> This targeted approach helps you find exactly the item codes you need!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Results View Info (Hidden initially) -->
+            <div id="view-info" class="mb-4 p-3 bg-blue-50 rounded-lg hidden">
                 <div class="flex items-center">
                     <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -797,6 +1041,77 @@
             <div id="search-summary" class="mb-4 hidden">
                 <div class="bg-gray-50 p-3 rounded-lg">
                     <span id="results-count" class="text-gray-700 font-medium">0 item codes found</span>
+                </div>
+            </div>
+            
+            <!-- Search Results Controls (View Toggle, Export, etc.) -->
+            <div id="search-results-controls" class="bg-white p-4 rounded-lg shadow-md mb-4 hidden">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-2">
+                        <span id="view-description" class="text-sm text-gray-600">Table view with detailed information</span>
+                    </div>
+                    
+                    <div class="flex space-x-3 flex-wrap">
+                        <button id="clear-attribute-search-btn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm project-search-only">
+                            Clear Filters
+                        </button>
+                        <button id="toggle-view-btn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm project-search-only">
+                            Toggle Hierarchy View
+                        </button>
+                        <button id="toggle-table-view-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm" onclick="console.log('INLINE CLICK DETECTED'); toggleSearchTableView();">
+                            Switch to Card View
+                        </button>
+                        <!-- Enhanced Export Controls -->
+                        <div class="relative inline-block">
+                            <button id="export-dropdown-btn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-1 text-sm" onclick="console.log('EXPORT DROPDOWN CLICKED'); event.stopPropagation(); var menu = document.getElementById('export-dropdown-menu'); if(menu) menu.classList.toggle('hidden'); else console.log('Menu not found');">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="pointer-events: none;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
+                                </svg>
+                                <span style="pointer-events: none;">Export</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="pointer-events: none;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div id="export-dropdown-menu" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                                <div class="p-4">
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Export Item Codes</h3>
+                                    
+                                    <!-- Filter Selection -->
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Status:</label>
+                                        <select id="export-filter-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
+                                            <option value="all">All Approved Item Codes</option>
+                                            <option value="erp_integrated">ERP Integrated Codes Only</option>
+                                            <option value="erp_pending">Pending ERP Integration</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Export Format Options -->
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <button id="export-excel-btn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm flex items-center gap-2" onclick="console.log('EXCEL EXPORT CLICKED'); event.stopPropagation(); testExport('excel');">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="pointer-events: none;">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                            <span style="pointer-events: none;">Excel (.xlsx)</span>
+                                        </button>
+                                        <button id="export-pdf-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm flex items-center gap-2" onclick="console.log('PDF EXPORT CLICKED'); event.stopPropagation(); testExport('pdf');">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="pointer-events: none;">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
+                                            </svg>
+                                            <span style="pointer-events: none;">PDF</span>
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="mt-3 text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                                        <p><strong>Note:</strong> PDF exports include automatic text wrapping to ensure all content is clearly visible.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button id="refresh-search-btn" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm" onclick="console.log('REFRESH CLICKED'); event.stopPropagation(); window.location.reload();">
+                            <span style="pointer-events: none;">Refresh Data</span>
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -1200,7 +1515,7 @@ function md5(string) {
 // Enhanced function to get next variation number including pending requests
 async function getNextVariationNumber(projectId, baseSignature) {
     try {
-        console.log('Ã°Å¸â€Â Getting next variation number for base signature:', baseSignature);
+        console.log('ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â Getting next variation number for base signature:', baseSignature);
         
         // Query ALL variations (approved AND pending) with same base signature
         const { data: existingVariations, error } = await supabase
@@ -1336,14 +1651,14 @@ async function checkCombinationExists(combination, uom, country, modelNumber, un
                 // Base combination exists but different variation - can create variation
                 const baseItem = baseMatches.find(code => !code.is_variation) || baseMatches[0];
                 
-                console.log('Ã°Å¸â€Â Base combination exists, checking for ALL variations including pending...');
+                console.log('ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â Base combination exists, checking for ALL variations including pending...');
                 
                 // Get next variation number using the enhanced function that checks ALL statuses
                 const nextVariationNumber = await getNextVariationNumber(currentProject.id, baseSignature);
                 
-                console.log('Ã¢Å“â€¦ Base combination exists, can create variation');
-                console.log('Ã°Å¸â€œÅ  Approved variations found:', baseMatches.length);
-                console.log('Ã°Å¸â€Â¢ Next variation number will be:', nextVariationNumber);
+                console.log('ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Base combination exists, can create variation');
+                console.log('ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â  Approved variations found:', baseMatches.length);
+                console.log('ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â¢ Next variation number will be:', nextVariationNumber);
                 
                 return { 
                     exists: false, 
@@ -1581,6 +1896,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     console.log('All required elements found, setting up login form...');
     setupLoginForm();
+    
+    // Check for existing authentication session
+    console.log('🔍 Checking for existing user session...');
+    checkExistingAuth();
 });     
 
 // Setup login form
@@ -1592,6 +1911,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const password = document.getElementById('password').value;
                 
                 try {
+                    console.log('🔑 Attempting login...');
+                    
                     const { data, error } = await supabase.rpc('authenticate_user', {
                         email_param: email,
                         password_param: password
@@ -1601,6 +1922,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (data && data.success) {
                         currentUser = data.user;
+                        console.log('✅ Login successful for:', currentUser.username);
+                        
+                        // Store user in localStorage for session persistence
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                        console.log('💾 User session stored in localStorage');
+                        
                         document.getElementById('login-modal').classList.add('hidden');
                         document.getElementById('main-container').classList.remove('hidden');
                         initializeApp();
@@ -1608,10 +1935,41 @@ document.addEventListener('DOMContentLoaded', () => {
                         throw new Error(data?.message || 'Login failed');
                     }
                 } catch (error) {
+                    console.error('❌ Login error:', error);
                     document.getElementById('login-error').textContent = error.message;
                     document.getElementById('login-error').classList.remove('hidden');
                 }
             });
+        }
+
+        // Check for existing authentication on page load
+        function checkExistingAuth() {
+            console.log('🔍 Checking for existing authentication...');
+            
+            // Check if user is already authenticated through localStorage
+            const storedUser = localStorage.getItem('currentUser');
+            if (storedUser) {
+                try {
+                    currentUser = JSON.parse(storedUser);
+                    console.log('✅ Found stored user session:', currentUser.username);
+                    console.log('🚀 Auto-logging in user...');
+                    
+                    // Hide login modal and show main container
+                    document.getElementById('login-modal').classList.add('hidden');
+                    document.getElementById('main-container').classList.remove('hidden');
+                    
+                    // Initialize app with stored user
+                    initializeApp();
+                    return true;
+                } catch (error) {
+                    console.error('❌ Error parsing stored user:', error);
+                    // Clear corrupted data
+                    localStorage.removeItem('currentUser');
+                }
+            }
+            
+            console.log('ℹ️ No valid stored session found, showing login modal');
+            return false;
         }
 
         // Initialize app after login
@@ -3628,7 +3986,7 @@ async function checkForDuplicates() {
             );
             
             if (exactDuplicate) {
-                console.log('Ã°Å¸Å¡Â« EXACT DUPLICATE FOUND (same attributes + same UOM/manufacturer/model/country):', exactDuplicate.item_code);
+                console.log('ÃƒÂ°Ã…Â¸Ã…Â¡Ã‚Â« EXACT DUPLICATE FOUND (same attributes + same UOM/manufacturer/model/country):', exactDuplicate.item_code);
                 showDuplicateStatusEnhanced('approved_code', exactDuplicate.item_code, 'signature_based');
                 return true;
             }
@@ -3640,7 +3998,7 @@ async function checkForDuplicates() {
             );
             
             if (baseMatch) {
-                console.log('Ã¢Å“â€¦ VARIATION DETECTED: Same attributes but different UOM/manufacturer/model/country');
+                console.log('ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ VARIATION DETECTED: Same attributes but different UOM/manufacturer/model/country');
                 console.log(`   Base item: ${baseMatch.item_code} (UOM: ${baseMatch.uom}, Manufacturer: ${baseMatch.manufacturer})`);
                 console.log(`   Your item will be: NEW VARIATION (UOM: ${uom}, Manufacturer: ${manufacturer})`);
                 // This is ALLOWED - it's a variation, not a duplicate
@@ -3683,7 +4041,7 @@ async function checkForDuplicates() {
                 const isFieldDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                 
                 if (isFieldDuplicate) {
-                    console.log('Ã°Å¸Å¡Â« LEGACY FIELD DUPLICATE DETECTED:', {
+                    console.log('ÃƒÂ°Ã…Â¸Ã…Â¡Ã‚Â« LEGACY FIELD DUPLICATE DETECTED:', {
                         code: code.item_code,
                         attributesMatch,
                         uomMatch,
@@ -3728,7 +4086,7 @@ async function checkForDuplicates() {
             );
             
             if (exactRequestDuplicate) {
-                console.log('Ã°Å¸Å¡Â« EXACT DUPLICATE FOUND in requests (same attributes + same UOM/manufacturer/model/country):', exactRequestDuplicate.item_code);
+                console.log('ÃƒÂ°Ã…Â¸Ã…Â¡Ã‚Â« EXACT DUPLICATE FOUND in requests (same attributes + same UOM/manufacturer/model/country):', exactRequestDuplicate.item_code);
                 showDuplicateStatusEnhanced('pending_request', exactRequestDuplicate.item_code, 'signature_based');
                 return true;
             }
@@ -3740,7 +4098,7 @@ async function checkForDuplicates() {
             );
             
             if (baseRequestMatch) {
-                console.log('Ã¢Å“â€¦ PENDING VARIATION DETECTED: Same attributes but different UOM/manufacturer/model/country');
+                console.log('ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ PENDING VARIATION DETECTED: Same attributes but different UOM/manufacturer/model/country');
                 console.log(`   Pending item: ${baseRequestMatch.item_code} (UOM: ${baseRequestMatch.uom}, Manufacturer: ${baseRequestMatch.manufacturer})`);
                 console.log(`   Your item will be: NEW VARIATION (UOM: ${uom}, Manufacturer: ${manufacturer})`);
                 // This is ALLOWED - it's a variation, not a duplicate
@@ -3783,7 +4141,7 @@ async function checkForDuplicates() {
                 const isFieldDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                 
                 if (isFieldDuplicate) {
-                    console.log('Ã°Å¸Å¡Â« LEGACY FIELD DUPLICATE DETECTED in requests:', {
+                    console.log('ÃƒÂ°Ã…Â¸Ã…Â¡Ã‚Â« LEGACY FIELD DUPLICATE DETECTED in requests:', {
                         code: req.item_code,
                         attributesMatch,
                         uomMatch,
@@ -3804,12 +4162,12 @@ async function checkForDuplicates() {
         }
         
         // No duplicates found
-        console.log('Ã¢Å“â€¦ NO DUPLICATES FOUND - UNIQUE COMBINATION');
+        console.log('ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ NO DUPLICATES FOUND - UNIQUE COMBINATION');
         showUniqueStatusEnhanced(uom, country, modelNumber, manufacturer);
         return false;
         
     } catch (error) {
-        console.error("Ã¢Å¡Â Ã¯Â¸Â Error in enhanced duplicate detection:", error);
+        console.error("ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Error in enhanced duplicate detection:", error);
         showErrorStatusEnhanced(error.message);
         return false; // Allow submission on error to avoid blocking due to technical issues
     }
@@ -3858,7 +4216,7 @@ function showDuplicateStatusEnhanced(type, itemCode, method) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.854-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
             </svg>
             <div class="text-red-800">
-                <div class="font-bold text-lg mb-2">Ã¢Å¡Â Ã¯Â¸Â DUPLICATE DETECTED</div>
+                <div class="font-bold text-lg mb-2">ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â DUPLICATE DETECTED</div>
                 <div class="mb-2">
                     This combination already exists as <strong>${formatDuplicateTypeEnhanced(type)}</strong>:
                 </div>
@@ -3869,7 +4227,7 @@ function showDuplicateStatusEnhanced(type, itemCode, method) {
                     Detection method: ${formatDetectionMethodEnhanced(method)}
                 </div>
                 <div class="text-red-600 font-medium text-sm">
-                    Ã¢Å¡Â Ã¯Â¸Â Cannot submit identical combination. Please modify your selections.
+                    ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Cannot submit identical combination. Please modify your selections.
                 </div>
             </div>
         </div>
@@ -3915,13 +4273,13 @@ function showErrorStatusEnhanced(errorMessage) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
             <div class="text-yellow-800">
-                <div class="font-bold text-lg mb-2">Ã¢Å¡Â Ã¯Â¸Â DUPLICATE CHECK ERROR</div>
+                <div class="font-bold text-lg mb-2">ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â DUPLICATE CHECK ERROR</div>
                 <div class="mb-2">Error checking for duplicates:</div>
                 <div class="bg-yellow-200 p-2 rounded font-mono text-sm mb-2">
                     ${errorMessage}
                 </div>
                 <div class="text-yellow-600 font-medium text-sm">
-                    Ã¢Å¡Â Ã¯Â¸Â Proceeding with caution. Manual verification recommended.
+                    ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Proceeding with caution. Manual verification recommended.
                 </div>
             </div>
         </div>
@@ -4179,7 +4537,7 @@ function getFormattedCombination() {
             .eq('is_blocked', false);
         
         if (finalApprovedError) {
-            console.error("Ã¢Å¡Â Ã¯Â¸Â Final approved codes check error:", finalApprovedError);
+            console.error("ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Final approved codes check error:", finalApprovedError);
             alert('Final duplicate check failed: ' + finalApprovedError.message);
             return;
         }
@@ -4208,7 +4566,7 @@ function getFormattedCombination() {
                 const isTrueDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                 
                 if (attributesMatch && !isTrueDuplicate) {
-                    console.log('Ã¢Å“â€¦ VARIATION ALLOWED: Same attributes but different variation fields');
+                    console.log('ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ VARIATION ALLOWED: Same attributes but different variation fields');
                     console.log(`   Existing: UOM=${code.uom}, Manufacturer=${code.manufacturer}, Model=${code.model_number}`);
                     console.log(`   New: UOM=${uom}, Manufacturer=${manufacturer}, Model=${modelNumber}`);
                 }
@@ -4217,7 +4575,7 @@ function getFormattedCombination() {
             });
             
             if (approvedDuplicate) {
-                console.log('Ã°Å¸Å¡Â« FINAL CHECK BLOCKED - TRUE DUPLICATE:', approvedDuplicate);
+                console.log('ÃƒÂ°Ã…Â¸Ã…Â¡Ã‚Â« FINAL CHECK BLOCKED - TRUE DUPLICATE:', approvedDuplicate);
                 alert(`SUBMISSION BLOCKED\n\nEXACT DUPLICATE DETECTED: This combination already exists as approved code: ${approvedDuplicate.item_code}\n\nAll fields (attributes + UOM + manufacturer + model + country) are identical.\n\nPlease modify your combination and try again.`);
                 showDuplicateStatusEnhanced('approved_code', approvedDuplicate.item_code, 'field_based');
                 return;
@@ -4232,7 +4590,7 @@ function getFormattedCombination() {
             .in('status', ['pending', 'reviewer_approved']);
         
         if (finalRequestError) {
-            console.error("Ã¢Å¡Â Ã¯Â¸Â Final requests check error:", finalRequestError);
+            console.error("ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Final requests check error:", finalRequestError);
             alert('Final duplicate check failed: ' + finalRequestError.message);
             return;
         }
@@ -4261,7 +4619,7 @@ function getFormattedCombination() {
                 const isTrueDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                 
                 if (attributesMatch && !isTrueDuplicate) {
-                    console.log('Ã¢Å“â€¦ PENDING VARIATION ALLOWED: Same attributes but different variation fields');
+                    console.log('ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ PENDING VARIATION ALLOWED: Same attributes but different variation fields');
                     console.log(`   Pending: UOM=${req.uom}, Manufacturer=${req.manufacturer}, Model=${req.model_number}`);
                     console.log(`   New: UOM=${uom}, Manufacturer=${manufacturer}, Model=${modelNumber}`);
                 }
@@ -4270,7 +4628,7 @@ function getFormattedCombination() {
             });
             
             if (requestDuplicate) {
-                console.log('Ã°Å¸Å¡Â« FINAL CHECK BLOCKED - TRUE DUPLICATE IN REQUESTS:', requestDuplicate);
+                console.log('ÃƒÂ°Ã…Â¸Ã…Â¡Ã‚Â« FINAL CHECK BLOCKED - TRUE DUPLICATE IN REQUESTS:', requestDuplicate);
                 alert(`SUBMISSION BLOCKED\n\nEXACT DUPLICATE DETECTED: This combination already exists as pending request: ${requestDuplicate.item_code}\n\nAll fields (attributes + UOM + manufacturer + model + country) are identical.\n\nPlease modify your combination and try again.`);
                 showDuplicateStatusEnhanced('pending_request', requestDuplicate.item_code, 'field_based');
                 return;
@@ -4280,7 +4638,7 @@ function getFormattedCombination() {
         console.log(' Final duplicate check passed - proceeding with submission');
         
     } catch (error) {
-        console.error("Ã¢Å¡Â Ã¯Â¸Â Final duplicate check exception:", error);
+        console.error("ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Final duplicate check exception:", error);
         const proceed = confirm(`DUPLICATE CHECK FAILED\n\nError: ${error.message}\n\nDo you want to proceed anyway? (Not recommended)`);
         if (!proceed) {
             return;
@@ -4350,7 +4708,7 @@ function getFormattedCombination() {
                 .eq('is_blocked', false);
             
             if (submitApprovedError) {
-                console.error("Ã¢Å¡Â Ã¯Â¸Â Submit approved check error:", submitApprovedError);
+                console.error("ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Submit approved check error:", submitApprovedError);
                 alert('Duplicate validation failed: ' + submitApprovedError.message);
                 return;
             }
@@ -4378,7 +4736,7 @@ function getFormattedCombination() {
                     const isTrueDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                     
                     if (attributesMatch && !isTrueDuplicate) {
-                        console.log('Ã¢Å“â€¦ SUBMIT VARIATION ALLOWED: Same attributes but different variation fields');
+                        console.log('ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ SUBMIT VARIATION ALLOWED: Same attributes but different variation fields');
                         console.log(`   Existing: UOM=${code.uom}, Manufacturer=${code.manufacturer}`);
                         console.log(`   New: UOM=${uom}, Manufacturer=${manufacturer}`);
                     }
@@ -4387,7 +4745,7 @@ function getFormattedCombination() {
                 });
                 
                 if (approvedDuplicate) {
-                    console.log('Ã°Å¸Å¡Â« SUBMIT CHECK BLOCKED - TRUE DUPLICATE:', approvedDuplicate);
+                    console.log('ÃƒÂ°Ã…Â¸Ã…Â¡Ã‚Â« SUBMIT CHECK BLOCKED - TRUE DUPLICATE:', approvedDuplicate);
                     alert(`SUBMISSION BLOCKED\n\nEXACT DUPLICATE: This combination already exists as approved code: ${approvedDuplicate.item_code}\n\nAll fields are identical. Please modify your combination.`);
                     showDuplicateStatusEnhanced('approved_code', approvedDuplicate.item_code, 'field_based');
                     return;
@@ -4402,7 +4760,7 @@ function getFormattedCombination() {
                 .in('status', ['pending', 'reviewer_approved']);
             
             if (submitRequestError) {
-                console.error("Ã¢Å¡Â Ã¯Â¸Â Submit request check error:", submitRequestError);
+                console.error("ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Submit request check error:", submitRequestError);
                 alert('Duplicate validation failed: ' + submitRequestError.message);
                 return;
             }
@@ -4430,7 +4788,7 @@ function getFormattedCombination() {
                     const isTrueDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                     
                     if (attributesMatch && !isTrueDuplicate) {
-                        console.log('Ã¢Å“â€¦ SUBMIT PENDING VARIATION ALLOWED: Same attributes but different variation fields');
+                        console.log('ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ SUBMIT PENDING VARIATION ALLOWED: Same attributes but different variation fields');
                         console.log(`   Pending: UOM=${req.uom}, Manufacturer=${req.manufacturer}`);
                         console.log(`   New: UOM=${uom}, Manufacturer=${manufacturer}`);
                     }
@@ -4439,7 +4797,7 @@ function getFormattedCombination() {
                 });
                 
                 if (requestDuplicate) {
-                    console.log('Ã°Å¸Å¡Â« SUBMIT DUPLICATE CHECK BLOCKED (REQUEST):', requestDuplicate);
+                    console.log('ÃƒÂ°Ã…Â¸Ã…Â¡Ã‚Â« SUBMIT DUPLICATE CHECK BLOCKED (REQUEST):', requestDuplicate);
                     alert(`SUBMISSION BLOCKED\n\nExact duplicate detected: ${requestDuplicate.item_code} already exists as pending request\n\nAll fields are identical.`);
                     showDuplicateStatusEnhanced('pending_request', requestDuplicate.item_code, 'field_based');
                     return;
@@ -4899,7 +5257,7 @@ async function submitBlockRequest() {
             throw workflowError;
         }
 
-        console.log("Ã°Å¸â€œÅ  Data loaded from unified workflow table:", (allWorkflowItems || []).length);
+        console.log("ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â  Data loaded from unified workflow table:", (allWorkflowItems || []).length);
 
         // Transform for display compatibility
         historyData = (allWorkflowItems || []).map(item => ({
@@ -4909,7 +5267,7 @@ async function submitBlockRequest() {
             review_comments: item.reviewer_comments,
             // Determine display properties
             source: item.status === 'admin_approved' ? 'admin' : 'request',
-            sourceIcon: item.status === 'admin_approved' ? 'Ã°Å¸â€œâ€¹Ã¢Å“â€¦' : 'Ã°Å¸â€œâ€¹Ã¢ÂÂ³',
+            sourceIcon: item.status === 'admin_approved' ? 'ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦' : 'ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹ÃƒÂ¢Ã‚ÂÃ‚Â³',
             sourceDescription: item.status === 'admin_approved' ? 'Admin Generated' : 'User Request',
             isApproved: item.status === 'admin_approved',
             displayStatus: item.status,
@@ -4921,7 +5279,7 @@ async function submitBlockRequest() {
             } : null
         }));
         
-        console.log("Ã¢Å“â€¦ Complete project history loaded:");
+        console.log("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Complete project history loaded:");
         console.log('  - Total records:', historyData.length);
         console.log('  - Pending items:', historyData.filter(h => h.status === 'pending').length);
         console.log('  - Reviewer approved:', historyData.filter(h => h.status === 'reviewer_approved').length);  
@@ -4999,7 +5357,7 @@ function renderHistoryTable() {
                             <span class="text-lg">${item.sourceIcon}</span>
                             <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">${item.sourceDescription}</span>
                             ${item.erpStatus && item.erpStatus.erp_integrated ? 
-                                `<span class="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded">Ã¢Å“â€¦ ERP Integrated</span>` : ""}
+                                `<span class="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded">ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ ERP Integrated</span>` : ""}
                         </div>
                         <h4 class="text-lg font-semibold text-gray-900 font-mono">${item.item_code}</h4>
                         <div class="flex items-center mt-1">
@@ -5111,7 +5469,7 @@ function renderHistoryTable() {
                     ${item.erpStatus && item.erpStatus.erp_integrated && item.erpStatus.erp_integrated_at ? `
                         <div>
                             <span class="font-medium text-gray-600">ERP Integration:</span>
-                            <p class="text-green-800 bg-green-50 p-2 rounded border">Ã¢Å“â€¦ Integrated on ${new Date(item.erpStatus.erp_integrated_at).toLocaleDateString()}</p>
+                            <p class="text-green-800 bg-green-50 p-2 rounded border">ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Integrated on ${new Date(item.erpStatus.erp_integrated_at).toLocaleDateString()}</p>
                         </div>
                     ` : ''}
                 </div>
@@ -5140,7 +5498,7 @@ function renderHistoryTable() {
                 <td class="px-4 py-3 border-b text-sm">
                     <span class="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">${item.sourceDescription}</span>
                     ${item.erpStatus && item.erpStatus.erp_integrated ? 
-                        `<br><span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded mt-1 inline-block">Ã¢Å“â€¦ ERP</span>` : ""}
+                        `<br><span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded mt-1 inline-block">ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ ERP</span>` : ""}
                 </td>
                 <td class="px-4 py-3 border-b text-sm font-mono text-blue-600">#${item.id}</td>
                 <td class="px-4 py-3 border-b text-sm">
@@ -5831,7 +6189,16 @@ window.exportAllRequests = exportAllRequests;        // PDF Export
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
+            console.log('🚪 User logging out...');
+            
+            // Clear current user
             currentUser = null;
+            
+            // Clear stored session from localStorage
+            localStorage.removeItem('currentUser');
+            console.log('🗑️ User session cleared from localStorage');
+            
+            // Reload page to show login modal
             location.reload();
         });
     }
@@ -6218,6 +6585,7 @@ function refreshSearchCodesData() {
 
 let allApprovedCodes = [];
 let searchHierarchyView = true;
+let isSearchTableView = true; // Default to table view
 
 
 
@@ -6300,6 +6668,10 @@ async function loadAllApprovedCodes() {
             displaySearchResults(allApprovedCodes);
         }
         
+        // Load search dropdown data now that approved codes are available
+        console.log('📊 Loading search dropdown data with', allApprovedCodes.length, 'approved codes');
+        await loadSearchDropdownData();
+        
     } catch (error) {
         console.error('Error loading approved codes:', error);
         
@@ -6371,72 +6743,1240 @@ function showEmptyStateApproved() {
         emptyState.classList.remove('hidden');
     }
 }
+// Global variables for search functionality
+var selectedSearchProject = null;
+var projectSearchResults = [];
+
 function setupSearchCodesTab() {
-    const refreshBtn = document.getElementById('refresh-search-btn');
-if (refreshBtn) {
-    refreshBtn.addEventListener('click', refreshSearchCodesData);
-}
-    // Search input event listeners
-    const searchInputs = [
-        'search-desc1', 'search-desc2', 'search-item-code', 
-        'search-project-name-codes', 'search-csi-path', 'search-country',
-        'search-model', 'search-uom', 'search-attributes', 'search-erp-status'
-    ];
+    console.log('Setting up enhanced two-phase search codes tab...');
     
-    searchInputs.forEach(inputId => {
-        const input = document.getElementById(inputId);
-        if (input) {
-            input.addEventListener('input', debounce(performCodeSearch, 300));
+    // Setup project search functionality
+    setupProjectSearch();
+    
+    // Setup attribute search functionality
+    setupAttributeSearch();
+    
+    // Setup export functionality
+    setupSearchExportFunctionality();
+    
+    console.log('Two-phase search codes tab setup complete');
+}
+
+// Setup project search (Phase 1)
+function setupProjectSearch() {
+    const projectSearchInput = document.getElementById('project-search-input');
+    const projectSearchDropdown = document.getElementById('project-search-dropdown');
+    const clearProjectSearchBtn = document.getElementById('clear-project-search-btn');
+    const changeProjectBtn = document.getElementById('change-project-btn');
+    
+    if (!projectSearchInput) {
+        console.error('Project search input not found');
+        return;
+    }
+    
+    // Project search input event listeners
+    projectSearchInput.addEventListener('input', debounce(performProjectSearch, 300));
+    projectSearchInput.addEventListener('focus', () => {
+        if (projectSearchInput.value.length > 0) {
+            performProjectSearch();
         }
     });
     
-    // Button event listeners
-    const performSearchBtn = document.getElementById('perform-search-btn');
-    if (performSearchBtn) {
-        performSearchBtn.addEventListener('click', performCodeSearch);
+    // Clear project search
+    if (clearProjectSearchBtn) {
+        clearProjectSearchBtn.addEventListener('click', clearProjectSearch);
     }
     
-    const clearSearchBtn = document.getElementById('clear-search-codes-btn');
-    if (clearSearchBtn) {
-        clearSearchBtn.addEventListener('click', clearCodeSearch);
+    // Change project button
+    if (changeProjectBtn) {
+        changeProjectBtn.addEventListener('click', () => {
+            clearProjectSearch();
+            document.getElementById('project-search-input').focus();
+        });
     }
     
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#project-selection-phase')) {
+            if (projectSearchDropdown) {
+                projectSearchDropdown.classList.add('hidden');
+            }
+        }
+    });
+    
+    console.log('Project search setup complete');
+}
+
+// Setup attribute search (Phase 2)
+function setupAttributeSearch() {
+    const clearAttributeSearchBtn = document.getElementById('clear-attribute-search-btn');
     const toggleViewBtn = document.getElementById('toggle-view-btn');
+    const toggleTableViewBtn = document.getElementById('toggle-table-view-btn');
+    const refreshBtn = document.getElementById('refresh-search-btn');
+    
+    // Set initial button text since we default to table view
+    if (toggleTableViewBtn) {
+        toggleTableViewBtn.textContent = 'Switch to Card View';
+    }
+    
+    // Clear attribute search
+    if (clearAttributeSearchBtn) {
+        clearAttributeSearchBtn.addEventListener('click', clearAttributeSearch);
+    }
+    
+    // View toggle buttons
     if (toggleViewBtn) {
         toggleViewBtn.addEventListener('click', toggleSearchView);
     }
     
-    // Legacy export button (now triggers dropdown)
-    const exportBtn = document.getElementById('export-search-results-btn');
-    if (exportBtn) {
-        exportBtn.addEventListener('click', exportSearchResults);
+    if (toggleTableViewBtn) {
+        toggleTableViewBtn.addEventListener('click', toggleSearchTableView);
     }
     
-    // Enhanced export functionality
+    // Refresh button
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', refreshSearchCodesData);
+    }
+    
+    console.log('Attribute search setup complete');
+}
+
+// Setup export functionality
+function setupSearchExportFunctionality() {
     const exportDropdownBtn = document.getElementById('export-dropdown-btn');
+    const exportExcelBtn = document.getElementById('export-excel-btn');
+    const exportPdfBtn = document.getElementById('export-pdf-btn');
+    
     if (exportDropdownBtn) {
         exportDropdownBtn.addEventListener('click', toggleExportDropdown);
     }
     
-    const exportExcelBtn = document.getElementById('export-excel-btn');
     if (exportExcelBtn) {
         exportExcelBtn.addEventListener('click', () => {
             const filterType = document.getElementById('export-filter-select').value;
             exportFilteredToExcel(filterType);
-            // Close dropdown after export
             document.getElementById('export-dropdown-menu').classList.add('hidden');
         });
     }
     
-    const exportPdfBtn = document.getElementById('export-pdf-btn');
     if (exportPdfBtn) {
         exportPdfBtn.addEventListener('click', () => {
             const filterType = document.getElementById('export-filter-select').value;
             exportFilteredToPDF(filterType);
-            // Close dropdown after export
             document.getElementById('export-dropdown-menu').classList.add('hidden');
         });
     }
+    
+    console.log('Export functionality setup complete');
+}
+
+// ===== PROJECT SEARCH FUNCTIONS (PHASE 1) =====
+
+// Perform project search
+function performProjectSearch() {
+    const searchInput = document.getElementById('project-search-input');
+    const dropdown = document.getElementById('project-search-dropdown');
+    
+    if (!searchInput || !dropdown) {
+        console.error('Project search elements not found');
+        return;
+    }
+    
+    const searchTerm = searchInput.value.trim();
+    
+    if (searchTerm.length < 2) {
+        dropdown.classList.add('hidden');
+        return;
+    }
+    
+    try {
+        console.log('Searching projects with term:', searchTerm);
+        
+        // Use already loaded allProjects data for client-side filtering
+        if (!allProjects || allProjects.length === 0) {
+            console.warn('No projects loaded for search');
+            dropdown.innerHTML = `
+                <div class="p-3 text-gray-500 text-sm">
+                    No projects available. Please refresh the page.
+                </div>
+            `;
+            dropdown.classList.remove('hidden');
+            return;
+        }
+        
+        // Filter projects based on search term
+        const searchLower = searchTerm.toLowerCase();
+        const filteredProjects = allProjects.filter(project => {
+            // Search in project name
+            if (project.project_name && project.project_name.toLowerCase().includes(searchLower)) {
+                return true;
+            }
+            
+            // Search in item code
+            if (project.item_code && project.item_code.toLowerCase().includes(searchLower)) {
+                return true;
+            }
+            
+            // Search in tags if they exist
+            if (project.tags && Array.isArray(project.tags)) {
+                const tagsString = project.tags.join(' ').toLowerCase();
+                if (tagsString.includes(searchLower)) {
+                    return true;
+                }
+            }
+            
+            // Search in CSI codes
+            if (project.division_code && project.division_code.toLowerCase().includes(searchLower)) {
+                return true;
+            }
+            if (project.section_code && project.section_code.toLowerCase().includes(searchLower)) {
+                return true;
+            }
+            if (project.detailed_section_code && project.detailed_section_code.toLowerCase().includes(searchLower)) {
+                return true;
+            }
+            
+            return false;
+        }).slice(0, 10); // Limit to 10 results
+        
+        console.log('Filtered projects:', filteredProjects.length);
+        
+        projectSearchResults = filteredProjects;
+        displayProjectSearchResults(projectSearchResults);
+        
+    } catch (error) {
+        console.error('Error in project search:', error);
+    }
+}
+
+// Display project search results in dropdown
+function displayProjectSearchResults(projects) {
+    const dropdown = document.getElementById('project-search-dropdown');
+    
+    if (!dropdown) {
+        console.error('Project search dropdown not found');
+        return;
+    }
+    
+    if (!projects || projects.length === 0) {
+        dropdown.innerHTML = `
+            <div class="p-3 text-gray-500 text-sm">
+                No projects found matching your search
+            </div>
+        `;
+        dropdown.classList.remove('hidden');
+        return;
+    }
+    
+    const projectOptions = projects.map(project => {
+        const tags = Array.isArray(project.tags) ? project.tags.join(', ') : '';
+        const tagsDisplay = tags ? `<span class="text-xs text-blue-600">Tags: ${tags}</span>` : '';
+        
+        return `
+            <div class="project-option p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0" 
+                 data-project='${JSON.stringify(project)}'>
+                <div class="font-medium text-gray-800">${project.project_name || 'Unnamed Project'}</div>
+                <div class="text-sm text-gray-600">${project.item_code} - ${project.division_code}.${project.section_code}.${project.detailed_section_code}</div>
+                ${tagsDisplay}
+            </div>
+        `;
+    }).join('');
+    
+    dropdown.innerHTML = projectOptions;
+    dropdown.classList.remove('hidden');
+    
+    // Add click handlers for project selection
+    dropdown.querySelectorAll('.project-option').forEach(option => {
+        option.addEventListener('click', () => {
+            const projectData = JSON.parse(option.dataset.project);
+            selectSearchProject(projectData);
+        });
+    });
+}
+
+// Select a project and proceed to Phase 2
+function selectSearchProject(project) {
+    console.log('Selected project for search:', project);
+    
+    selectedSearchProject = project;
+    
+    // Hide project search dropdown
+    const dropdown = document.getElementById('project-search-dropdown');
+    if (dropdown) {
+        dropdown.classList.add('hidden');
+    }
+    
+    // Show selected project display
+    const selectedDisplay = document.getElementById('selected-project-search-display');
+    const selectedInfo = document.getElementById('selected-project-search-info');
+    
+    if (selectedDisplay && selectedInfo) {
+        const tags = Array.isArray(project.tags) ? project.tags.join(', ') : '';
+        const tagsDisplay = tags ? `<div class="text-sm text-blue-600 mt-1">Tags: ${tags}</div>` : '';
+        
+        selectedInfo.innerHTML = `
+            <div>
+                <div class="font-medium text-gray-800">${project.project_name || 'Unnamed Project'}</div>
+                <div class="text-sm text-gray-600">${project.item_code} - ${project.division_code}.${project.section_code}.${project.detailed_section_code}</div>
+                ${tagsDisplay}
+            </div>
+        `;
+        
+        selectedDisplay.classList.remove('hidden');
+    }
+    
+    // Load project attributes from already available data
+    const projectAttributes = project.attributes || [];
+    console.log('Project attributes from loaded data:', projectAttributes);
+    
+    displayAttributeSearchFields(projectAttributes);
+    
+    // Show attribute search phase
+    const attributePhase = document.getElementById('attribute-search-phase');
+    if (attributePhase) {
+        attributePhase.classList.remove('hidden');
+    }
+    
+    // Perform initial search to show all project items in table view
+    setTimeout(() => {
+        performAttributeBasedSearch();
+    }, 100);
+}
+
+// Display attribute search fields
+function displayAttributeSearchFields(attributes) {
+    const attributeGrid = document.getElementById('attribute-search-grid');
+    
+    if (!attributeGrid) {
+        console.error('Attribute search grid not found');
+        return;
+    }
+    
+    if (!attributes || attributes.length === 0) {
+        attributeGrid.innerHTML = `
+            <div class="col-span-full text-center py-6 text-gray-500">
+                No attributes found for this project
+            </div>
+        `;
+        return;
+    }
+    
+    // Debug: Log the first attribute to understand the structure
+    console.log('Sample attribute structure:', attributes[0]);
+    if (attributes[0]?.standard_values) {
+        console.log('Sample standard_values:', attributes[0].standard_values);
+        console.log('Type of standard_values:', typeof attributes[0].standard_values);
+    }
+    
+    const attributeFields = attributes.map((attr, index) => {
+        // Use attribute index as ID if attr.id is undefined
+        const attributeId = attr.id || `attr-${index}`;
+        
+        // Get standard values for dropdown options
+        let standardValues = [];
+        
+        if (attr.standard_values) {
+            let rawValues = attr.standard_values;
+            
+            // Handle different possible formats of standard_values
+            if (typeof rawValues === 'string') {
+                try {
+                    rawValues = JSON.parse(rawValues);
+                } catch (e) {
+                    rawValues = [rawValues];
+                }
+            }
+            
+            if (Array.isArray(rawValues)) {
+                // Extract the actual values from objects or use strings directly
+                standardValues = rawValues.map(item => {
+                    if (typeof item === 'object' && item !== null) {
+                        // Try common object properties that might contain the value
+                        return item.value || item.name || item.standard_value || 
+                               item.text || item.label || JSON.stringify(item);
+                    }
+                    return item;
+                }).filter(value => value !== undefined && value !== null && value !== '');
+            } else if (typeof rawValues === 'object') {
+                // Handle single object
+                const singleValue = rawValues.value || rawValues.name || 
+                                  rawValues.standard_value || JSON.stringify(rawValues);
+                standardValues = [singleValue];
+            } else {
+                // Handle primitive value
+                standardValues = [String(rawValues)];
+            }
+        }
+        
+        // Create dropdown options HTML
+        const dropdownOptions = standardValues.map(value => 
+            `<div class="dropdown-option p-2 hover:bg-blue-50 cursor-pointer text-sm border-b border-gray-100 last:border-b-0" data-value="${value}">
+                ${value}
+            </div>`
+        ).join('');
+        
+        const standardValuesForTooltip = standardValues.length > 0 ? 
+            `Available values: ${standardValues.join(', ')}` : 'No standard values available';
+        
+        return `
+            <div class="space-y-2">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Attribute Name</label>
+                    <input type="text" 
+                           class="w-full px-2 py-1 text-sm bg-gray-100 border border-gray-300 rounded cursor-not-allowed" 
+                           value="${attr.attribute_name}" 
+                           readonly 
+                           title="${standardValuesForTooltip}">
+                </div>
+                <div class="relative">
+                    <label class="block text-xs font-medium text-blue-600 mb-1">Search Value for ${attr.attribute_name}:</label>
+                    <div class="relative">
+                        <input type="text" 
+                               id="attr-search-${attributeId}" 
+                               placeholder="Type to search or select..." 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                               data-attribute-id="${attributeId}"
+                               data-attribute-name="${attr.attribute_name}"
+                               data-attribute-index="${index}"
+                               autocomplete="off">
+                        <div class="absolute right-2 top-2 pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <!-- Dropdown container -->
+                    <div id="dropdown-${attributeId}" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                        ${standardValues.length > 0 ? dropdownOptions : '<div class="p-3 text-gray-500 text-sm">No standard values available</div>'}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    attributeGrid.innerHTML = attributeFields;
+    
+    // Clear any existing event listeners first (to prevent duplicates)
+    const existingEventElements = attributeGrid.querySelectorAll('[data-dropdown-initialized]');
+    existingEventElements.forEach(element => {
+        element.removeAttribute('data-dropdown-initialized');
+    });
+    
+    // Add automatic search and dropdown functionality to all attribute search inputs
+    const attributeSearchInputs = attributeGrid.querySelectorAll('[id^="attr-search-"]');
+    attributeSearchInputs.forEach(input => {
+        // Skip if already initialized to prevent duplicate listeners
+        if (input.dataset.dropdownInitialized) return;
+        input.dataset.dropdownInitialized = 'true';
+        
+        const attributeId = input.dataset.attributeId;
+        const dropdown = document.getElementById(`dropdown-${attributeId}`);
+        
+        if (!dropdown) {
+            console.warn(`Dropdown not found for attribute ${attributeId}`);
+            return;
+        }
+        
+        // Auto-search functionality (debounced)
+        input.addEventListener('input', debounce(performAttributeBasedSearch, 300));
+        
+        // Focus handler - show all options when focusing
+        input.addEventListener('focus', function(e) {
+            e.stopPropagation();
+            showAllDropdownOptions(dropdown);
+            showDropdown(dropdown);
+        });
+        
+        // Input handler for filtering - but allow a brief delay for selections
+        input.addEventListener('input', function(e) {
+            e.stopPropagation();
+            // Small delay to allow dropdown selections to complete
+            setTimeout(() => {
+                filterDropdownOptions(this, dropdown);
+            }, 100);
+        });
+        
+        // Clear selection on double-click to allow easy reselection
+        input.addEventListener('dblclick', function(e) {
+            e.stopPropagation();
+            this.value = '';
+            showAllDropdownOptions(dropdown);
+            showDropdown(dropdown);
+            performAttributeBasedSearch(); // Trigger search with cleared value
+        });
+        
+        input.addEventListener('keydown', function(e) {
+            handleDropdownNavigation(e, dropdown, this);
+        });
+        
+        // Handle option selection with specific targeting
+        dropdown.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (e.target.classList.contains('dropdown-option')) {
+                const selectedValue = e.target.dataset.value;
+                console.log('=== DROPDOWN SELECTION ===');
+                console.log('Selected value:', selectedValue);
+                console.log('Input ID:', input.id);
+                console.log('Input data attributes:', {
+                    attributeId: input.dataset.attributeId,
+                    attributeName: input.dataset.attributeName,
+                    attributeIndex: input.dataset.attributeIndex
+                });
+                
+                input.value = selectedValue; // Use the captured input reference
+                console.log('Input value after selection:', input.value);
+                hideDropdown(dropdown);
+                
+                console.log('About to call performAttributeBasedSearch...');
+                performAttributeBasedSearch();
+            }
+        });
+    });
+    
+    // Also add event listeners to additional search fields 
+    // Note: Dropdown fields (manufacturer, uom, country, model) have their own event handlers
+    // Only add input/change listeners to non-dropdown fields
+    const additionalFields = ['search-erp-status', 'search-price-value', 'search-price-max', 'search-currency'];
+    additionalFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('input', debounce(performAttributeBasedSearch, 300));
+            field.addEventListener('change', performAttributeBasedSearch); // For select dropdown
+        }
+    });
+    
+    // The searchable dropdown fields (manufacturer, uom, country, model) trigger 
+    // performAttributeBasedSearch automatically when selections are made
+    
+    // Add event listener for price comparison type
+    const priceComparisonType = document.getElementById('price-comparison-type');
+    if (priceComparisonType) {
+        priceComparisonType.addEventListener('change', function() {
+            const maxContainer = document.getElementById('price-max-container');
+            if (this.value === 'between') {
+                maxContainer.classList.remove('hidden');
+            } else {
+                maxContainer.classList.add('hidden');
+                document.getElementById('search-price-max').value = '';
+            }
+            performAttributeBasedSearch();
+        });
+    }
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+        // Check if click is outside any attribute dropdown container
+        const isInsideDropdownArea = e.target.closest('.relative') && 
+                                   (e.target.closest('[id^="attr-search-"]') || e.target.closest('[id^="dropdown-"]'));
+        
+        if (!isInsideDropdownArea) {
+            // Hide all attribute dropdowns
+            attributeSearchInputs.forEach(input => {
+                const attributeId = input.dataset.attributeId;
+                const dropdown = document.getElementById(`dropdown-${attributeId}`);
+                if (dropdown) {
+                    hideDropdown(dropdown);
+                }
+            });
+        }
+    });
+    
+    console.log('Attribute search fields displayed with dropdown suggestions and automatic search enabled');
+}
+
+// Helper functions for dropdown functionality
+function showAllDropdownOptions(dropdown) {
+    if (!dropdown) return;
+    
+    const options = dropdown.querySelectorAll('.dropdown-option');
+    options.forEach(option => {
+        option.style.display = 'block';
+    });
+}
+
+function showDropdown(dropdown) {
+    if (dropdown) {
+        dropdown.classList.remove('hidden');
+    }
+}
+
+function hideDropdown(dropdown) {
+    if (dropdown) {
+        dropdown.classList.add('hidden');
+    }
+}
+
+function filterDropdownOptions(input, dropdown) {
+    if (!dropdown) return;
+    
+    const searchTerm = input.value.toLowerCase().trim();
+    const options = dropdown.querySelectorAll('.dropdown-option');
+    let hasVisibleOptions = false;
+    
+    // If search term is empty, show all options
+    if (searchTerm === '') {
+        options.forEach(option => {
+            option.style.display = 'block';
+            hasVisibleOptions = true;
+        });
+        showDropdown(dropdown);
+        return;
+    }
+    
+    // Check if current value exactly matches an option - if so, show all options for easy changing
+    let exactMatch = false;
+    options.forEach(option => {
+        const optionText = option.textContent.toLowerCase().trim();
+        if (optionText === searchTerm) {
+            exactMatch = true;
+        }
+    });
+    
+    if (exactMatch) {
+        // Show all options when user has selected an exact match (allows easy changing)
+        options.forEach(option => {
+            option.style.display = 'block';
+            hasVisibleOptions = true;
+        });
+    } else {
+        // Filter options based on search term
+        options.forEach(option => {
+            const optionText = option.textContent.toLowerCase();
+            const isMatch = optionText.includes(searchTerm);
+            
+            if (isMatch) {
+                option.style.display = 'block';
+                hasVisibleOptions = true;
+            } else {
+                option.style.display = 'none';
+            }
+        });
+    }
+    
+    // Show/hide dropdown based on whether there are matches
+    if (hasVisibleOptions) {
+        showDropdown(dropdown);
+    } else {
+        hideDropdown(dropdown);
+    }
+}
+
+function handleDropdownNavigation(e, dropdown, inputElement) {
+    if (!dropdown || dropdown.classList.contains('hidden')) return;
+    
+    const options = dropdown.querySelectorAll('.dropdown-option:not([style*="display: none"])');
+    const currentActive = dropdown.querySelector('.dropdown-option.bg-blue-100');
+    let currentIndex = currentActive ? Array.from(options).indexOf(currentActive) : -1;
+    
+    switch (e.key) {
+        case 'ArrowDown':
+            e.preventDefault();
+            if (currentActive) currentActive.classList.remove('bg-blue-100');
+            currentIndex = (currentIndex + 1) % options.length;
+            if (options[currentIndex]) {
+                options[currentIndex].classList.add('bg-blue-100');
+                options[currentIndex].scrollIntoView({ block: 'nearest' });
+            }
+            break;
+            
+        case 'ArrowUp':
+            e.preventDefault();
+            if (currentActive) currentActive.classList.remove('bg-blue-100');
+            currentIndex = currentIndex <= 0 ? options.length - 1 : currentIndex - 1;
+            if (options[currentIndex]) {
+                options[currentIndex].classList.add('bg-blue-100');
+                options[currentIndex].scrollIntoView({ block: 'nearest' });
+            }
+            break;
+            
+        case 'Enter':
+            e.preventDefault();
+            if (currentActive) {
+                const selectedValue = currentActive.dataset.value;
+                inputElement.value = selectedValue; // Use the specific input element
+                hideDropdown(dropdown);
+                performAttributeBasedSearch();
+            }
+            break;
+            
+        case 'Escape':
+            e.preventDefault();
+            hideDropdown(dropdown);
+            break;
+    }
+}
+
+// Clear project search
+function clearProjectSearch() {
+    const searchInput = document.getElementById('project-search-input');
+    const dropdown = document.getElementById('project-search-dropdown');
+    const selectedDisplay = document.getElementById('selected-project-search-display');
+    const attributePhase = document.getElementById('attribute-search-phase');
+    
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    
+    if (dropdown) {
+        dropdown.classList.add('hidden');
+    }
+    
+    if (selectedDisplay) {
+        selectedDisplay.classList.add('hidden');
+    }
+    
+    if (attributePhase) {
+        attributePhase.classList.add('hidden');
+    }
+    
+    selectedSearchProject = null;
+    projectSearchResults = [];
+    
+    // Clear search results
+    clearSearchResults();
+    
+    console.log('Project search cleared');
+}
+
+// ===== ATTRIBUTE SEARCH FUNCTIONS (PHASE 2) =====
+
+// Perform attribute-based search
+function performAttributeBasedSearch() {
+    console.log('=== performAttributeBasedSearch START ===');
+    console.log('🔍 EXECUTION TRACE: Function called');
+    
+    if (!selectedSearchProject) {
+        console.log('❌ EXECUTION TRACE: No project selected');
+        alert('Please select a project first');
+        return;
+    }
+    
+    console.log('✅ EXECUTION TRACE: Project selected:', selectedSearchProject.id);
+    console.log('✅ EXECUTION TRACE: Project attributes:', selectedSearchProject.attributes?.length || 0);
+    
+    // Collect attribute search criteria
+    const attributeCriteria = {};
+    const attributeInputs = document.querySelectorAll('[id^="attr-search-"]');
+    
+    console.log('🔍 EXECUTION TRACE: Found attribute input fields:', attributeInputs.length);
+    
+    attributeInputs.forEach((input, idx) => {
+        const value = input.value.trim();
+        if (value) {
+            const attributeId = input.dataset.attributeId;
+            const attributeName = input.dataset.attributeName;
+            attributeCriteria[attributeId] = {
+                name: attributeName,
+                value: value
+            };
+            console.log(`✅ EXECUTION TRACE: Added criteria ${idx + 1}: ${attributeName} = ${value}`);
+        } else {
+            console.log(`⚪ EXECUTION TRACE: Skipping empty input ${idx + 1}: ${input.id}`);
+        }
+    });
+    
+    // Collect additional search criteria
+    const additionalCriteria = {
+        uom: document.getElementById('search-uom')?.value.trim() || '',
+        country: document.getElementById('search-country')?.value.trim() || '',
+        model: document.getElementById('search-model')?.value.trim() || '',
+        erpStatus: document.getElementById('search-erp-status')?.value || '',
+        manufacturer: document.getElementById('search-manufacturer')?.value.trim() || '',
+        priceComparison: document.getElementById('price-comparison-type')?.value || '',
+        priceValue: document.getElementById('search-price-value')?.value || '',
+        priceMax: document.getElementById('search-price-max')?.value || '',
+        currency: document.getElementById('search-currency')?.value || ''
+    };
+    
+    console.log('📊 EXECUTION TRACE: Final criteria count:', Object.keys(attributeCriteria).length);
+    console.log('📊 EXECUTION TRACE: Attribute criteria:', attributeCriteria);
+    
+    // Use already loaded approved codes data
+    if (!allApprovedCodes || allApprovedCodes.length === 0) {
+        console.log('❌ EXECUTION TRACE: No approved codes available');
+        alert('No approved item codes available. Please refresh the page.');
+        return;
+    }
+    
+    console.log('📊 EXECUTION TRACE: Total approved codes available:', allApprovedCodes.length);
+    
+    // Filter by selected project first
+    const projectItemCodes = allApprovedCodes.filter(item => {
+        const matches = item.project_id === selectedSearchProject.id || 
+                       item.project_id === selectedSearchProject.project_id;
+        return matches;
+    });
+    
+    console.log('📊 EXECUTION TRACE: Found item codes for project:', projectItemCodes.length);
+    
+    if (projectItemCodes.length === 0) {
+        console.log('⚠️ EXECUTION TRACE: No items found for project, calling displaySearchResults([])');
+        displaySearchResults([]);
+        console.log('✅ EXECUTION TRACE: displaySearchResults([]) completed');
+        return;
+    }
+    
+    // Filter item codes based on search criteria
+    console.log('🔍 EXECUTION TRACE: About to call filterItemCodesByCriteria');
+    console.log('🔍 EXECUTION TRACE: Input codes:', projectItemCodes.length);
+    console.log('🔍 EXECUTION TRACE: Criteria:', { attributeCriteria, additionalCriteria });
+    
+    const filteredCodes = filterItemCodesByCriteria(projectItemCodes, attributeCriteria, additionalCriteria);
+    
+    console.log('📊 EXECUTION TRACE: Filter returned:', filteredCodes.length, 'items');
+    console.log('🔍 EXECUTION TRACE: About to call displaySearchResults with', filteredCodes.length, 'codes');
+    
+    // Display the search results
+    displaySearchResults(filteredCodes);
+    
+    console.log('✅ EXECUTION TRACE: displaySearchResults completed');
+    console.log('=== performAttributeBasedSearch END ===');
+}
+
+// Filter item codes based on search criteria
+function filterItemCodesByCriteria(itemCodes, attributeCriteria, additionalCriteria) {
+    console.log('=== FILTERING DEBUG ===');
+    console.log('Total items to filter:', itemCodes.length);
+    console.log('Attribute criteria:', attributeCriteria);
+    console.log('Number of attribute filters:', Object.keys(attributeCriteria).length);
+    
+    if (Object.keys(attributeCriteria).length === 0) {
+        // No attribute criteria, just apply additional criteria
+        console.log('No attribute criteria, applying only additional criteria');
+        return itemCodes.filter(item => applyAdditionalCriteria(item, additionalCriteria));
+    }
+    
+    // Apply filtering with detailed logging for each item
+    const results = itemCodes.filter((item, itemIndex) => {
+        console.log(`\n=== ITEM ${itemIndex + 1}/${itemCodes.length} ===`);
+        console.log('Item code:', item.item_code);
+        console.log('Description1:', item.description1);
+        
+        let criteriaResults = [];
+        
+        // Check each attribute criteria
+        for (const [attributeKey, criteria] of Object.entries(attributeCriteria)) {
+            console.log(`\n--- Checking attribute: ${criteria.name} (${attributeKey}) ---`);
+            console.log('Search value:', criteria.value);
+            
+            const searchValue = criteria.value.toLowerCase().trim();
+            if (!searchValue) {
+                console.log('Empty search value, skipping');
+                continue;
+            }
+            
+            const searchableFields = [
+                item.description1 || '',
+                item.description2 || '',
+                item.item_code || '',
+                item.manufacturer || '',
+                item.model_number || ''
+            ];
+            
+            let found = false;
+            for (const field of searchableFields) {
+                const fieldValue = String(field).toLowerCase();
+                if (fieldValue.includes(searchValue)) {
+                    console.log(`✅ Found "${criteria.value}" in field: "${field}"`);
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) {
+                console.log(`❌ "${criteria.value}" NOT found in any description fields`);
+            }
+            
+            criteriaResults.push({
+                attribute: criteria.name,
+                value: criteria.value,
+                found: found
+            });
+        }
+        
+        // Analyze results
+        const totalCriteria = criteriaResults.length;
+        const matchedCriteria = criteriaResults.filter(result => result.found).length;
+        
+        console.log(`RESULT: ${matchedCriteria}/${totalCriteria} criteria matched`);
+        console.log('Criteria details:', criteriaResults);
+        
+        // For now, require ALL criteria to match (strict AND)
+        const attributesMatch = matchedCriteria === totalCriteria && totalCriteria > 0;
+        
+        if (!attributesMatch) {
+            console.log('❌ Item REJECTED - not all criteria matched');
+            return false;
+        }
+        
+        // Check additional criteria
+        const additionalMatch = applyAdditionalCriteria(item, additionalCriteria);
+        if (!additionalMatch) {
+            console.log('❌ Item REJECTED - additional criteria failed');
+            return false;
+        }
+        
+        console.log('✅ Item ACCEPTED - all criteria passed');
+        return true;
+    });
+    
+    console.log(`\n=== FILTERING COMPLETE ===`);
+    console.log(`Results: ${results.length}/${itemCodes.length} items passed filtering`);
+    
+    return results;
+}
+
+// Helper function to check if item matches ALL attribute criteria
+function matchAllAttributeCriteria(item, attributeCriteria) {
+    let matchedCriteria = 0;
+    let totalCriteria = 0;
+    
+    for (const [attributeKey, criteria] of Object.entries(attributeCriteria)) {
+        console.log(`\n--- Checking attribute: ${criteria.name} (${attributeKey}) ---`);
+        console.log('Search value:', criteria.value);
+        
+        const searchValue = criteria.value.toLowerCase().trim();
+        if (!searchValue) continue;
+        
+        totalCriteria++;
+        
+        const searchableFields = [
+            item.description1 || '',
+            item.description2 || '',
+            item.item_code || '',
+            item.manufacturer || '',
+            item.model_number || ''
+        ];
+        
+        let attributeValueFound = false;
+        for (const field of searchableFields) {
+            const fieldValue = String(field).toLowerCase();
+            if (fieldValue.includes(searchValue)) {
+                console.log(`✅ Found "${criteria.value}" in field: "${field}"`);
+                attributeValueFound = true;
+                matchedCriteria++;
+                break;
+            }
+        }
+        
+        if (!attributeValueFound) {
+            console.log(`❌ "${criteria.value}" not found in any description fields`);
+        }
+    }
+    
+    console.log(`Criteria matching: ${matchedCriteria}/${totalCriteria}`);
+    return matchedCriteria === totalCriteria && totalCriteria > 0;
+}
+
+// Helper function to apply additional criteria (UOM, Country, Model, ERP Status)
+function applyAdditionalCriteria(item, additionalCriteria) {
+    // Manufacturer filter
+    if (additionalCriteria.manufacturer) {
+        const searchManufacturer = additionalCriteria.manufacturer.toLowerCase();
+        const itemManufacturer = String(item.manufacturer || '').toLowerCase();
+        if (!itemManufacturer.includes(searchManufacturer)) {
+            console.log('❌ Manufacturer filter failed');
+            return false;
+        }
+    }
+    
+    // UOM filter
+    if (additionalCriteria.uom) {
+        const searchUom = additionalCriteria.uom.toLowerCase();
+        const itemUom = String(item.uom || '').toLowerCase();
+        if (!itemUom.includes(searchUom)) {
+            console.log('❌ UOM filter failed');
+            return false;
+        }
+    }
+    
+    // Country filter
+    if (additionalCriteria.country) {
+        const searchCountry = additionalCriteria.country.toLowerCase();
+        const itemCountry = String(item.country_of_origin || '').toLowerCase();
+        if (!itemCountry.includes(searchCountry)) {
+            console.log('❌ Country filter failed');
+            return false;
+        }
+    }
+    
+    // Model filter
+    if (additionalCriteria.model) {
+        const searchModel = additionalCriteria.model.toLowerCase();
+        const itemModel = String(item.model_number || '').toLowerCase();
+        if (!itemModel.includes(searchModel)) {
+            console.log('❌ Model filter failed');
+            return false;
+        }
+    }
+    
+    // ERP Status filter
+    if (additionalCriteria.erpStatus) {
+        if (additionalCriteria.erpStatus === 'integrated' && !item.erp_integrated) {
+            console.log('❌ ERP status filter failed - not integrated');
+            return false;
+        }
+        if (additionalCriteria.erpStatus === 'pending' && item.erp_integrated) {
+            console.log('❌ ERP status filter failed - already integrated');
+            return false;
+        }
+    }
+    
+    // Price comparison filter
+    if (additionalCriteria.priceComparison && additionalCriteria.priceValue) {
+        const itemPrice = parseFloat(item.unit_price || 0);
+        const searchPrice = parseFloat(additionalCriteria.priceValue);
+        const searchMaxPrice = parseFloat(additionalCriteria.priceMax || 0);
+        
+        // Currency filter (if specified, only compare prices with matching currency)
+        if (additionalCriteria.currency && item.currency) {
+            if (item.currency !== additionalCriteria.currency) {
+                console.log('❌ Currency filter failed - currency mismatch');
+                return false;
+            }
+        }
+        
+        // Apply price comparison logic
+        switch (additionalCriteria.priceComparison) {
+            case 'equal':
+                if (Math.abs(itemPrice - searchPrice) > 0.01) { // Allow for small floating point differences
+                    console.log(`❌ Price filter failed - ${itemPrice} not equal to ${searchPrice}`);
+                    return false;
+                }
+                break;
+            case 'greater':
+                if (itemPrice <= searchPrice) {
+                    console.log(`❌ Price filter failed - ${itemPrice} not greater than ${searchPrice}`);
+                    return false;
+                }
+                break;
+            case 'less':
+                if (itemPrice >= searchPrice) {
+                    console.log(`❌ Price filter failed - ${itemPrice} not less than ${searchPrice}`);
+                    return false;
+                }
+                break;
+            case 'between':
+                if (!searchMaxPrice || itemPrice < searchPrice || itemPrice > searchMaxPrice) {
+                    console.log(`❌ Price filter failed - ${itemPrice} not between ${searchPrice} and ${searchMaxPrice}`);
+                    return false;
+                }
+                break;
+        }
+    }
+    
+    return true;
+}
+
+// Clear attribute search fields
+function clearAttributeSearch() {
+    const attributeInputs = document.querySelectorAll('[id^="attr-search-"]');
+    attributeInputs.forEach(input => {
+        input.value = '';
+    });
+    
+    // Clear additional search fields
+    const additionalFields = [
+        {id: 'search-uom', placeholder: 'Search UOM...'},
+        {id: 'search-country', placeholder: 'Search country...'},
+        {id: 'search-model', placeholder: 'Search model...'},
+        {id: 'search-manufacturer', placeholder: 'Search manufacturer...'},
+        {id: 'search-erp-status', placeholder: ''},
+        {id: 'price-comparison-type', placeholder: ''},
+        {id: 'search-price-value', placeholder: ''},
+        {id: 'search-price-max', placeholder: ''},
+        {id: 'search-currency', placeholder: ''}
+    ];
+    
+    additionalFields.forEach(field => {
+        const element = document.getElementById(field.id);
+        if (element) {
+            element.value = '';
+            if (field.placeholder) {
+                element.placeholder = field.placeholder;
+            }
+        }
+    });
+    
+    // Hide all search dropdowns
+    const searchDropdowns = [
+        'manufacturer-search-dropdown',
+        'uom-search-dropdown', 
+        'country-search-dropdown',
+        'model-search-dropdown'
+    ];
+    searchDropdowns.forEach(dropdownId => {
+        const dropdown = document.getElementById(dropdownId);
+        if (dropdown) {
+            dropdown.classList.add('hidden');
+        }
+    });
+    
+    // Hide price max container when clearing
+    const maxContainer = document.getElementById('price-max-container');
+    if (maxContainer) {
+        maxContainer.classList.add('hidden');
+    }
+    
+    // Clear search results
+    clearSearchResults();
+    
+    console.log('Attribute search cleared');
+}
+
+// Clear search results display
+function clearSearchResults() {
+    const hierarchyView = document.getElementById('hierarchy-view');
+    const listView = document.getElementById('list-view');
+    const tableView = document.getElementById('table-view-container');
+    const summary = document.getElementById('search-summary');
+    const controls = document.getElementById('search-results-controls');
+    const viewInfo = document.getElementById('view-info');
+    
+    if (hierarchyView) {
+        hierarchyView.innerHTML = '';
+        hierarchyView.classList.add('hidden');
+    }
+    
+    if (listView) {
+        listView.innerHTML = '';
+        listView.classList.remove('hidden');
+    }
+    
+    if (tableView) {
+        tableView.classList.add('hidden');
+    }
+    
+    if (summary) {
+        summary.classList.add('hidden');
+    }
+    
+    if (controls) {
+        controls.classList.add('hidden');
+    }
+    
+    if (viewInfo) {
+        viewInfo.classList.add('hidden');
+    }
+}
+
+// Show view info when results are displayed
+function showResultsViewInfo() {
+    const viewInfo = document.getElementById('view-info');
+    const summary = document.getElementById('search-summary');
+    const controls = document.getElementById('search-results-controls');
+    
+    if (viewInfo) {
+        viewInfo.classList.remove('hidden');
+    }
+    
+    if (summary) {
+        summary.classList.remove('hidden');
+    }
+    
+    if (controls) {
+        controls.classList.remove('hidden');
+        
+        // Ensure event listeners are attached to the controls
+        setupSearchResultsControls();
+    }
+}
+
+// Setup event listeners for search results controls
+function setupSearchResultsControls() {
+    console.log('🔧 Setting up search results controls event listeners...');
+    
+    // Check if required functions exist
+    const functionChecks = [
+        { name: 'toggleSearchTableView', fn: window.toggleSearchTableView },
+        { name: 'toggleSearchView', fn: window.toggleSearchView },
+        { name: 'clearAttributeSearch', fn: window.clearAttributeSearch }
+    ];
+    
+    functionChecks.forEach(check => {
+        if (typeof check.fn === 'function') {
+            console.log(`✅ Function ${check.name} is available`);
+        } else {
+            console.error(`❌ Function ${check.name} is NOT available`);
+        }
+    });
+    
+    // Toggle table view button
+    const toggleTableBtn = document.getElementById('toggle-table-view-btn');
+    if (toggleTableBtn) {
+        console.log('🔍 Toggle table button found, attaching listener...');
+        
+        // Test if the function works
+        if (typeof toggleSearchTableView === 'function') {
+            console.log('✅ toggleSearchTableView function is available');
+            
+            // Add event listener using a more reliable method
+            toggleTableBtn.onclick = function(e) {
+                console.log('🔄 Toggle table view clicked via onclick');
+                e.preventDefault();
+                e.stopPropagation();
+                try {
+                    toggleSearchTableView();
+                    console.log('✅ toggleSearchTableView executed successfully');
+                } catch (error) {
+                    console.error('❌ Error executing toggleSearchTableView:', error);
+                }
+            };
+            console.log('✅ Toggle table view onclick handler attached');
+        } else {
+            console.error('❌ toggleSearchTableView function not found');
+        }
+    } else {
+        console.error('❌ Toggle table button not found');
+    }
+    
+    // Export dropdown button
+    const exportBtn = document.getElementById('export-dropdown-btn');
+    if (exportBtn) {
+        console.log('🔍 Export button found, attaching listener...');
+        
+        exportBtn.onclick = function(e) {
+            console.log('🔄 Export dropdown clicked via onclick');
+            e.preventDefault();
+            e.stopPropagation();
+            try {
+                const menu = document.getElementById('export-dropdown-menu');
+                if (menu) {
+                    menu.classList.toggle('hidden');
+                    console.log('✅ Export menu toggled');
+                } else {
+                    console.error('❌ Export menu not found');
+                }
+            } catch (error) {
+                console.error('❌ Error toggling export menu:', error);
+            }
+        };
+        console.log('✅ Export dropdown onclick handler attached');
+    } else {
+        console.error('❌ Export button not found');
+    }
+    
+    // Refresh search button
+    const refreshBtn = document.getElementById('refresh-search-btn');
+    if (refreshBtn) {
+        console.log('🔍 Refresh button found, attaching listener...');
+        
+        refreshBtn.onclick = function(e) {
+            console.log('🔄 Refresh search clicked via onclick');
+            e.preventDefault();
+            e.stopPropagation();
+            try {
+                location.reload();
+            } catch (error) {
+                console.error('❌ Error refreshing page:', error);
+            }
+        };
+        console.log('✅ Refresh search onclick handler attached');
+    } else {
+        console.error('❌ Refresh button not found');
+    }
+    
+    console.log('🎯 Search results controls setup complete');
 }
 
 // Perform search across all criteria
@@ -6542,47 +8082,287 @@ return matches;
 // Display search results in hierarchy or list view
 // Add this updated card generation for search results
 // Display search results in hierarchy or list view
+// Force reset all view states - useful for recovering from stuck conditions
+function resetViewStates() {
+    console.log('🔄 Force resetting all view states...');
+    
+    const hierarchyView = document.getElementById('hierarchy-view');
+    const listView = document.getElementById('list-view');
+    const tableView = document.getElementById('table-view-container');
+    const resultsContainer = document.getElementById('search-results-container');
+    
+    // Hide all views
+    if (hierarchyView) {
+        hierarchyView.classList.add('hidden');
+        hierarchyView.innerHTML = '';
+    }
+    if (listView) {
+        listView.classList.add('hidden');
+        listView.innerHTML = '';
+    }
+    if (tableView) {
+        tableView.classList.add('hidden');
+        // Clear table body content
+        const tableBody = document.getElementById('search-codes-table-body');
+        if (tableBody) {
+            tableBody.innerHTML = '';
+        }
+    }
+    
+    // Clear results container
+    if (resultsContainer) {
+        resultsContainer.innerHTML = '';
+    }
+    
+    // Reset button text to default
+    const toggleBtn = document.getElementById('toggle-table-view-btn');
+    if (toggleBtn) {
+        if (isSearchTableView) {
+            toggleBtn.textContent = 'Switch to Card View';
+        } else {
+            toggleBtn.textContent = 'Switch to Table View';
+        }
+    }
+    
+    console.log('✅ View state reset complete');
+}
+
+// Validate current view state and fix any inconsistencies
+function validateViewState() {
+    console.log('🔍 Validating view state...');
+    
+    const hierarchyView = document.getElementById('hierarchy-view');
+    const listView = document.getElementById('list-view');
+    const tableView = document.getElementById('table-view-container');
+    
+    const hierarchyVisible = hierarchyView && !hierarchyView.classList.contains('hidden');
+    const listVisible = listView && !listView.classList.contains('hidden');
+    const tableVisible = tableView && !tableView.classList.contains('hidden');
+    
+    console.log('Current visibility:', {
+        hierarchy: hierarchyVisible,
+        list: listVisible,
+        table: tableVisible,
+        isSearchTableView: isSearchTableView
+    });
+    
+    // Check for inconsistent states
+    if (isSearchTableView && !tableVisible) {
+        console.log('⚠️ State inconsistency: isSearchTableView=true but table not visible');
+        return false;
+    }
+    
+    if (!isSearchTableView && tableVisible) {
+        console.log('⚠️ State inconsistency: isSearchTableView=false but table is visible');
+        return false;
+    }
+    
+    const visibleViews = [hierarchyVisible, listVisible, tableVisible].filter(Boolean).length;
+    if (visibleViews > 1) {
+        console.log('⚠️ Multiple views visible simultaneously');
+        return false;
+    }
+    
+    console.log('✅ View state is valid');
+    return true;
+}
+
 function displaySearchResults(codes) {
-    console.log('=== displaySearchResults called ===');
-    console.log('Codes received:', codes.length);
+    console.log('=== displaySearchResults START ===');
+    console.log('🔍 DISPLAY TRACE: Function called with', codes.length, 'codes');
+    console.log('🔍 DISPLAY TRACE: Current isSearchTableView:', isSearchTableView);
+    
+    // CRITICAL FIX: Ensure we default to table view for search results
+    if (typeof isSearchTableView === 'undefined') {
+        isSearchTableView = true;
+        console.log('🔧 DISPLAY TRACE: isSearchTableView was undefined, defaulting to true');
+    }
+    
+    // Store filtered results globally for view toggling
+    window.lastFilteredResults = codes;
+    console.log('✅ DISPLAY TRACE: Stored results globally');
     
     const resultsContainer = document.getElementById('search-results-container');
     const emptyState = document.getElementById('empty-state');
     const hierarchyView = document.getElementById('hierarchy-view');
     const listView = document.getElementById('list-view');
+    const tableView = document.getElementById('table-view-container');
     const resultsCount = document.getElementById('results-count');
+    const summary = document.getElementById('search-summary');
     
-    // Update results count
+    console.log('🔍 DISPLAY TRACE: Element detection:', {
+        resultsContainer: !!resultsContainer,
+        hierarchyView: !!hierarchyView,
+        listView: !!listView,
+        tableView: !!tableView,
+        resultsCount: !!resultsCount,
+        summary: !!summary
+    });
+    
+    // Update results count and show summary
     if (resultsCount) {
         resultsCount.textContent = `${codes.length} item codes found`;
+        console.log('✅ DISPLAY TRACE: Updated results count');
+    }
+    
+    if (summary) {
+        summary.classList.toggle('hidden', codes.length === 0);
+        console.log('✅ DISPLAY TRACE: Updated summary visibility');
     }
     
     // Hide empty state if we have results
     if (emptyState) {
         emptyState.classList.toggle('hidden', codes.length > 0);
+        console.log('✅ DISPLAY TRACE: Updated empty state visibility');
     }
     
-    // Show/hide views based on results
-    if (hierarchyView) hierarchyView.classList.toggle('hidden', codes.length === 0);
-    if (listView) listView.classList.toggle('hidden', codes.length === 0);
+    // CRITICAL: Reset all view states first to prevent stuck states
+    console.log('🔄 DISPLAY TRACE: Resetting all view states...');
+    if (hierarchyView) hierarchyView.classList.add('hidden');
+    if (listView) listView.classList.add('hidden'); 
+    if (tableView) tableView.classList.add('hidden');
+    console.log('✅ DISPLAY TRACE: All views hidden');
     
+    // Handle zero results case
     if (codes.length === 0) {
-        if (resultsContainer) {
-            resultsContainer.innerHTML = '<div class="text-center py-8 text-gray-500">No search results found</div>';
+        console.log('⚠️ DISPLAY TRACE: Zero results - showing no results message WITHOUT destroying DOM');
+        
+        // Hide all view containers but preserve them
+        if (hierarchyView) hierarchyView.classList.add('hidden');
+        if (listView) listView.classList.add('hidden');
+        if (tableView) tableView.classList.add('hidden');
+        
+        // Show or create the no results message in empty state div
+        const searchEmpty = document.getElementById('search-empty');
+        if (searchEmpty) {
+            searchEmpty.classList.remove('hidden');
+            console.log('✅ DISPLAY TRACE: Showed existing search-empty div');
+        } else {
+            // Fallback: create temporary message without destroying container
+            console.log('⚠️ DISPLAY TRACE: search-empty div not found, using fallback');
+            
+            // Remove any existing temporary messages
+            const existingMessage = resultsContainer.querySelector('.temp-no-results');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+            
+            // Add temporary message as additional element (not replacement)
+            const tempMessage = document.createElement('div');
+            tempMessage.className = 'temp-no-results text-center py-8 text-gray-500';
+            tempMessage.textContent = 'No search results found';
+            resultsContainer.appendChild(tempMessage);
+            
+            console.log('✅ DISPLAY TRACE: Added temporary no results message');
         }
+        
+        console.log('=== displaySearchResults END (zero results) ===');
         return;
     }
     
-    // Check current view mode
-    const isHierarchyView = hierarchyView && !hierarchyView.classList.contains('hidden');
+    // For results > 0, show the appropriate view
+    console.log('📊 DISPLAY TRACE: Processing', codes.length, 'results');
+    console.log('📊 DISPLAY TRACE: View mode:', isSearchTableView ? 'TABLE' : 'CARD');
     
-    if (isHierarchyView) {
-        // Render hierarchy view
-        displayHierarchyView(codes);
-    } else {
-        // Render list view using our enhanced cards
-        displayListView(codes);
+    // Clean up any temporary no results messages
+    const existingMessage = resultsContainer?.querySelector('.temp-no-results');
+    if (existingMessage) {
+        existingMessage.remove();
+        console.log('🔧 DISPLAY TRACE: Removed temporary no results message');
     }
+    
+    // Hide the search-empty div
+    const searchEmpty = document.getElementById('search-empty');
+    if (searchEmpty) {
+        searchEmpty.classList.add('hidden');
+        console.log('🔧 DISPLAY TRACE: Hidden search-empty div');
+    }
+    
+    // Show results view info when we have results
+    try {
+        showResultsViewInfo();
+        console.log('✅ DISPLAY TRACE: showResultsViewInfo completed');
+    } catch (error) {
+        console.log('❌ DISPLAY TRACE: showResultsViewInfo failed:', error);
+    }
+    
+    // ALWAYS TRY TABLE VIEW FIRST for search results
+    if (tableView) {
+        console.log('🔧 DISPLAY TRACE: Table view container found, setting up TABLE view...');
+        isSearchTableView = true; // Force table view for search results
+        
+        tableView.classList.remove('hidden');
+        console.log('✅ DISPLAY TRACE: Table view made visible');
+        
+        // Update toggle button text
+        const toggleBtn = document.getElementById('toggle-table-view-btn');
+        if (toggleBtn) {
+            toggleBtn.textContent = 'Switch to Card View';
+            console.log('✅ DISPLAY TRACE: Toggle button updated');
+        }
+        
+        // Immediate table population attempt
+        const immediateTableBody = document.getElementById('search-codes-table-body');
+        if (immediateTableBody) {
+            console.log('✅ DISPLAY TRACE: Table body found immediately, populating...');
+            try {
+                populateTableBody(immediateTableBody, codes);
+                console.log('✅ DISPLAY TRACE: Table population successful');
+            } catch (error) {
+                console.log('❌ DISPLAY TRACE: Table population failed:', error);
+            }
+        } else {
+            console.log('⚠️ DISPLAY TRACE: Table body not found immediately, using timeout...');
+            
+            // Timeout-based population
+            setTimeout(() => {
+                console.log('🔄 DISPLAY TRACE: Timeout callback executing...');
+                const timeoutTableBody = document.getElementById('search-codes-table-body');
+                if (timeoutTableBody) {
+                    console.log('✅ DISPLAY TRACE: Table body found in timeout, populating...');
+                    try {
+                        populateTableBody(timeoutTableBody, codes);
+                        console.log('✅ DISPLAY TRACE: Timeout table population successful');
+                    } catch (error) {
+                        console.log('❌ DISPLAY TRACE: Timeout table population failed:', error);
+                    }
+                } else {
+                    console.log('❌ DISPLAY TRACE: Table body STILL not found after timeout');
+                    console.log('🔧 DISPLAY TRACE: Using fallback list view...');
+                    
+                    // Fallback to list view but keep trying table
+                    if (tableView) tableView.classList.add('hidden');
+                    if (listView) {
+                        listView.classList.remove('hidden');
+                        try {
+                            displayListView(codes);
+                            console.log('✅ DISPLAY TRACE: Fallback to list view successful');
+                        } catch (error) {
+                            console.log('❌ DISPLAY TRACE: Fallback to list view failed:', error);
+                        }
+                    }
+                }
+            }, 100);
+        }
+    } else {
+        console.log('❌ DISPLAY TRACE: Table view container NOT FOUND');
+        console.log('🔧 DISPLAY TRACE: Using fallback list view...');
+        
+        // Fallback to list view
+        if (listView) {
+            listView.classList.remove('hidden');
+            try {
+                displayListView(codes);
+                console.log('✅ DISPLAY TRACE: Fallback to list view successful');
+            } catch (error) {
+                console.log('❌ DISPLAY TRACE: Fallback to list view failed:', error);
+            }
+        } else {
+            console.log('❌ DISPLAY TRACE: No view containers found at all!');
+        }
+    }
+    
+    console.log('=== displaySearchResults END ===');
 }
 
 // Display codes in list view with enhanced cards
@@ -8213,7 +9993,7 @@ async function loadUserRequests() {
             itemCodes: (codeRequests || []).map(req => ({
                 ...req,
                 type: 'Item Code',
-                typeIcon: 'Ã°Å¸â€œâ€¹',
+                typeIcon: 'ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹',
                 title: req.item_code || 'Pending Code Generation',
                 subtitle: `${req.project?.division_code || ''} - ${req.project?.project_name || 'Unknown Project'}`,
                 erpStatus: erpStatusMap[req.item_code] || null
@@ -8237,7 +10017,7 @@ async function loadUserRequests() {
             manufacturers: (manufacturerRequests || []).map(req => ({
                 ...req,
                 type: 'Manufacturer',
-                typeIcon: 'Ã°Å¸Å¡Â«',
+                typeIcon: 'ÃƒÂ°Ã…Â¸Ã…Â¡Ã‚Â«',
                 title: req.manufacturer_name,
                 subtitle: `${req.project?.project_name || 'Unknown Project'}`,
                 erpStatus: null // Manufacturer requests don't have direct ERP integration
@@ -8254,7 +10034,7 @@ async function loadUserRequests() {
             organizedRequests.standardValues.length +
             organizedRequests.manufacturers.length;
 
-        console.log("Ã°Å¸â€œâ€¹ Loaded comprehensive requests:", {
+        console.log("ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹ Loaded comprehensive requests:", {
             itemCodes: organizedRequests.itemCodes.length,
             blockCombinations: organizedRequests.blockCombinations.length,
             standardValues: organizedRequests.standardValues.length,
@@ -8403,7 +10183,7 @@ function renderEnhancedRequestsCards(organizedRequests) {
     if (totalRequests === 0) {
         container.innerHTML = `
             <div class="text-center py-12">
-                <div class="text-gray-400 text-6xl mb-4">Ã°Å¸â€œâ€¹</div>
+                <div class="text-gray-400 text-6xl mb-4">ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹</div>
                 <h3 class="text-xl font-medium text-gray-900 mb-2">No Requests Found</h3>
                 <p class="text-gray-500">You haven't made any requests yet. Start by generating an item code!</p>
             </div>
@@ -8441,7 +10221,7 @@ function renderEnhancedRequestsCards(organizedRequests) {
         renderRequestSection('Item Code Requests', 'itemCodes', organizedRequests.itemCodes, '', 'blue'),
         renderRequestSection('Combination Requests', 'blockCombinations', organizedRequests.blockCombinations, '', 'purple'),
         renderRequestSection('Standard Value Requests', 'standardValues', organizedRequests.standardValues, '', 'green'),
-        renderRequestSection('Manufacturer Requests', 'manufacturers', organizedRequests.manufacturers, 'Ã°Å¸ÂÂ­', 'orange')
+        renderRequestSection('Manufacturer Requests', 'manufacturers', organizedRequests.manufacturers, 'ÃƒÂ°Ã…Â¸Ã‚ÂÃ‚Â­', 'orange')
     ].join('');
 
     container.innerHTML = summaryHtml + sectionsHtml;
@@ -8493,7 +10273,7 @@ function renderSingleRequestCard(request, sectionType, index, color) {
         <div class="mt-3 p-3 rounded-lg ${request.erpStatus.erp_integrated ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}">
             <div class="flex items-center gap-2">
                 <span class="text-sm font-medium ${request.erpStatus.erp_integrated ? 'text-green-800' : 'text-yellow-800'}">
-                    ${request.erpStatus.erp_integrated ? "Ã¢Å“â€¦ ERP INTEGRATED" : "PENDING ERP INTEGRATION"}
+                    ${request.erpStatus.erp_integrated ? "ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ ERP INTEGRATED" : "PENDING ERP INTEGRATION"}
                 </span>
             </div>
             ${request.erpStatus.erp_integrated && request.erpStatus.erp_integrated_at ? `
@@ -8553,17 +10333,17 @@ function renderSingleRequestCard(request, sectionType, index, color) {
                     ${isApproved ? `
                         <button onclick="exportRequestToPDF('${sectionType}', ${index})" 
                                 class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors">
-                            Ã°Å¸â€œâ€ž PDF
+                            ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Å¾ PDF
                         </button>
                         <button onclick="exportRequestToExcel('${sectionType}', ${index})" 
                                 class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors">
-                            Ã°Å¸â€œÅ  Excel
+                            ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â  Excel
                         </button>
                     ` : ''}
                     ${isRejected ? `
                         <button onclick="regenerateFromRejected('${sectionType}', ${index})" 
                                 class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded transition-colors">
-                            Ã°Å¸â€â€ž Regenerate Request
+                            ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬Å¾ Regenerate Request
                         </button>
                     ` : ''}
                 </div>
@@ -8676,11 +10456,11 @@ function getEnhancedStatusInfo(status) {
             description: 'Approved by reviewer, awaiting admin'
         },
         'admin_approved': {
-            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Ã¢Å“â€¦ Admin Approved</span>',
+            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Admin Approved</span>',
             description: 'Fully approved'
         },
         'approved': {
-            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Ã¢Å“â€¦ Approved</span>',
+            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Approved</span>',
             description: 'Fully approved'
         },
         'reviewer_rejected': {
@@ -8728,7 +10508,7 @@ function renderWorkflowProgress(status) {
                     <div class="flex items-center ${index < steps.length - 1 ? 'flex-1' : ''}">
                         <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium
                             ${isCompleted ? 'bg-green-500 text-white' : isActive ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-600'}">
-                            ${isCompleted ? "Ã¢Å“â€¦" : index + 1}
+                            ${isCompleted ? "ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦" : index + 1}
                         </div>
                         <div class="ml-1 text-xs ${isCompleted ? 'text-green-600 font-medium' : isActive ? 'text-blue-600 font-medium' : 'text-gray-500'}">
                             ${step.name}
@@ -8889,7 +10669,7 @@ function generateEnhancedRequestPDF(request, sectionType) {
     workflowSteps.forEach((step, index) => {
         const isCompleted = completedSteps[index];
         doc.setFont(undefined, isCompleted ? 'bold' : 'normal');
-        doc.text(`${index + 1}. ${step} ${isCompleted ? "Ã¢Å“â€¦" : ""}`, 20, yPosition);
+        doc.text(`${index + 1}. ${step} ${isCompleted ? "ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦" : ""}`, 20, yPosition);
         yPosition += 6;
     });
     
@@ -10382,9 +12162,6 @@ window.modifyRejectedRequest = modifyRejectedRequest;
 
 // ===== TABLE VIEW FUNCTIONALITY FOR SEARCH CODES =====
 
-// Global variable to track search view mode
-let isSearchTableView = false;
-
 // Toggle between card/hierarchy view and table view
 function toggleSearchTableView() {
     console.log(' Toggling search view mode...');
@@ -10411,8 +12188,13 @@ function toggleSearchTableView() {
         if (toggleBtn) toggleBtn.textContent = 'Switch to Card View';
         if (viewDescription) viewDescription.textContent = 'Showing table view with ERP integration controls for admins';
         
-        // Populate table with current data
-        populateSearchTable();
+        // Populate table with current filtered data
+        // Get the current filtered results from the last search
+        if (window.lastFilteredResults && window.lastFilteredResults.length > 0) {
+            populateSearchTable(window.lastFilteredResults);
+        } else {
+            populateSearchTable();
+        }
     } else {
         // Switch back to card/hierarchy view
         tableView.classList.add('hidden');
@@ -10430,34 +12212,101 @@ function toggleSearchTableView() {
                 'Showing hierarchical WBS view organized by CSI structure' : 
                 'Showing flat list view of all item codes';
         }
+        
+        // Repopulate the card view with current filtered data
+        if (window.lastFilteredResults && window.lastFilteredResults.length > 0) {
+            console.log('Repopulating card view with filtered results:', window.lastFilteredResults.length);
+            if (searchHierarchyView) {
+                displayHierarchyView(window.lastFilteredResults);
+            } else {
+                displayListView(window.lastFilteredResults);
+            }
+        } else {
+            // If no filtered results, trigger a new search to populate
+            console.log('No filtered results available, triggering new search');
+            performAttributeBasedSearch();
+        }
     }
     
     console.log(' Switched to', isSearchTableView ? 'table' : 'card', 'view');
 }
 
 // Populate the search table with approved codes
-function populateSearchTable() {
+function populateSearchTable(codes = null) {
     console.log(' Populating search table...');
+    console.log(' Current isSearchTableView:', isSearchTableView);
     
     const tableBody = document.getElementById('search-codes-table-body');
+    const tableView = document.getElementById('table-view-container');
+    
+    console.log(' Table body element:', tableBody);
+    console.log(' Table view container:', tableView);
+    
     if (!tableBody) {
         console.error(' Table body not found');
+        console.log(' All elements with search-codes-table-body:', document.querySelectorAll('#search-codes-table-body'));
+        console.log(' All elements with "table" in ID:', document.querySelectorAll('[id*="table"]'));
+        
+        // Force switch to table view and try again
+        const hierarchyView = document.getElementById('hierarchy-view');
+        const listView = document.getElementById('list-view');
+        
+        if (hierarchyView) hierarchyView.classList.add('hidden');
+        if (listView) listView.classList.add('hidden');
+        if (tableView) {
+            tableView.classList.remove('hidden');
+            console.log(' Forced table view visible');
+            
+            // Try to find table body again after showing table view
+            setTimeout(() => {
+                const retryTableBody = document.getElementById('search-codes-table-body');
+                console.log(' Retry table body found:', retryTableBody);
+                if (retryTableBody) {
+                    populateTableBody(retryTableBody, codes);
+                }
+            }, 100);
+        }
         return;
     }
     
-    if (!allApprovedCodes || allApprovedCodes.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="12" class="px-4 py-8 text-center text-gray-500">No admin-approved codes found</td></tr>';
+    // Ensure we're in table view mode when populating table
+    if (!isSearchTableView) {
+        console.log(' Not in table view mode, switching to table view first');
+        isSearchTableView = true;
+        
+        // Show table view and hide other views
+        const hierarchyView = document.getElementById('hierarchy-view');
+        const listView = document.getElementById('list-view');
+        
+        if (hierarchyView) hierarchyView.classList.add('hidden');
+        if (listView) listView.classList.add('hidden');
+        if (tableView) tableView.classList.remove('hidden');
+        
+        // Update button text
+        const toggleBtn = document.getElementById('toggle-table-view-btn');
+        if (toggleBtn) toggleBtn.textContent = 'Switch to Card View';
+    }
+    
+    populateTableBody(tableBody, codes);
+}
+
+// Helper function to populate the table body
+function populateTableBody(tableBody, codes) {
+    const dataToDisplay = codes || allApprovedCodes || [];
+    
+    if (dataToDisplay.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="12" class="px-4 py-8 text-center text-gray-500">No item codes found</td></tr>';
         return;
     }
     
-    console.log(' Populating table with', allApprovedCodes.length, 'admin-approved items');
+    console.log(' Populating table with', dataToDisplay.length, 'items');
     
     // Check if user is admin for showing checkboxes
     const isAdmin = currentUser && currentUser.role === 'admin';
     // Check if user is ERP data entry for showing ERP controls
     const isERPDataEntry = currentUser && currentUser.role === 'erp_data_entry';
     
-    tableBody.innerHTML = allApprovedCodes.map((item, index) => `
+    tableBody.innerHTML = dataToDisplay.map((item, index) => `
         <tr class="hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}">
             <td class="px-4 py-3 whitespace-nowrap text-sm font-mono font-semibold text-blue-600 border-b">${item.item_code || 'N/A'}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-b">${(item.classification_projects?.project_name || 'Unknown').substring(0, 30)}${(item.classification_projects?.project_name || '').length > 30 ? '...' : ''}</td>
@@ -11307,7 +13156,7 @@ async function loadUserHistory() {
         if (!requests || requests.length === 0) {
             content.innerHTML = 
                 '<div class="text-center py-12">' +
-                    '<div class="text-gray-400 text-6xl mb-4">Ã°Å¸â€œâ€¹</div>' +
+                    '<div class="text-gray-400 text-6xl mb-4">ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹</div>' +
                     '<h3 class="text-xl font-medium text-gray-900 mb-2">No Request History</h3>' +
                     '<p class="text-gray-500">You have not submitted any item code requests yet.</p>' +
                     '<p class="text-gray-400 text-sm mt-2">Start by generating your first item code!</p>' +
@@ -11475,7 +13324,7 @@ async function loadStandardValueRequests() {
         if (!requests || requests.length === 0) {
             content.innerHTML = 
                 '<div class="text-center py-12">' +
-                    '<div class="text-gray-400 text-6xl mb-4">Ã°Å¸â€œâ€¹</div>' +
+                    '<div class="text-gray-400 text-6xl mb-4">ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹</div>' +
                     '<h3 class="text-xl font-medium text-gray-900 mb-2">No Standard Value Requests</h3>' +
                     '<p class="text-gray-500">You have not submitted any standard value requests yet.</p>' +
                     '<p class="text-gray-400 text-sm mt-2">Standard value requests allow you to add new values to dropdown lists!</p>' +
@@ -11596,7 +13445,7 @@ async function loadCombinationRequests() {
         if (!requests || requests.length === 0) {
             content.innerHTML = 
                 '<div class="text-center py-12">' +
-                    '<div class="text-gray-400 text-6xl mb-4">Ã°Å¸â€â€”</div>' +
+                    '<div class="text-gray-400 text-6xl mb-4">ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬â€</div>' +
                     '<h3 class="text-xl font-medium text-gray-900 mb-2">No Combination Requests</h3>' +
                     '<p class="text-gray-500">You have not submitted any combination requests yet.</p>' +
                     '<p class="text-gray-400 text-sm mt-2">Combination requests allow you to generate or block specific attribute combinations!</p>' +
@@ -11701,7 +13550,7 @@ function generateRequestCard(request, index) {
     
     // Debug logging for ERP status
     if (request.status === 'admin_approved') {
-        console.log(`ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒâ€šÃ‚Â Debug - Request #${request.id}:`, {
+        console.log(`ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â Debug - Request #${request.id}:`, {
             item_code: request.item_code,
             status: request.status,
             erp_integrated: request.erp_integrated,
@@ -11743,7 +13592,7 @@ function generateRequestCard(request, index) {
                     <span class="text-xs bg-white px-2 py-1 rounded-full">${getApprovalStage(request.status, request.erp_integrated)}</span>
                 </div>
                 
-                <!-- 4-Stage Progress Line: Submit ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Reviewer ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Admin ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ ERP Integration -->
+                <!-- 4-Stage Progress Line: Submit ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ Reviewer ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ Admin ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ ERP Integration -->
                 <div class="relative">
                     <div class="flex items-center justify-between">
                         <!-- Stage 1: Submitted -->
@@ -12003,27 +13852,27 @@ function getApprovalLineColor(status) {
 function getApprovalStatusBadge(status, erpIntegrated = false) {
     const badgeMap = {
         'submitted': { 
-            label: "Ã°Å¸â€œÂ Submitted - Awaiting Reviewer",
+            label: "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â Submitted - Awaiting Reviewer",
             bg: 'bg-blue-50', 
             text: 'text-blue-700' 
         },
         'pending': { 
-            label: "Ã°Å¸â€˜â‚¬ Under Review by Reviewer",
+            label: "ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ¢â€šÂ¬ Under Review by Reviewer",
             bg: 'bg-yellow-50', 
             text: 'text-yellow-700' 
         },
         'under_review': { 
-            label: "Ã¢ÂÂ³ Being Reviewed",
+            label: "ÃƒÂ¢Ã‚ÂÃ‚Â³ Being Reviewed",
             bg: 'bg-orange-50', 
             text: 'text-orange-700' 
         },
         'reviewer_rejected': { 
-            label: 'ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Rejected by Reviewer', 
+            label: 'ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Rejected by Reviewer', 
             bg: 'bg-red-50', 
             text: 'text-red-700' 
         },
         'admin_approved': { 
-            label: erpIntegrated ? 'ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Fully Complete - ERP Integrated' : 'ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€šÃ‚Â³ Approved - Awaiting ERP Integration', 
+            label: erpIntegrated ? 'ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ Fully Complete - ERP Integrated' : 'ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³ Approved - Awaiting ERP Integration', 
             bg: erpIntegrated ? 'bg-green-50' : 'bg-blue-50', 
             text: erpIntegrated ? 'text-green-700' : 'text-blue-700' 
         },
@@ -12040,7 +13889,7 @@ function getApprovalStatusBadge(status, erpIntegrated = false) {
     };
     
     return badgeMap[status] || { 
-        label: `ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹ Status: ${status ? status.replace('_', ' ') : 'Unknown'}`, 
+        label: `ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¹ Status: ${status ? status.replace('_', ' ') : 'Unknown'}`, 
         bg: 'bg-gray-50', 
         text: 'text-gray-700' 
     };
@@ -12770,6 +14619,573 @@ window.debugAttributeSettings = function() {
 };
 
 // ===== END ATTRIBUTE DISPLAY SETTINGS MANAGEMENT =====
+
+// ===== SEARCHABLE DROPDOWN FUNCTIONALITY FOR SEARCH FILTERS =====
+
+// Global variables to store dropdown data
+let searchDropdownData = {
+    manufacturers: [],
+    uoms: [],
+    countries: [],
+    models: []
+};
+
+// Toggle search dropdown visibility
+function toggleSearchDropdown(dropdownId, inputId) {
+    const dropdown = document.getElementById(dropdownId);
+    const input = document.getElementById(inputId);
+    
+    if (!dropdown || !input) {
+        console.warn(`⚠️ Dropdown elements not found: ${dropdownId}, ${inputId}`);
+        return;
+    }
+    
+    console.log(`🔽 Toggling dropdown: ${dropdownId}`);
+    
+    // Close all other dropdowns first
+    const allDropdowns = [
+        'manufacturer-search-dropdown',
+        'uom-search-dropdown',
+        'country-search-dropdown',
+        'model-search-dropdown'
+    ];
+    
+    allDropdowns.forEach(id => {
+        if (id !== dropdownId) {
+            const otherDropdown = document.getElementById(id);
+            if (otherDropdown) otherDropdown.classList.add('hidden');
+        }
+    });
+    
+    // Toggle current dropdown
+    const isHidden = dropdown.classList.contains('hidden');
+    if (isHidden) {
+        dropdown.classList.remove('hidden');
+        console.log(`✅ Opened dropdown: ${dropdownId}`);
+        
+        // Get the data key and populate initial options
+        const dataKey = getDataKeyFromDropdownId(dropdownId);
+        if (dataKey && searchDropdownData[dataKey]) {
+            console.log(`📊 Populating ${dropdownId} with ${searchDropdownData[dataKey].length} options`);
+            populateDropdownOptions(dropdownId, searchDropdownData[dataKey], input);
+        }
+        
+        // Focus on the search input inside the dropdown with delay to ensure it's rendered
+        setTimeout(() => {
+            const searchInput = dropdown.querySelector('input[type="text"]');
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.value = ''; // Clear any previous search
+                console.log(`🎯 Focused on search input: ${searchInput.id}`);
+            } else {
+                console.warn(`⚠️ Search input not found in ${dropdownId}`);
+            }
+        }, 50);
+        
+    } else {
+        dropdown.classList.add('hidden');
+        console.log(`❌ Closed dropdown: ${dropdownId}`);
+    }
+}
+
+// Get data key from dropdown ID
+function getDataKeyFromDropdownId(dropdownId) {
+    const mapping = {
+        'manufacturer-search-dropdown': 'manufacturers',
+        'uom-search-dropdown': 'uoms',
+        'country-search-dropdown': 'countries',
+        'model-search-dropdown': 'models'
+    };
+    return mapping[dropdownId];
+}
+
+// Load unique values from approved codes for search dropdowns
+async function loadSearchDropdownData() {
+    console.log('📊 Loading search dropdown data...');
+    
+    try {
+        // Get all approved codes to extract unique values
+        if (!allApprovedCodes || allApprovedCodes.length === 0) {
+            console.log('⚠️ No approved codes available for dropdown data');
+            
+            // Set empty arrays so dropdowns still work
+            searchDropdownData = {
+                manufacturers: [],
+                uoms: [],
+                countries: [],
+                models: []
+            };
+            return;
+        }
+        
+        console.log('📊 Processing', allApprovedCodes.length, 'approved codes for dropdown data');
+        
+        // Extract unique manufacturers with detailed logging
+        const manufacturerValues = allApprovedCodes.map(item => item.manufacturer).filter(val => val && val.trim() !== '');
+        const manufacturers = [...new Set(manufacturerValues)].sort();
+        console.log('📊 Found', manufacturerValues.length, 'manufacturer entries, unique:', manufacturers.length);
+        
+        // Extract unique UOMs
+        const uomValues = allApprovedCodes.map(item => item.uom).filter(val => val && val.trim() !== '');
+        const uoms = [...new Set(uomValues)].sort();
+        console.log('📊 Found', uomValues.length, 'UOM entries, unique:', uoms.length);
+        
+        // Extract unique countries
+        const countryValues = allApprovedCodes.map(item => item.country_of_origin).filter(val => val && val.trim() !== '');
+        const countries = [...new Set(countryValues)].sort();
+        console.log('📊 Found', countryValues.length, 'country entries, unique:', countries.length);
+        
+        // Extract unique models
+        const modelValues = allApprovedCodes.map(item => item.model_number).filter(val => val && val.trim() !== '');
+        const models = [...new Set(modelValues)].sort();
+        console.log('📊 Found', modelValues.length, 'model entries, unique:', models.length);
+        
+        // Store the data
+        searchDropdownData = {
+            manufacturers: manufacturers,
+            uoms: uoms,
+            countries: countries,
+            models: models
+        };
+        
+        console.log('✅ Search dropdown data loaded:', {
+            manufacturers: manufacturers.length,
+            uoms: uoms.length,
+            countries: countries.length,
+            models: models.length
+        });
+        
+        // Show sample data for debugging
+        if (manufacturers.length > 0) {
+            console.log('📋 Sample manufacturers:', manufacturers.slice(0, 5));
+        }
+        if (uoms.length > 0) {
+            console.log('📋 Sample UOMs:', uoms.slice(0, 5));
+        }
+        if (countries.length > 0) {
+            console.log('📋 Sample countries:', countries.slice(0, 5));
+        }
+        if (models.length > 0) {
+            console.log('📋 Sample models:', models.slice(0, 5));
+        }
+        
+        // Setup search functionality for the search inputs
+        setupDropdownSearchInputs();
+        
+    } catch (error) {
+        console.error('❌ Error loading search dropdown data:', error);
+        
+        // Set empty arrays so dropdowns still work even on error
+        searchDropdownData = {
+            manufacturers: [],
+            uoms: [],
+            countries: [],
+            models: []
+        };
+    }
+}
+
+// Setup search inputs inside dropdowns
+function setupDropdownSearchInputs() {
+    const searchInputs = [
+        {
+            inputId: 'manufacturer-search-input',
+            dropdownId: 'manufacturer-search-dropdown',
+            optionsId: 'manufacturer-options',
+            dataKey: 'manufacturers',
+            targetInputId: 'search-manufacturer'
+        },
+        {
+            inputId: 'uom-search-input',
+            dropdownId: 'uom-search-dropdown',
+            optionsId: 'uom-options',
+            dataKey: 'uoms',
+            targetInputId: 'search-uom'
+        },
+        {
+            inputId: 'country-search-input',
+            dropdownId: 'country-search-dropdown',
+            optionsId: 'country-options',
+            dataKey: 'countries',
+            targetInputId: 'search-country'
+        },
+        {
+            inputId: 'model-search-input',
+            dropdownId: 'model-search-dropdown',
+            optionsId: 'model-options',
+            dataKey: 'models',
+            targetInputId: 'search-model'
+        }
+    ];
+    
+    searchInputs.forEach(config => {
+        // Wait for DOM elements to be available
+        setTimeout(() => {
+            const searchInput = document.getElementById(config.inputId);
+            if (searchInput) {
+                console.log(`✅ Setting up search for ${config.inputId}`);
+                
+                // Clear any existing listeners
+                searchInput.replaceWith(searchInput.cloneNode(true));
+                const newSearchInput = document.getElementById(config.inputId);
+                
+                newSearchInput.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase().trim();
+                    console.log(`🔍 Searching ${config.dataKey} for: "${searchTerm}"`);
+                    
+                    let filteredData;
+                    if (searchTerm === '') {
+                        // Show all data when search is empty
+                        filteredData = searchDropdownData[config.dataKey];
+                    } else {
+                        // Filter based on search term
+                        filteredData = searchDropdownData[config.dataKey].filter(item =>
+                            item.toLowerCase().includes(searchTerm)
+                        );
+                    }
+                    
+                    console.log(`📊 Filtered ${config.dataKey}:`, filteredData.length, 'results');
+                    
+                    const targetInput = document.getElementById(config.targetInputId);
+                    populateDropdownOptions(config.dropdownId, filteredData, targetInput, config.optionsId);
+                });
+                
+                // Also trigger initial population when input gets focus
+                newSearchInput.addEventListener('focus', function() {
+                    const targetInput = document.getElementById(config.targetInputId);
+                    populateDropdownOptions(config.dropdownId, searchDropdownData[config.dataKey], targetInput, config.optionsId);
+                });
+                
+                console.log(`✅ Search input ${config.inputId} configured`);
+            } else {
+                console.warn(`⚠️ Search input ${config.inputId} not found`);
+            }
+        }, 100);
+    });
+}
+
+// Populate dropdown options
+function populateDropdownOptions(dropdownId, data, targetInput, optionsId = null) {
+    // Find the options container - either the specified container or default to the dropdown itself
+    let optionsContainer;
+    if (optionsId) {
+        optionsContainer = document.getElementById(optionsId);
+    } else {
+        // Look for the options container within the dropdown
+        const dropdown = document.getElementById(dropdownId);
+        if (dropdown) {
+            optionsContainer = dropdown.querySelector('[id$="-options"]') || 
+                              dropdown.querySelector('.max-h-48') || 
+                              dropdown;
+        }
+    }
+    
+    if (!optionsContainer || !targetInput) {
+        console.warn(`⚠️ Options container or target input not found for ${dropdownId}`);
+        return;
+    }
+    
+    console.log(`📝 Populating ${dropdownId} with ${data.length} options`);
+    
+    optionsContainer.innerHTML = '';
+    
+    if (data.length === 0) {
+        optionsContainer.innerHTML = '<div class="px-3 py-2 text-gray-500 text-sm">No matches found</div>';
+        return;
+    }
+    
+    // Add "Clear Selection" option if there's a current value
+    if (targetInput.value.trim() !== '') {
+        const clearOption = document.createElement('div');
+        clearOption.className = 'px-3 py-2 text-sm cursor-pointer hover:bg-red-50 hover:text-red-700 border-b border-gray-100 text-red-600 font-medium';
+        clearOption.innerHTML = '✕ Clear Selection';
+        clearOption.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log(`🗑️ Clearing selection for ${dropdownId}`);
+            
+            targetInput.value = '';
+            // Reset placeholder to original
+            const originalPlaceholder = getOriginalPlaceholder(targetInput.id);
+            if (originalPlaceholder) {
+                targetInput.placeholder = originalPlaceholder;
+            }
+            
+            document.getElementById(dropdownId).classList.add('hidden');
+            performAttributeBasedSearch();
+        });
+        optionsContainer.appendChild(clearOption);
+    }
+    
+    // Limit to first 20 results for performance
+    const limitedData = data.slice(0, 20);
+    
+    limitedData.forEach((item, index) => {
+        const option = document.createElement('div');
+        option.className = 'px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 border-b border-gray-50';
+        option.textContent = item;
+        
+        option.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log(`✅ Selected: ${item} for ${dropdownId}`);
+            
+            targetInput.value = item;
+            targetInput.placeholder = `${item} (Selected)`;
+            document.getElementById(dropdownId).classList.add('hidden');
+            
+            // Trigger search when item is selected
+            performAttributeBasedSearch();
+        });
+        
+        optionsContainer.appendChild(option);
+    });
+    
+    console.log(`✅ Populated ${dropdownId} with ${limitedData.length} options`);
+}
+
+// Helper function to get original placeholder text
+function getOriginalPlaceholder(inputId) {
+    const placeholders = {
+        'search-manufacturer': 'Search manufacturer...',
+        'search-uom': 'Search UOM...',
+        'search-country': 'Search country...',
+        'search-model': 'Search model...'
+    };
+    return placeholders[inputId] || 'Search...';
+}
+
+// Close all search dropdowns when clicking outside
+document.addEventListener('click', function(e) {
+    const searchDropdowns = [
+        'manufacturer-search-dropdown',
+        'uom-search-dropdown',
+        'country-search-dropdown',
+        'model-search-dropdown'
+    ];
+    
+    searchDropdowns.forEach(dropdownId => {
+        const dropdown = document.getElementById(dropdownId);
+        if (dropdown && !dropdown.contains(e.target)) {
+            // Check if clicked element is the trigger input
+            const triggerInput = dropdown.previousElementSibling?.querySelector('input[readonly]');
+            if (triggerInput && !triggerInput.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        }
+    });
+});
+
+// ===== END SEARCHABLE DROPDOWN FUNCTIONALITY =====
+
+// ===== SEARCH METHOD TABS AND DIRECT ITEM CODE SEARCH =====
+
+// Handle search method tab switching
+function initializeSearchMethodTabs() {
+    const tabButtons = document.querySelectorAll('.search-method-tab');
+    const contentSections = document.querySelectorAll('.search-method-content');
+    
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const method = this.dataset.method;
+            
+            // Update tab appearance
+            tabButtons.forEach(btn => {
+                btn.classList.remove('border-blue-500', 'text-blue-600');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            this.classList.remove('border-transparent', 'text-gray-500');
+            this.classList.add('border-blue-500', 'text-blue-600');
+            
+            // Show corresponding content
+            contentSections.forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            const targetSection = document.getElementById(`${method}-search-method`);
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+            }
+            
+            // Show/hide project-specific buttons in controls
+            updateSearchControlsVisibility(method);
+            
+            // Show/hide attribute search phase based on method
+            const attributePhase = document.getElementById('attribute-search-phase');
+            if (method === 'project') {
+                // Reset any existing search results when switching to project mode
+                clearSearchResults();
+            } else {
+                // Hide attribute search for direct item code search
+                if (attributePhase) {
+                    attributePhase.classList.add('hidden');
+                }
+                clearSearchResults();
+            }
+        });
+    });
+}
+
+// Update search controls visibility based on search method
+function updateSearchControlsVisibility(searchMethod) {
+    const projectOnlyButtons = document.querySelectorAll('.project-search-only');
+    
+    if (searchMethod === 'project') {
+        // Show project-specific buttons
+        projectOnlyButtons.forEach(button => {
+            button.style.display = 'inline-block';
+        });
+    } else {
+        // Hide project-specific buttons for direct item code search
+        projectOnlyButtons.forEach(button => {
+            button.style.display = 'none';
+        });
+    }
+}
+
+// Direct item code search functionality
+function performDirectItemCodeSearch() {
+    const searchInput = document.getElementById('direct-item-code-search');
+    const resultsInfo = document.getElementById('itemcode-search-info');
+    const resultsText = document.getElementById('itemcode-results-text');
+    
+    if (!searchInput || !searchInput.value.trim()) {
+        alert('Please enter at least one item code to search');
+        return;
+    }
+    
+    const searchTerms = searchInput.value
+        .split(',')
+        .map(term => term.trim().toLowerCase())
+        .filter(term => term.length > 0);
+    
+    console.log('🔍 Direct item code search:', searchTerms);
+    
+    if (!allApprovedCodes || allApprovedCodes.length === 0) {
+        alert('No approved item codes available. Please refresh the page.');
+        return;
+    }
+    
+    // Ensure controls are set for item code search context
+    updateSearchControlsVisibility('itemcode');
+    
+    // Filter items by item code matching
+    const matchedItems = allApprovedCodes.filter(item => {
+        const itemCode = String(item.item_code || '').toLowerCase();
+        return searchTerms.some(term => itemCode.includes(term));
+    });
+    
+    console.log(`📊 Found ${matchedItems.length} items matching search terms`);
+    
+    // Update results info
+    if (resultsInfo && resultsText) {
+        resultsText.textContent = `Found ${matchedItems.length} item code(s) matching your search`;
+        resultsInfo.classList.remove('hidden');
+        
+        // Hide after 3 seconds
+        setTimeout(() => {
+            resultsInfo.classList.add('hidden');
+        }, 3000);
+    }
+    
+    // Display results (this will show the controls section)
+    displaySearchResults(matchedItems);
+}
+
+// Clear direct item code search
+function clearDirectItemCodeSearch() {
+    const searchInput = document.getElementById('direct-item-code-search');
+    const resultsInfo = document.getElementById('itemcode-search-info');
+    
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    
+    if (resultsInfo) {
+        resultsInfo.classList.add('hidden');
+    }
+    
+    clearSearchResults();
+}
+
+// Initialize search method functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize search method tabs
+    initializeSearchMethodTabs();
+    
+    // Set initial context to project search (default active tab)
+    updateSearchControlsVisibility('project');
+    
+    // Note: loadSearchDropdownData() is now called from loadAllApprovedCodes()
+    // when the approved codes data is actually available
+    
+    // Add event listeners for direct item code search
+    const searchButton = document.getElementById('search-itemcode-btn');
+    const clearButton = document.getElementById('clear-itemcode-search-btn');
+    const searchInput = document.getElementById('direct-item-code-search');
+    
+    if (searchButton) {
+        searchButton.addEventListener('click', performDirectItemCodeSearch);
+    }
+    
+    if (clearButton) {
+        clearButton.addEventListener('click', clearDirectItemCodeSearch);
+    }
+    
+    // Allow Enter key to trigger search
+    if (searchInput) {
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                performDirectItemCodeSearch();
+            }
+        });
+    }
+});
+
+// Simple export test function for debugging
+function testExport(format) {
+    console.log(`🔍 TEST EXPORT: Attempting to export as ${format}`);
+    alert(`Test export: ${format} export would happen here`);
+    
+    // Hide export dropdown
+    const menu = document.getElementById('export-dropdown-menu');
+    if (menu) {
+        menu.classList.add('hidden');
+        console.log('✅ Export menu hidden');
+    }
+}
+
+// Export current search results
+function exportCurrentResults(format) {
+    console.log(`📊 Exporting current search results as ${format}`);
+    
+    // Get current filtered results or all results if none filtered
+    const resultsToExport = window.lastFilteredResults || allApprovedCodes || [];
+    
+    if (!resultsToExport || resultsToExport.length === 0) {
+        alert('No search results to export');
+        return;
+    }
+    
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    const filename = `search_results_${timestamp}`;
+    
+    if (format === 'excel') {
+        exportToExcel(resultsToExport, `${filename}.xlsx`);
+    } else if (format === 'pdf') {
+        exportToPDF(resultsToExport, `${filename}.pdf`, 'Search Results');
+    }
+    
+    // Hide export dropdown
+    const menu = document.getElementById('export-dropdown-menu');
+    if (menu) {
+        menu.classList.add('hidden');
+    }
+}
+
+// ===== END SEARCH METHOD TABS AND DIRECT ITEM CODE SEARCH =====
 
     </script>
 </body>
