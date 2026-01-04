@@ -121,6 +121,87 @@
             color: #6b7280;
             margin-top: 4px;
         }
+        
+        /* NEW: Deprecation styling for Code Generation Portal */
+        .deprecated-value-option {
+            background: linear-gradient(135deg, #FEF3C7 0%, #FBBF24 100%) !important;
+            border: 1px solid #F59E0B !important;
+            position: relative;
+            opacity: 0.7;
+            pointer-events: none; /* Disable selection of deprecated values */
+        }
+        
+        .deprecated-value-option::before {
+            content: "⚠️ DEPRECATED";
+            position: absolute;
+            top: -6px;
+            right: 4px;
+            background: #F59E0B;
+            color: white;
+            padding: 1px 4px;
+            font-size: 9px;
+            border-radius: 2px;
+            font-weight: bold;
+            z-index: 10;
+        }
+        
+        .deprecated-value-option input[type="radio"] {
+            display: none; /* Hide radio button for deprecated values */
+        }
+        
+        .deprecated-value-option .deprecated-info {
+            font-size: 10px;
+            color: #D97706;
+            margin-top: 2px;
+            font-style: italic;
+        }
+        
+        .deprecated-section {
+            border-top: 2px dashed #F59E0B;
+            margin-top: 12px;
+            padding-top: 12px;
+            background: #FFFBEB;
+            border-radius: 6px;
+            padding: 8px;
+        }
+        
+        .deprecated-section-header {
+            font-size: 11px;
+            color: #D97706;
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-align: center;
+        }
+        
+        .deprecation-warning {
+            background: #FEF3C7;
+            border: 1px solid #F59E0B;
+            border-radius: 6px;
+            padding: 8px;
+            margin: 8px 0;
+            font-size: 12px;
+            color: #92400E;
+        }
+        
+        .deprecation-warning::before {
+            content: "⚠️ ";
+            font-weight: bold;
+        }
+        
+        .attribute-section.has-deprecated {
+            border-left: 4px solid #F59E0B;
+            padding-left: 12px;
+        }
+        
+        .legacy-value-info {
+            background: #FEF3C7;
+            border: 1px solid #F59E0B;
+            border-radius: 4px;
+            padding: 6px;
+            margin-top: 8px;
+            font-size: 11px;
+            color: #D97706;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -306,8 +387,8 @@
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Project Name</label>
-                <input type="text" id="search-project-name" placeholder="Search by project name..." 
+                <label class="block text-xs font-medium text-gray-600 mb-1">Project Name / Tags</label>
+                <input type="text" id="search-project-name" placeholder="Search by name or tags..." 
                        class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-blue-500">
             </div>
             
@@ -647,91 +728,38 @@
 
         <!-- Search Tab -->
         <div id="search-tab" class="tab-content hidden">
-            <!-- Phase 1: Search Method Selection -->
-            <div id="search-method-selection" class="bg-white p-6 rounded-lg shadow-md mb-6">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4">Search Item Codes</h2>
+            <!-- Phase 1: Project Selection -->
+            <div id="project-selection-phase" class="bg-white p-6 rounded-lg shadow-md mb-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Search Item Codes by Project</h2>
                 
-                <!-- Search Method Tabs -->
-                <div class="border-b border-gray-200 mb-4">
-                    <nav class="-mb-px flex space-x-8" aria-label="Search methods">
-                        <button id="project-search-tab" class="search-method-tab border-b-2 border-blue-500 py-2 px-1 text-blue-600 font-medium text-sm" data-method="project">
-                            Search by Project
-                        </button>
-                        <button id="itemcode-search-tab" class="search-method-tab border-b-2 border-transparent py-2 px-1 text-gray-500 hover:text-gray-700 font-medium text-sm" data-method="itemcode">
-                            Search by Item Code
-                        </button>
-                    </nav>
-                </div>
-                
-                <!-- Project Search Method -->
-                <div id="project-search-method" class="search-method-content">
-                    <h3 class="text-lg font-medium text-gray-700 mb-3">Search by Project</h3>
-                    <p class="text-gray-600 mb-4">Select a project to search within its item codes using attribute filters.</p>
-                    
-                    <!-- Project Search Controls -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div class="relative">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Project Name or Tag</label>
-                            <input type="text" id="project-search-input" placeholder="Search by project name or tag..." 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
-                            <!-- Project Search Dropdown -->
-                            <div id="project-search-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                                <!-- Project options will be populated here -->
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-end">
-                            <button id="clear-project-search-btn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md">
-                                Clear Search
-                            </button>
+                <!-- Project Search Controls -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="relative">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Project Name or Tag</label>
+                        <input type="text" id="project-search-input" placeholder="Search by project name or tag..." 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
+                        <!-- Project Search Dropdown -->
+                        <div id="project-search-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                            <!-- Project options will be populated here -->
                         </div>
                     </div>
+                    
+                    <div class="flex items-end">
+                        <button id="clear-project-search-btn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md">
+                            Clear Search
+                        </button>
+                    </div>
+                </div>
 
-                    <!-- Selected Project Display -->
-                    <div id="selected-project-search-display" class="hidden bg-blue-50 p-4 rounded-lg border border-blue-200">
-                        <div class="flex items-center justify-between">
-                            <div id="selected-project-search-info">
-                                <!-- Selected project info will be populated here -->
-                            </div>
-                            <button id="change-project-btn" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                                Change Project
-                            </button>
+                <!-- Selected Project Display -->
+                <div id="selected-project-search-display" class="hidden bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <div class="flex items-center justify-between">
+                        <div id="selected-project-search-info">
+                            <!-- Selected project info will be populated here -->
                         </div>
-                    </div>
-                </div>
-                
-                <!-- Item Code Search Method -->
-                <div id="itemcode-search-method" class="search-method-content hidden">
-                    <h3 class="text-lg font-medium text-gray-700 mb-3">Search by Item Code</h3>
-                    <p class="text-gray-600 mb-4">Enter full or partial item codes to search across all projects.</p>
-                    
-                    <!-- Item Code Search Controls -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Item Code(s)</label>
-                            <input type="text" id="direct-item-code-search" placeholder="Enter item code(s)..." 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
-                            <p class="text-xs text-gray-500 mt-1">Tip: Use commas to separate multiple codes (e.g., 032100-1-00001, 032100-1-00002)</p>
-                        </div>
-                        
-                        <div class="flex items-end">
-                            <button id="clear-itemcode-search-btn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md mr-2">
-                                Clear
-                            </button>
-                            <button id="search-itemcode-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
-                                Search
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- Search Results Info for Item Code Search -->
-                    <div id="itemcode-search-info" class="hidden bg-green-50 p-4 rounded-lg border border-green-200">
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                            </svg>
-                            <span id="itemcode-results-text" class="text-green-700 font-medium">Search completed</span>
-                        </div>
+                        <button id="change-project-btn" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                            Change Project
+                        </button>
                     </div>
                 </div>
             </div>
@@ -746,101 +774,23 @@
                 </div>
                 
                 <!-- Additional Search Filters -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                    <div class="relative">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Manufacturer</label>
-                        <div class="relative">
-                            <input type="text" id="search-manufacturer" placeholder="Search manufacturer..." 
-                                   class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 cursor-pointer"
-                                   readonly onclick="toggleSearchDropdown('manufacturer-search-dropdown', 'search-manufacturer')">
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                            </div>
-                        </div>
-                        <!-- Manufacturer Search Dropdown -->
-                        <div id="manufacturer-search-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                            <div class="p-2">
-                                <input type="text" id="manufacturer-search-input" placeholder="Type to search..." 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 text-sm">
-                            </div>
-                            <div id="manufacturer-options" class="max-h-48 overflow-y-auto">
-                                <!-- Manufacturer options will be populated here -->
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="relative">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Unit of Measurement</label>
-                        <div class="relative">
-                            <input type="text" id="search-uom" placeholder="Search UOM..." 
-                                   class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 cursor-pointer"
-                                   readonly onclick="toggleSearchDropdown('uom-search-dropdown', 'search-uom')">
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                            </div>
-                        </div>
-                        <!-- UOM Search Dropdown -->
-                        <div id="uom-search-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                            <div class="p-2">
-                                <input type="text" id="uom-search-input" placeholder="Type to search..." 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 text-sm">
-                            </div>
-                            <div id="uom-options" class="max-h-48 overflow-y-auto">
-                                <!-- UOM options will be populated here -->
-                            </div>
-                        </div>
+                        <input type="text" id="search-uom" placeholder="Search UOM..." 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
                     </div>
                     
-                    <div class="relative">
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Country of Origin</label>
-                        <div class="relative">
-                            <input type="text" id="search-country" placeholder="Search country..." 
-                                   class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 cursor-pointer"
-                                   readonly onclick="toggleSearchDropdown('country-search-dropdown', 'search-country')">
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                            </div>
-                        </div>
-                        <!-- Country Search Dropdown -->
-                        <div id="country-search-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                            <div class="p-2">
-                                <input type="text" id="country-search-input" placeholder="Type to search..." 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 text-sm">
-                            </div>
-                            <div id="country-options" class="max-h-48 overflow-y-auto">
-                                <!-- Country options will be populated here -->
-                            </div>
-                        </div>
+                        <input type="text" id="search-country" placeholder="Search country..." 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
                     </div>
                     
-                    <div class="relative">
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Model Number</label>
-                        <div class="relative">
-                            <input type="text" id="search-model" placeholder="Search model..." 
-                                   class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 cursor-pointer"
-                                   readonly onclick="toggleSearchDropdown('model-search-dropdown', 'search-model')">
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                            </div>
-                        </div>
-                        <!-- Model Search Dropdown -->
-                        <div id="model-search-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                            <div class="p-2">
-                                <input type="text" id="model-search-input" placeholder="Type to search..." 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 text-sm">
-                            </div>
-                            <div id="model-options" class="max-h-48 overflow-y-auto">
-                                <!-- Model options will be populated here -->
-                            </div>
-                        </div>
+                        <input type="text" id="search-model" placeholder="Search model..." 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
                     </div>
                     
                     <div>
@@ -853,50 +803,11 @@
                     </div>
                 </div>
                 
-                <!-- Unit Price Search Section -->
-                <div class="bg-gray-50 p-4 rounded-lg mb-4">
-                    <h3 class="text-lg font-medium text-gray-800 mb-3">Unit Price Search</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Comparison Type</label>
-                            <select id="price-comparison-type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
-                                <option value="">No Price Filter</option>
-                                <option value="equal">Equal to</option>
-                                <option value="greater">Greater than</option>
-                                <option value="less">Less than</option>
-                                <option value="between">Between</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Price Value</label>
-                            <input type="number" id="search-price-value" placeholder="Enter price..." 
-                                   step="0.01" min="0"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
-                        </div>
-                        
-                        <div id="price-max-container" class="hidden">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Maximum Price</label>
-                            <input type="number" id="search-price-max" placeholder="Enter max price..." 
-                                   step="0.01" min="0"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
-                            <select id="search-currency" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
-                                <option value="">All Currencies</option>
-                                <option value="USD">USD</option>
-                                <option value="SAR">SAR</option>
-                                <option value="EUR">EUR</option>
-                                <option value="GBP">GBP</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                
                 <!-- Search Actions -->
                 <div class="flex space-x-3 flex-wrap">
+                    <button id="perform-attribute-search-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md">
+                        Search Item Codes
+                    </button>
                     <button id="clear-attribute-search-btn" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-md">
                         Clear Filters
                     </button>
@@ -904,7 +815,7 @@
                         Toggle Hierarchy View
                     </button>
                     <button id="toggle-table-view-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md">
-                        Switch to Card View
+                        Switch to Table View
                     </button>
                     <!-- Enhanced Export Controls -->
                     <div class="relative inline-block">
@@ -1041,77 +952,6 @@
             <div id="search-summary" class="mb-4 hidden">
                 <div class="bg-gray-50 p-3 rounded-lg">
                     <span id="results-count" class="text-gray-700 font-medium">0 item codes found</span>
-                </div>
-            </div>
-            
-            <!-- Search Results Controls (View Toggle, Export, etc.) -->
-            <div id="search-results-controls" class="bg-white p-4 rounded-lg shadow-md mb-4 hidden">
-                <div class="flex flex-wrap items-center justify-between gap-4">
-                    <div class="flex items-center gap-2">
-                        <span id="view-description" class="text-sm text-gray-600">Table view with detailed information</span>
-                    </div>
-                    
-                    <div class="flex space-x-3 flex-wrap">
-                        <button id="clear-attribute-search-btn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm project-search-only">
-                            Clear Filters
-                        </button>
-                        <button id="toggle-view-btn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm project-search-only">
-                            Toggle Hierarchy View
-                        </button>
-                        <button id="toggle-table-view-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm" onclick="console.log('INLINE CLICK DETECTED'); toggleSearchTableView();">
-                            Switch to Card View
-                        </button>
-                        <!-- Enhanced Export Controls -->
-                        <div class="relative inline-block">
-                            <button id="export-dropdown-btn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-1 text-sm" onclick="console.log('EXPORT DROPDOWN CLICKED'); event.stopPropagation(); var menu = document.getElementById('export-dropdown-menu'); if(menu) menu.classList.toggle('hidden'); else console.log('Menu not found');">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="pointer-events: none;">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
-                                </svg>
-                                <span style="pointer-events: none;">Export</span>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="pointer-events: none;">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                            </button>
-                            <div id="export-dropdown-menu" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                                <div class="p-4">
-                                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Export Item Codes</h3>
-                                    
-                                    <!-- Filter Selection -->
-                                    <div class="mb-4">
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Status:</label>
-                                        <select id="export-filter-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
-                                            <option value="all">All Approved Item Codes</option>
-                                            <option value="erp_integrated">ERP Integrated Codes Only</option>
-                                            <option value="erp_pending">Pending ERP Integration</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <!-- Export Format Options -->
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <button id="export-excel-btn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm flex items-center gap-2" onclick="console.log('EXCEL EXPORT CLICKED'); event.stopPropagation(); testExport('excel');">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="pointer-events: none;">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                            </svg>
-                                            <span style="pointer-events: none;">Excel (.xlsx)</span>
-                                        </button>
-                                        <button id="export-pdf-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm flex items-center gap-2" onclick="console.log('PDF EXPORT CLICKED'); event.stopPropagation(); testExport('pdf');">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="pointer-events: none;">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
-                                            </svg>
-                                            <span style="pointer-events: none;">PDF</span>
-                                        </button>
-                                    </div>
-                                    
-                                    <div class="mt-3 text-xs text-gray-600 bg-gray-50 p-2 rounded">
-                                        <p><strong>Note:</strong> PDF exports include automatic text wrapping to ensure all content is clearly visible.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <button id="refresh-search-btn" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm" onclick="console.log('REFRESH CLICKED'); event.stopPropagation(); window.location.reload();">
-                            <span style="pointer-events: none;">Refresh Data</span>
-                        </button>
-                    </div>
                 </div>
             </div>
             
@@ -1587,13 +1427,101 @@ async function checkCombinationExists(combination, uom, country, modelNumber, un
     if (!currentProject) return { exists: false };
     
     try {
-        console.log(' Checking duplicates with VARIATION logic...');
+        console.log('🔍 Checking duplicates with ENHANCED DEPRECATION-AWARE logic...');
+        
+        // NEW: Use enhanced duplicate check with deprecation awareness
+        const { data: enhancedResult, error: enhancedError } = await supabase
+            .rpc('enhanced_duplicate_check', {
+                project_id_param: currentProject.id,
+                attribute_selections_param: attributeSelections,
+                uom_param: uom || '',
+                country_of_origin_param: country || '',
+                model_number_param: modelNumber || '',
+                manufacturer_param: manufacturer || ''
+            });
+
+        if (enhancedError) {
+            console.warn('Enhanced duplicate check failed, falling back to legacy:', enhancedError);
+            return await fallbackDuplicateCheck(combination, uom, country, modelNumber, unitPrice, currency, manufacturer);
+        }
+
+        if (enhancedResult && enhancedResult.exists) {
+            console.log('✅ Enhanced duplicate detection result:', enhancedResult);
+            
+            // Handle deprecation warnings
+            if (enhancedResult.deprecated_values_in_request && enhancedResult.deprecated_values_in_request.length > 0) {
+                const deprecatedValues = enhancedResult.deprecated_values_in_request;
+                const deprecatedList = deprecatedValues.map(dv => `${dv.attribute_id}: ${dv.value_name}`).join(', ');
+                
+                console.warn('⚠️ DEPRECATION WARNING: Request contains deprecated values:', deprecatedList);
+                
+                // Show deprecation warning to user
+                showDeprecationWarningInUI(deprecatedValues, enhancedResult);
+            }
+            
+            return {
+                exists: true,
+                type: enhancedResult.type,
+                code: enhancedResult.item_code,
+                isDuplicate: true,
+                detection_method: enhancedResult.detection_method,
+                compatibility_mode: enhancedResult.compatibility_mode,
+                deprecation_info: enhancedResult.deprecated_values_in_request,
+                enhanced: true
+            };
+        }
+
+        // Check pending requests using enhanced method
+        const { data: pendingCheck, error: pendingError } = await supabase
+            .from('item_code_workflow')
+            .select(`
+                id, item_code, base_combination_signature, variation_fields_signature,
+                uom, country_of_origin, model_number, manufacturer, status
+            `)
+            .eq('project_id', currentProject.id)
+            .in('status', ['pending', 'reviewer_approved']);
+
+        if (!pendingError && pendingCheck && pendingCheck.length > 0) {
+            // Generate current signatures for comparison
+            const baseSignature = getBaseCombinationSignature();
+            const variationSignature = getVariationFieldsSignature();
+            
+            const pendingMatch = pendingCheck.find(pending => 
+                pending.base_combination_signature === baseSignature && 
+                pending.variation_fields_signature === variationSignature
+            );
+            
+            if (pendingMatch) {
+                console.log('📋 PENDING REQUEST found:', pendingMatch);
+                return { 
+                    exists: true, 
+                    type: 'pending request', 
+                    code: pendingMatch.item_code,
+                    isDuplicate: true,
+                    status: pendingMatch.status
+                };
+            }
+        }
+        
+        console.log('✅ No duplicates found - combination is unique');
+        return { exists: false, enhanced: true };
+        
+    } catch (error) {
+        console.error('Error in enhanced duplicate check:', error);
+        return await fallbackDuplicateCheck(combination, uom, country, modelNumber, unitPrice, currency, manufacturer);
+    }
+}
+
+// Fallback duplicate check for when enhanced method fails
+async function fallbackDuplicateCheck(combination, uom, country, modelNumber, unitPrice, currency, manufacturer) {
+    try {
+        console.log('🔄 Using fallback duplicate detection...');
         
         const baseSignature = getBaseCombinationSignature();
         const variationSignature = getVariationFieldsSignature();
         
-        console.log(' Base signature (attributes):', baseSignature);
-        console.log(' Variation signature (UOM/manufacturer/model/country):', variationSignature);
+        console.log('📝 Base signature (attributes):', baseSignature);
+        console.log('📝 Variation signature (UOM/manufacturer/model/country):', variationSignature);
         
         // Check existing approved codes
         const { data: existingCodes, error: codeError } = await supabase
@@ -1628,12 +1556,13 @@ async function checkCombinationExists(combination, uom, country, modelNumber, un
             });
             
             if (exactMatch) {
-                console.log('EXACT DUPLICATE found:', exactMatch);
+                console.log('🔍 EXACT DUPLICATE found:', exactMatch);
                 return { 
                     exists: true, 
                     type: 'approved code', 
                     code: exactMatch.item_code,
-                    isDuplicate: true
+                    isDuplicate: true,
+                    fallback: true
                 };
             }
             
@@ -1748,6 +1677,71 @@ async function checkFallbackDuplicates(combination, uom, country, modelNumber) {
     }
     
     return { exists: false };
+}
+
+// NEW: Show deprecation warning in the UI
+function showDeprecationWarningInUI(deprecatedValues, enhancedResult) {
+    try {
+        // Remove existing deprecation warnings
+        const existingWarnings = document.querySelectorAll('.deprecation-warning-banner');
+        existingWarnings.forEach(warning => warning.remove());
+        
+        // Create deprecation warning banner
+        const warningBanner = document.createElement('div');
+        warningBanner.className = 'deprecation-warning-banner deprecation-warning mb-4';
+        
+        const deprecatedList = deprecatedValues.map(dv => {
+            // Find attribute name from current project
+            const attribute = currentProject.attributes?.find(attr => attr.attribute_id === dv.attribute_id);
+            const attributeName = attribute ? attribute.attribute_name : `Attribute ${dv.attribute_id}`;
+            return `• ${attributeName}: ${dv.value_name}`;
+        }).join('\n');
+        
+        warningBanner.innerHTML = `
+            <div class="font-semibold text-orange-800 mb-2">
+                Deprecation Notice - Values in This Request
+            </div>
+            <div class="text-sm text-orange-700 mb-2">
+                This combination contains ${deprecatedValues.length} deprecated standard value${deprecatedValues.length > 1 ? 's' : ''}:
+            </div>
+            <div class="text-sm text-orange-700 font-mono bg-orange-100 p-2 rounded mb-2">
+                ${deprecatedList.replace(/\n/g, '<br>')}
+            </div>
+            <div class="text-xs text-orange-600">
+                <strong>Effects:</strong> 
+                ${enhancedResult.compatibility_mode === 'deprecated_values_match' ? 
+                    'This matches an existing item with deprecated values. System integrity maintained.' :
+                    'These deprecated values will be preserved in the new item but are hidden from future item creation.'
+                }
+            </div>
+            <div class="text-xs text-orange-600 mt-1">
+                <strong>Recommendation:</strong> Consider using current standard values for better long-term maintenance.
+            </div>
+        `;
+        
+        // Insert warning before the generate button
+        const generateSection = document.querySelector('.generation-section') || 
+                               document.querySelector('#generate-button')?.parentElement ||
+                               document.querySelector('button[onclick*="generateCode"]')?.parentElement;
+        
+        if (generateSection) {
+            generateSection.insertBefore(warningBanner, generateSection.firstChild);
+        } else {
+            // Fallback: insert after preview section
+            const previewSection = document.getElementById('preview-section');
+            if (previewSection) {
+                previewSection.appendChild(warningBanner);
+            }
+        }
+        
+        console.log('🚨 Deprecation warning displayed to user');
+        
+    } catch (error) {
+        console.error('Error displaying deprecation warning:', error);
+        // Fallback: simple alert
+        const deprecatedList = deprecatedValues.map(dv => `${dv.value_name}`).join(', ');
+        alert(`⚠️ Deprecation Notice\n\nYour selection contains deprecated values: ${deprecatedList}\n\nThese values will be preserved but are no longer available for new items.`);
+    }
 }
 
 // ===== VARIATION PREVIEW FUNCTIONS =====
@@ -1896,10 +1890,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     console.log('All required elements found, setting up login form...');
     setupLoginForm();
-    
-    // Check for existing authentication session
-    console.log('🔍 Checking for existing user session...');
-    checkExistingAuth();
 });     
 
 // Setup login form
@@ -1911,8 +1901,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const password = document.getElementById('password').value;
                 
                 try {
-                    console.log('🔑 Attempting login...');
-                    
                     const { data, error } = await supabase.rpc('authenticate_user', {
                         email_param: email,
                         password_param: password
@@ -1922,12 +1910,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (data && data.success) {
                         currentUser = data.user;
-                        console.log('✅ Login successful for:', currentUser.username);
-                        
-                        // Store user in localStorage for session persistence
-                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                        console.log('💾 User session stored in localStorage');
-                        
                         document.getElementById('login-modal').classList.add('hidden');
                         document.getElementById('main-container').classList.remove('hidden');
                         initializeApp();
@@ -1935,41 +1917,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         throw new Error(data?.message || 'Login failed');
                     }
                 } catch (error) {
-                    console.error('❌ Login error:', error);
                     document.getElementById('login-error').textContent = error.message;
                     document.getElementById('login-error').classList.remove('hidden');
                 }
             });
-        }
-
-        // Check for existing authentication on page load
-        function checkExistingAuth() {
-            console.log('🔍 Checking for existing authentication...');
-            
-            // Check if user is already authenticated through localStorage
-            const storedUser = localStorage.getItem('currentUser');
-            if (storedUser) {
-                try {
-                    currentUser = JSON.parse(storedUser);
-                    console.log('✅ Found stored user session:', currentUser.username);
-                    console.log('🚀 Auto-logging in user...');
-                    
-                    // Hide login modal and show main container
-                    document.getElementById('login-modal').classList.add('hidden');
-                    document.getElementById('main-container').classList.remove('hidden');
-                    
-                    // Initialize app with stored user
-                    initializeApp();
-                    return true;
-                } catch (error) {
-                    console.error('❌ Error parsing stored user:', error);
-                    // Clear corrupted data
-                    localStorage.removeItem('currentUser');
-                }
-            }
-            
-            console.log('ℹ️ No valid stored session found, showing login modal');
-            return false;
         }
 
         // Initialize app after login
@@ -2117,13 +2068,80 @@ async function loadApprovedProjects() {
         });
         
         setupCascadingDropdowns();
-        setupProjectSearch();
+        setupAdvancedProjectSearch();
         setupSearchCodesTab();
     } catch (error) {
         console.error('Error loading projects:', error);
         alert('Failed to load projects. Please check console for details.');
     }
 }
+
+// NEW: Load project attributes with deprecation status information
+async function loadProjectAttributesWithDeprecationStatus(projectId) {
+    try {
+        console.log('Loading deprecation-aware attributes for project:', projectId);
+        
+        if (!projectId || !currentProject) {
+            return;
+        }
+
+        // Get project attributes with enhanced standard values including deprecation status
+        const { data: attributesWithLifecycle, error } = await supabase
+            .rpc('get_project_attributes_with_lifecycle', {
+                project_id_param: projectId
+            });
+
+        if (error) {
+            console.warn('Could not load deprecation status, using fallback:', error);
+            return; // Fall back to existing attributes without deprecation info
+        }
+
+        if (attributesWithLifecycle && currentProject.attributes) {
+            // Enhance existing project attributes with deprecation information
+            currentProject.attributes = currentProject.attributes.map(attr => {
+                const lifecycleAttr = attributesWithLifecycle.find(la => la.attribute_id === attr.attribute_id);
+                
+                if (lifecycleAttr && lifecycleAttr.lifecycle_values) {
+                    // Enhance standard values with deprecation status
+                    const enhancedStandardValues = attr.standard_values?.map(value => {
+                        const valueName = typeof value === 'object' ? value.name : value;
+                        const lifecycleValue = lifecycleAttr.lifecycle_values.find(lv => lv.value_name === valueName);
+                        
+                        if (lifecycleValue) {
+                            return {
+                                ...(typeof value === 'object' ? value : { name: value }),
+                                status: lifecycleValue.status,
+                                deprecated_at: lifecycleValue.deprecated_at,
+                                deprecated_reason: lifecycleValue.deprecation_reason,
+                                usage_count: lifecycleValue.usage_count
+                            };
+                        }
+                        
+                        // If not found in lifecycle, assume active
+                        return typeof value === 'object' ? { ...value, status: 'active' } : { name: value, status: 'active' };
+                    });
+                    
+                    return {
+                        ...attr,
+                        standard_values: enhancedStandardValues
+                    };
+                }
+                
+                return attr;
+            });
+            
+            console.log('Enhanced project attributes with deprecation status:', currentProject.attributes);
+            
+            // Re-render attributes with the new deprecation information
+            renderAttributes();
+        }
+        
+    } catch (error) {
+        console.error('Error loading project attributes with deprecation status:', error);
+        // Don't throw - fall back to existing functionality
+    }
+}
+
        // Setup cascading dropdowns
 function setupCascadingDropdowns() {
     // Initialize dropdown elements
@@ -2538,7 +2556,7 @@ function loadAdditionalLevels(divisionCode, sectionCode, detailedSectionCode, it
 }
 
 // Handle final project selection
-function handleAdditionalLevelChange(e) {
+async function handleAdditionalLevelChange(e) {
     const selectedProjectId = e.target.value;
     
     if (selectedProjectId) {
@@ -2552,7 +2570,7 @@ function handleAdditionalLevelChange(e) {
         try {
             const project = JSON.parse(selectedOption.dataset.project);
             console.log('Selected project from cascading dropdown:', project);
-            selectProjectFromData(project);
+            await selectProjectFromData(project);
             
             // Clear advanced search inputs
             clearAdvancedSearchInputs();
@@ -2706,8 +2724,18 @@ async function updateCascadingDropdownsForProject(project) {
     }
 }
 
-// Setup enhanced project search
-function setupProjectSearch() {
+// Utility function to escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Setup enhanced project search for Generate Codes tab
+function setupAdvancedProjectSearch() {
+    console.log('🔍 Setting up project search...');
+    
     const searchInputs = {
         projectName: document.getElementById('search-project-name'),
         creator: document.getElementById('search-creator'),
@@ -2719,18 +2747,39 @@ function setupProjectSearch() {
     const resultsDropdown = document.getElementById('search-results-dropdown');
     const clearBtn = document.getElementById('clear-search-btn');
     
+    // Check if all elements exist
+    const missingElements = [];
+    Object.entries(searchInputs).forEach(([key, element]) => {
+        if (!element) {
+            missingElements.push(key);
+        }
+    });
+    
+    if (!resultsDropdown) missingElements.push('search-results-dropdown');
+    if (!clearBtn) missingElements.push('clear-search-btn');
+    
+    if (missingElements.length > 0) {
+        console.error('❌ Missing search elements:', missingElements);
+        return; // Don't set up search if elements are missing
+    }
+    
+    console.log('✅ All search elements found, setting up event listeners...');
+    
     // Add event listeners to all search inputs
     Object.values(searchInputs).forEach(input => {
-        input.addEventListener('input', debounce(performAdvancedSearch, 300));
-        input.addEventListener('focus', performAdvancedSearch);
+        if (input) {
+            input.addEventListener('input', debounce(performAdvancedSearch, 300));
+            input.addEventListener('focus', performAdvancedSearch);
+        }
     });
     
     // Clear search functionality
     clearBtn.addEventListener('click', () => {
         Object.values(searchInputs).forEach(input => {
-            input.value = '';
+            if (input) input.value = '';
         });
         resultsDropdown.classList.add('hidden');
+        console.log('🧹 Search inputs cleared');
     });
     
     // Close dropdown when clicking outside
@@ -2740,8 +2789,10 @@ function setupProjectSearch() {
         }
     });
     
+    console.log('✅ Project search setup completed');
+    
     function performAdvancedSearch() {
-    console.log('Performing advanced search...');
+    console.log('🔍 Performing advanced search...');
     console.log('Available projects:', allProjects.length);
     
     if (!allProjects || allProjects.length === 0) {
@@ -2752,14 +2803,14 @@ function setupProjectSearch() {
     }
     
     const criteria = {
-        projectName: searchInputs.projectName.value.toLowerCase().trim(),
-        creator: searchInputs.creator.value.toLowerCase().trim(),
-        csiCode: searchInputs.csiCode.value.toLowerCase().trim(),
-        attributeName: searchInputs.attributeName.value.toLowerCase().trim(),
-        standardValue: searchInputs.standardValue.value.toLowerCase().trim()
+        projectName: searchInputs.projectName?.value?.toLowerCase().trim() || '',
+        creator: searchInputs.creator?.value?.toLowerCase().trim() || '',
+        csiCode: searchInputs.csiCode?.value?.toLowerCase().trim() || '',
+        attributeName: searchInputs.attributeName?.value?.toLowerCase().trim() || '',
+        standardValue: searchInputs.standardValue?.value?.toLowerCase().trim() || ''
     };
     
-    console.log('Search criteria:', criteria);
+    console.log('🔍 Search criteria:', criteria);
     
     // Check if any search criteria is provided
     const hasSearchCriteria = Object.values(criteria).some(value => value.length > 0);
@@ -2772,32 +2823,47 @@ function setupProjectSearch() {
     const filtered = allProjects.filter(project => {
         let matches = true;
         
-        // Project name search
+        // Enhanced project name search (includes project tags)
         if (criteria.projectName) {
             const projectName = (project.project_name || '').toLowerCase();
-            if (!projectName.includes(criteria.projectName)) {
+            let nameMatches = projectName.includes(criteria.projectName);
+            
+            // NEW: Also search in project tags
+            if (!nameMatches && project.tags && Array.isArray(project.tags)) {
+                const tagMatches = project.tags.some(tag => {
+                    const tagStr = typeof tag === 'string' ? tag.toLowerCase() : String(tag).toLowerCase();
+                    return tagStr.includes(criteria.projectName);
+                });
+                nameMatches = tagMatches;
+                
+                if (tagMatches) {
+                    console.log(`🏷️ Project "${project.project_name}" matched via tags:`, project.tags);
+                }
+            }
+            
+            if (!nameMatches) {
                 matches = false;
             }
         }
         
         // Creator search (if available in project data)
-        if (criteria.creator) {
-            const creatorName = (project.creator_name || '').toLowerCase();
+        if (criteria.creator && matches) {
+            const creatorName = (project.creator_name || project.created_by_name || '').toLowerCase();
             if (!creatorName.includes(criteria.creator)) {
                 matches = false;
             }
         }
         
-        // CSI Code search (search across all CSI levels)
-        if (criteria.csiCode) {
-            const csiText = `${project.division_code || ''} ${project.section_code || ''} ${project.detailed_section_code || ''} ${project.item_code || ''}`.toLowerCase();
+        // Enhanced CSI Code search (search across all CSI levels)
+        if (criteria.csiCode && matches) {
+            const csiText = `${project.division_code || ''} ${project.section_code || ''} ${project.detailed_section_code || ''} ${project.item_code || ''} ${project.division_description || ''} ${project.section_description || ''} ${project.detailed_section_description || ''} ${project.item_description || ''}`.toLowerCase();
             if (!csiText.includes(criteria.csiCode)) {
                 matches = false;
             }
         }
         
         // Attribute name search
-        if (criteria.attributeName && project.attributes) {
+        if (criteria.attributeName && matches && project.attributes) {
             const hasMatchingAttribute = project.attributes.some(attr => 
                 attr && attr.attribute_name && attr.attribute_name.toLowerCase().includes(criteria.attributeName)
             );
@@ -2806,14 +2872,19 @@ function setupProjectSearch() {
             }
         }
         
-        // Standard value search
-        if (criteria.standardValue && project.attributes) {
-            const hasMatchingValue = project.attributes.some(attr => 
-                attr && attr.standard_values && Array.isArray(attr.standard_values) && 
-                attr.standard_values.some(val => 
-                    val && val.name && val.name.toLowerCase().includes(criteria.standardValue)
-                )
-            );
+        // Enhanced standard value search (includes deprecated values)
+        if (criteria.standardValue && matches && project.attributes) {
+            const hasMatchingValue = project.attributes.some(attr => {
+                if (!attr || !attr.standard_values) return false;
+                
+                return Array.isArray(attr.standard_values) && attr.standard_values.some(val => {
+                    if (!val) return false;
+                    
+                    // Handle both string and object formats
+                    const valueName = typeof val === 'object' ? (val.name || val.value || '') : String(val);
+                    return valueName.toLowerCase().includes(criteria.standardValue);
+                });
+            });
             if (!hasMatchingValue) {
                 matches = false;
             }
@@ -2822,7 +2893,7 @@ function setupProjectSearch() {
         return matches;
     });
     
-    console.log('Filtered results:', filtered.length);
+    console.log('🎯 Filtered results:', filtered.length);
     renderSearchResults(filtered);
 }    
     function renderSearchResults(projects) {
@@ -2839,17 +2910,29 @@ let displayText = project.additional_level_value && project.additional_level_val
     : `${project.item_code} - ${project.item_description || 'No description'}`;
 
 const additionalLevelText = ''; // Remove this since it's now included in displayText
+
+            // Format project tags for display
+            let tagsDisplay = '';
+            if (project.tags && Array.isArray(project.tags) && project.tags.length > 0) {
+                const tagsHtml = project.tags
+                    .slice(0, 3) // Show max 3 tags to avoid clutter
+                    .map(tag => `<span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-1">${escapeHtml(tag)}</span>`)
+                    .join('');
+                const moreTagsText = project.tags.length > 3 ? ` +${project.tags.length - 3} more` : '';
+                tagsDisplay = `<div class="text-xs text-gray-500 mt-1">Tags: ${tagsHtml}${moreTagsText}</div>`;
+            }
                 
             return `
                 <div class="project-option" onclick="selectProject(${project.project_id})">
-                    <div class="font-medium">${project.project_name}</div>
+                    <div class="font-medium">${escapeHtml(project.project_name)}</div>
                     <div class="text-sm text-gray-600">
                         CSI: ${project.division_code}-${project.section_code}-${project.detailed_section_code}-${project.item_code}
                     </div>
                    <div class="text-xs text-gray-500">
-    ${displayText}${additionalLevelText}
+    ${escapeHtml(displayText)}${additionalLevelText}
 </div>
-${project.creator_name ? `<div class="text-xs text-blue-600">Creator: ${project.creator_name}</div>` : ''}
+${project.creator_name ? `<div class="text-xs text-blue-600">Creator: ${escapeHtml(project.creator_name)}</div>` : ''}
+${tagsDisplay}
 ${currentUser && currentUser.role === 'admin' ? `
     <div class="text-xs text-red-600">Admin View</div>
 ` : ''}
@@ -2898,7 +2981,7 @@ function renderProjectDropdown(projects) {
         // Select project
         // Select project
 // Select project by ID
-function selectProject(projectId) {
+async function selectProject(projectId) {
     console.log('selectProject called with ID:', projectId);
     console.log('Available projects:', allProjects.length);
     
@@ -2917,7 +3000,7 @@ function selectProject(projectId) {
     }
     
     console.log('Found project:', project);
-    selectProjectFromData(project);
+    await selectProjectFromData(project);
     
     // Clear any search inputs
     const searchInputs = [
@@ -2931,7 +3014,7 @@ function selectProject(projectId) {
         if (input) input.value = '';
     });
 }
-function selectProjectFromData(project) {
+async function selectProjectFromData(project) {
     console.log('Selecting project:', project);
     
     if (!project) {
@@ -2956,6 +3039,13 @@ getNextSerialNumber().then(serial => {
 loadAttributeDisplaySettings().catch(error => {
     console.error('Error loading attribute display settings for project:', error);
 });
+
+// NEW: Load deprecation-aware attributes for the current project
+try {
+    await loadProjectAttributesWithDeprecationStatus(project.id);
+} catch (error) {
+    console.error('Error loading deprecation status for project attributes:', error);
+}
     
     // CRITICAL FIX: Ensure we have an 'id' field for database queries
 // The RPC returns 'project_id', but we need 'id' for queries
@@ -3452,38 +3542,120 @@ function renderAttributes() {
                 </div>
             `;
         } else {
-            // Standard attributes with predefined values
-            // Modified section around line 1895-1917
-if (attr.standard_values && Array.isArray(attr.standard_values) && attr.standard_values.length > 0) {
-    attr.standard_values.forEach((value, valueIndex) => {
-        const radioId = `attr-${originalIndex}-val-${valueIndex}`;
-        
-        // Enhanced handling for units
-        let valueName, valueUnit;
-        if (typeof value === 'object' && value !== null) {
-            valueName = value.name || value.value || value;
-            valueUnit = value.unit || value.unit_code || '';
-        } else {
-            valueName = value;
-            // Look for unit in separate attribute property
-            valueUnit = attr.unit_of_measurement || attr.default_unit || '';
-        }
-        
-        // If no unit found in standard value, check attribute level
-        if (!valueUnit && attr.units && Array.isArray(attr.units) && attr.units.length > 0) {
-            valueUnit = attr.units[0]; // Use first available unit as default
-        }
-        
-        html += `
-            <label class="flex items-center">
-                <input type="radio" id="${radioId}" name="attr-${originalIndex}" 
-                       value="${valueName}" class="mr-1"
-                       data-unit="${valueUnit}"
-                       onchange="selectAttribute(${attr.attribute_id}, '${valueName}', ${valueIndex + 1}, '${valueUnit}')"
-                <span class="text-sm">${valueName} ${valueUnit ? `(${valueUnit})` : ''}</span>
-            </label>
-        `;
-    });
+            // Standard attributes with predefined values - Enhanced with deprecation support
+            if (attr.standard_values && Array.isArray(attr.standard_values) && attr.standard_values.length > 0) {
+                // Separate active and deprecated values
+                const activeValues = [];
+                const deprecatedValues = [];
+                let hasDeprecatedValues = false;
+                
+                // Process and categorize values
+                attr.standard_values.forEach((value, valueIndex) => {
+                    let valueName, valueUnit, isDeprecated = false, deprecationInfo = null;
+                    
+                    if (typeof value === 'object' && value !== null) {
+                        valueName = value.name || value.value || value;
+                        valueUnit = value.unit || value.unit_code || '';
+                        isDeprecated = value.status === 'deprecated';
+                        deprecationInfo = {
+                            deprecatedAt: value.deprecated_at,
+                            deprecatedReason: value.deprecated_reason,
+                            usageCount: value.usage_count || 0
+                        };
+                    } else {
+                        valueName = value;
+                        valueUnit = attr.unit_of_measurement || attr.default_unit || '';
+                    }
+                    
+                    // If no unit found in standard value, check attribute level
+                    if (!valueUnit && attr.units && Array.isArray(attr.units) && attr.units.length > 0) {
+                        valueUnit = attr.units[0];
+                    }
+                    
+                    const valueObj = {
+                        name: valueName,
+                        unit: valueUnit,
+                        index: valueIndex,
+                        isDeprecated: isDeprecated,
+                        deprecationInfo: deprecationInfo
+                    };
+                    
+                    if (isDeprecated) {
+                        deprecatedValues.push(valueObj);
+                        hasDeprecatedValues = true;
+                    } else {
+                        activeValues.push(valueObj);
+                    }
+                });
+                
+                // Render active values first
+                if (activeValues.length > 0) {
+                    activeValues.forEach(valueObj => {
+                        const radioId = `attr-${originalIndex}-val-${valueObj.index}`;
+                        
+                        html += `
+                            <label class="flex items-center p-2 border border-gray-200 rounded hover:bg-gray-50 transition-colors">
+                                <input type="radio" id="${radioId}" name="attr-${originalIndex}" 
+                                       value="${valueObj.name}" class="mr-2"
+                                       data-unit="${valueObj.unit}"
+                                       onchange="selectAttribute(${attr.attribute_id}, '${valueObj.name}', ${valueObj.index + 1}, '${valueObj.unit}')"
+                                />
+                                <span class="text-sm font-medium">${valueObj.name} ${valueObj.unit ? `(${valueObj.unit})` : ''}</span>
+                            </label>
+                        `;
+                    });
+                }
+                
+                // Render deprecated values section if any exist
+                if (hasDeprecatedValues && deprecatedValues.length > 0) {
+                    html += `
+                        <div class="deprecated-section w-full">
+                            <div class="deprecated-section-header">
+                                ⚠️ Legacy Values (From Existing Items Only)
+                            </div>
+                    `;
+                    
+                    deprecatedValues.forEach(valueObj => {
+                        const radioId = `attr-${originalIndex}-val-${valueObj.index}`;
+                        
+                        html += `
+                            <label class="deprecated-value-option flex items-center p-2 rounded mb-1 cursor-not-allowed" title="This value is deprecated and cannot be used for new items">
+                                <input type="radio" id="${radioId}" name="attr-${originalIndex}" 
+                                       value="${valueObj.name}" class="mr-2"
+                                       data-unit="${valueObj.unit}"
+                                       disabled
+                                />
+                                <div class="flex-1">
+                                    <span class="text-sm">${valueObj.name} ${valueObj.unit ? `(${valueObj.unit})` : ''}</span>
+                                    <div class="deprecated-info">
+                                        Deprecated${valueObj.deprecationInfo?.deprecatedAt ? ' on ' + new Date(valueObj.deprecationInfo.deprecatedAt).toLocaleDateString() : ''}
+                                        ${valueObj.deprecationInfo?.usageCount ? ` • Used in ${valueObj.deprecationInfo.usageCount} items` : ''}
+                                    </div>
+                                    ${valueObj.deprecationInfo?.deprecatedReason ? `<div class="deprecated-info">Reason: ${valueObj.deprecationInfo.deprecatedReason}</div>` : ''}
+                                </div>
+                            </label>
+                        `;
+                    });
+                    
+                    html += `
+                        </div>
+                    `;
+                }
+                
+                // Add deprecation warning if this attribute has deprecated values
+                if (hasDeprecatedValues) {
+                    html += `
+                        </div>
+                        <div class="legacy-value-info">
+                            <strong>Note:</strong> This attribute has ${deprecatedValues.length} deprecated value${deprecatedValues.length > 1 ? 's' : ''} 
+                            that appear in existing items but cannot be selected for new items.
+                        </div>
+                        <div class="flex flex-wrap gap-3 mb-2">
+                    `;
+                    
+                    // Mark the attribute section as having deprecated values
+                    attrDiv.classList.add('has-deprecated');
+                }
 
             } else {
                 // No standard values available - provide manual entry
@@ -6132,7 +6304,7 @@ window.exportAllRequests = exportAllRequests;        // PDF Export
                     document.getElementById('add-value-form').reset();
                     
                     // Reload the project to show new value
-                    selectProjectFromData(currentProject);
+                    await selectProjectFromData(currentProject);
                 } else {
                     // Regular users go through approval process
                     const reviewerId = document.getElementById('modal-reviewer-select').value;
@@ -6189,16 +6361,7 @@ window.exportAllRequests = exportAllRequests;        // PDF Export
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
-            console.log('🚪 User logging out...');
-            
-            // Clear current user
             currentUser = null;
-            
-            // Clear stored session from localStorage
-            localStorage.removeItem('currentUser');
-            console.log('🗑️ User session cleared from localStorage');
-            
-            // Reload page to show login modal
             location.reload();
         });
     }
@@ -6585,7 +6748,6 @@ function refreshSearchCodesData() {
 
 let allApprovedCodes = [];
 let searchHierarchyView = true;
-let isSearchTableView = true; // Default to table view
 
 
 
@@ -6667,10 +6829,6 @@ async function loadAllApprovedCodes() {
         } else {
             displaySearchResults(allApprovedCodes);
         }
-        
-        // Load search dropdown data now that approved codes are available
-        console.log('📊 Loading search dropdown data with', allApprovedCodes.length, 'approved codes');
-        await loadSearchDropdownData();
         
     } catch (error) {
         console.error('Error loading approved codes:', error);
@@ -6809,14 +6967,15 @@ function setupProjectSearch() {
 
 // Setup attribute search (Phase 2)
 function setupAttributeSearch() {
+    const performAttributeSearchBtn = document.getElementById('perform-attribute-search-btn');
     const clearAttributeSearchBtn = document.getElementById('clear-attribute-search-btn');
     const toggleViewBtn = document.getElementById('toggle-view-btn');
     const toggleTableViewBtn = document.getElementById('toggle-table-view-btn');
     const refreshBtn = document.getElementById('refresh-search-btn');
     
-    // Set initial button text since we default to table view
-    if (toggleTableViewBtn) {
-        toggleTableViewBtn.textContent = 'Switch to Card View';
+    // Attribute search button
+    if (performAttributeSearchBtn) {
+        performAttributeSearchBtn.addEventListener('click', performAttributeBasedSearch);
     }
     
     // Clear attribute search
@@ -6873,7 +7032,7 @@ function setupSearchExportFunctionality() {
 // ===== PROJECT SEARCH FUNCTIONS (PHASE 1) =====
 
 // Perform project search
-function performProjectSearch() {
+async function performProjectSearch() {
     const searchInput = document.getElementById('project-search-input');
     const dropdown = document.getElementById('project-search-dropdown');
     
@@ -6892,56 +7051,19 @@ function performProjectSearch() {
     try {
         console.log('Searching projects with term:', searchTerm);
         
-        // Use already loaded allProjects data for client-side filtering
-        if (!allProjects || allProjects.length === 0) {
-            console.warn('No projects loaded for search');
-            dropdown.innerHTML = `
-                <div class="p-3 text-gray-500 text-sm">
-                    No projects available. Please refresh the page.
-                </div>
-            `;
-            dropdown.classList.remove('hidden');
+        // Use the existing search_projects_with_tags RPC function
+        const { data: projects, error } = await supabase.rpc('search_projects_with_tags', {
+            search_term: searchTerm,
+            status_filter: 'admin_approved',
+            limit_param: 10
+        });
+        
+        if (error) {
+            console.error('Error searching projects:', error);
             return;
         }
         
-        // Filter projects based on search term
-        const searchLower = searchTerm.toLowerCase();
-        const filteredProjects = allProjects.filter(project => {
-            // Search in project name
-            if (project.project_name && project.project_name.toLowerCase().includes(searchLower)) {
-                return true;
-            }
-            
-            // Search in item code
-            if (project.item_code && project.item_code.toLowerCase().includes(searchLower)) {
-                return true;
-            }
-            
-            // Search in tags if they exist
-            if (project.tags && Array.isArray(project.tags)) {
-                const tagsString = project.tags.join(' ').toLowerCase();
-                if (tagsString.includes(searchLower)) {
-                    return true;
-                }
-            }
-            
-            // Search in CSI codes
-            if (project.division_code && project.division_code.toLowerCase().includes(searchLower)) {
-                return true;
-            }
-            if (project.section_code && project.section_code.toLowerCase().includes(searchLower)) {
-                return true;
-            }
-            if (project.detailed_section_code && project.detailed_section_code.toLowerCase().includes(searchLower)) {
-                return true;
-            }
-            
-            return false;
-        }).slice(0, 10); // Limit to 10 results
-        
-        console.log('Filtered projects:', filteredProjects.length);
-        
-        projectSearchResults = filteredProjects;
+        projectSearchResults = projects || [];
         displayProjectSearchResults(projectSearchResults);
         
     } catch (error) {
@@ -6995,7 +7117,7 @@ function displayProjectSearchResults(projects) {
 }
 
 // Select a project and proceed to Phase 2
-function selectSearchProject(project) {
+async function selectSearchProject(project) {
     console.log('Selected project for search:', project);
     
     selectedSearchProject = project;
@@ -7025,22 +7147,38 @@ function selectSearchProject(project) {
         selectedDisplay.classList.remove('hidden');
     }
     
-    // Load project attributes from already available data
-    const projectAttributes = project.attributes || [];
-    console.log('Project attributes from loaded data:', projectAttributes);
-    
-    displayAttributeSearchFields(projectAttributes);
+    // Load project attributes and show Phase 2
+    await loadProjectAttributesForSearch(project.id);
     
     // Show attribute search phase
     const attributePhase = document.getElementById('attribute-search-phase');
     if (attributePhase) {
         attributePhase.classList.remove('hidden');
     }
+}
+
+// Load project attributes for search
+async function loadProjectAttributesForSearch(projectId) {
+    console.log('Loading attributes for project:', projectId);
     
-    // Perform initial search to show all project items in table view
-    setTimeout(() => {
-        performAttributeBasedSearch();
-    }, 100);
+    try {
+        const { data: attributes, error } = await supabase
+            .from('project_attributes')
+            .select('*')
+            .eq('project_id', projectId)
+            .order('attribute_name');
+        
+        if (error) {
+            console.error('Error loading project attributes:', error);
+            return;
+        }
+        
+        console.log('Loaded attributes:', attributes);
+        displayAttributeSearchFields(attributes);
+        
+    } catch (error) {
+        console.error('Error in loadProjectAttributesForSearch:', error);
+    }
 }
 
 // Display attribute search fields
@@ -7061,94 +7199,28 @@ function displayAttributeSearchFields(attributes) {
         return;
     }
     
-    // Debug: Log the first attribute to understand the structure
-    console.log('Sample attribute structure:', attributes[0]);
-    if (attributes[0]?.standard_values) {
-        console.log('Sample standard_values:', attributes[0].standard_values);
-        console.log('Type of standard_values:', typeof attributes[0].standard_values);
-    }
-    
-    const attributeFields = attributes.map((attr, index) => {
-        // Use attribute index as ID if attr.id is undefined
-        const attributeId = attr.id || `attr-${index}`;
-        
-        // Get standard values for dropdown options
-        let standardValues = [];
-        
-        if (attr.standard_values) {
-            let rawValues = attr.standard_values;
-            
-            // Handle different possible formats of standard_values
-            if (typeof rawValues === 'string') {
-                try {
-                    rawValues = JSON.parse(rawValues);
-                } catch (e) {
-                    rawValues = [rawValues];
-                }
-            }
-            
-            if (Array.isArray(rawValues)) {
-                // Extract the actual values from objects or use strings directly
-                standardValues = rawValues.map(item => {
-                    if (typeof item === 'object' && item !== null) {
-                        // Try common object properties that might contain the value
-                        return item.value || item.name || item.standard_value || 
-                               item.text || item.label || JSON.stringify(item);
-                    }
-                    return item;
-                }).filter(value => value !== undefined && value !== null && value !== '');
-            } else if (typeof rawValues === 'object') {
-                // Handle single object
-                const singleValue = rawValues.value || rawValues.name || 
-                                  rawValues.standard_value || JSON.stringify(rawValues);
-                standardValues = [singleValue];
-            } else {
-                // Handle primitive value
-                standardValues = [String(rawValues)];
-            }
-        }
-        
-        // Create dropdown options HTML
-        const dropdownOptions = standardValues.map(value => 
-            `<div class="dropdown-option p-2 hover:bg-blue-50 cursor-pointer text-sm border-b border-gray-100 last:border-b-0" data-value="${value}">
-                ${value}
-            </div>`
-        ).join('');
-        
-        const standardValuesForTooltip = standardValues.length > 0 ? 
-            `Available values: ${standardValues.join(', ')}` : 'No standard values available';
+    const attributeFields = attributes.map(attr => {
+        const standardValues = Array.isArray(attr.standard_values) ? attr.standard_values : [];
+        const standardValuesText = standardValues.length > 0 ? standardValues.join(', ') : 'No standard values';
         
         return `
             <div class="space-y-2">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Attribute Name</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">${attr.attribute_name}</label>
                     <input type="text" 
                            class="w-full px-2 py-1 text-sm bg-gray-100 border border-gray-300 rounded cursor-not-allowed" 
-                           value="${attr.attribute_name}" 
+                           value="${standardValuesText}" 
                            readonly 
-                           title="${standardValuesForTooltip}">
+                           title="Available standard values for this attribute">
                 </div>
-                <div class="relative">
-                    <label class="block text-xs font-medium text-blue-600 mb-1">Search Value for ${attr.attribute_name}:</label>
-                    <div class="relative">
-                        <input type="text" 
-                               id="attr-search-${attributeId}" 
-                               placeholder="Type to search or select..." 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                               data-attribute-id="${attributeId}"
-                               data-attribute-name="${attr.attribute_name}"
-                               data-attribute-index="${index}"
-                               autocomplete="off">
-                        <div class="absolute right-2 top-2 pointer-events-none">
-                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    <!-- Dropdown container -->
-                    <div id="dropdown-${attributeId}" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                        ${standardValues.length > 0 ? dropdownOptions : '<div class="p-3 text-gray-500 text-sm">No standard values available</div>'}
-                    </div>
+                <div>
+                    <label class="block text-xs font-medium text-blue-600 mb-1">Search Value:</label>
+                    <input type="text" 
+                           id="attr-search-${attr.id}" 
+                           placeholder="Enter value to search..." 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                           data-attribute-id="${attr.id}"
+                           data-attribute-name="${attr.attribute_name}">
                 </div>
             </div>
         `;
@@ -7156,254 +7228,7 @@ function displayAttributeSearchFields(attributes) {
     
     attributeGrid.innerHTML = attributeFields;
     
-    // Clear any existing event listeners first (to prevent duplicates)
-    const existingEventElements = attributeGrid.querySelectorAll('[data-dropdown-initialized]');
-    existingEventElements.forEach(element => {
-        element.removeAttribute('data-dropdown-initialized');
-    });
-    
-    // Add automatic search and dropdown functionality to all attribute search inputs
-    const attributeSearchInputs = attributeGrid.querySelectorAll('[id^="attr-search-"]');
-    attributeSearchInputs.forEach(input => {
-        // Skip if already initialized to prevent duplicate listeners
-        if (input.dataset.dropdownInitialized) return;
-        input.dataset.dropdownInitialized = 'true';
-        
-        const attributeId = input.dataset.attributeId;
-        const dropdown = document.getElementById(`dropdown-${attributeId}`);
-        
-        if (!dropdown) {
-            console.warn(`Dropdown not found for attribute ${attributeId}`);
-            return;
-        }
-        
-        // Auto-search functionality (debounced)
-        input.addEventListener('input', debounce(performAttributeBasedSearch, 300));
-        
-        // Focus handler - show all options when focusing
-        input.addEventListener('focus', function(e) {
-            e.stopPropagation();
-            showAllDropdownOptions(dropdown);
-            showDropdown(dropdown);
-        });
-        
-        // Input handler for filtering - but allow a brief delay for selections
-        input.addEventListener('input', function(e) {
-            e.stopPropagation();
-            // Small delay to allow dropdown selections to complete
-            setTimeout(() => {
-                filterDropdownOptions(this, dropdown);
-            }, 100);
-        });
-        
-        // Clear selection on double-click to allow easy reselection
-        input.addEventListener('dblclick', function(e) {
-            e.stopPropagation();
-            this.value = '';
-            showAllDropdownOptions(dropdown);
-            showDropdown(dropdown);
-            performAttributeBasedSearch(); // Trigger search with cleared value
-        });
-        
-        input.addEventListener('keydown', function(e) {
-            handleDropdownNavigation(e, dropdown, this);
-        });
-        
-        // Handle option selection with specific targeting
-        dropdown.addEventListener('click', function(e) {
-            e.stopPropagation();
-            if (e.target.classList.contains('dropdown-option')) {
-                const selectedValue = e.target.dataset.value;
-                console.log('=== DROPDOWN SELECTION ===');
-                console.log('Selected value:', selectedValue);
-                console.log('Input ID:', input.id);
-                console.log('Input data attributes:', {
-                    attributeId: input.dataset.attributeId,
-                    attributeName: input.dataset.attributeName,
-                    attributeIndex: input.dataset.attributeIndex
-                });
-                
-                input.value = selectedValue; // Use the captured input reference
-                console.log('Input value after selection:', input.value);
-                hideDropdown(dropdown);
-                
-                console.log('About to call performAttributeBasedSearch...');
-                performAttributeBasedSearch();
-            }
-        });
-    });
-    
-    // Also add event listeners to additional search fields 
-    // Note: Dropdown fields (manufacturer, uom, country, model) have their own event handlers
-    // Only add input/change listeners to non-dropdown fields
-    const additionalFields = ['search-erp-status', 'search-price-value', 'search-price-max', 'search-currency'];
-    additionalFields.forEach(fieldId => {
-        const field = document.getElementById(fieldId);
-        if (field) {
-            field.addEventListener('input', debounce(performAttributeBasedSearch, 300));
-            field.addEventListener('change', performAttributeBasedSearch); // For select dropdown
-        }
-    });
-    
-    // The searchable dropdown fields (manufacturer, uom, country, model) trigger 
-    // performAttributeBasedSearch automatically when selections are made
-    
-    // Add event listener for price comparison type
-    const priceComparisonType = document.getElementById('price-comparison-type');
-    if (priceComparisonType) {
-        priceComparisonType.addEventListener('change', function() {
-            const maxContainer = document.getElementById('price-max-container');
-            if (this.value === 'between') {
-                maxContainer.classList.remove('hidden');
-            } else {
-                maxContainer.classList.add('hidden');
-                document.getElementById('search-price-max').value = '';
-            }
-            performAttributeBasedSearch();
-        });
-    }
-    
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', function(e) {
-        // Check if click is outside any attribute dropdown container
-        const isInsideDropdownArea = e.target.closest('.relative') && 
-                                   (e.target.closest('[id^="attr-search-"]') || e.target.closest('[id^="dropdown-"]'));
-        
-        if (!isInsideDropdownArea) {
-            // Hide all attribute dropdowns
-            attributeSearchInputs.forEach(input => {
-                const attributeId = input.dataset.attributeId;
-                const dropdown = document.getElementById(`dropdown-${attributeId}`);
-                if (dropdown) {
-                    hideDropdown(dropdown);
-                }
-            });
-        }
-    });
-    
-    console.log('Attribute search fields displayed with dropdown suggestions and automatic search enabled');
-}
-
-// Helper functions for dropdown functionality
-function showAllDropdownOptions(dropdown) {
-    if (!dropdown) return;
-    
-    const options = dropdown.querySelectorAll('.dropdown-option');
-    options.forEach(option => {
-        option.style.display = 'block';
-    });
-}
-
-function showDropdown(dropdown) {
-    if (dropdown) {
-        dropdown.classList.remove('hidden');
-    }
-}
-
-function hideDropdown(dropdown) {
-    if (dropdown) {
-        dropdown.classList.add('hidden');
-    }
-}
-
-function filterDropdownOptions(input, dropdown) {
-    if (!dropdown) return;
-    
-    const searchTerm = input.value.toLowerCase().trim();
-    const options = dropdown.querySelectorAll('.dropdown-option');
-    let hasVisibleOptions = false;
-    
-    // If search term is empty, show all options
-    if (searchTerm === '') {
-        options.forEach(option => {
-            option.style.display = 'block';
-            hasVisibleOptions = true;
-        });
-        showDropdown(dropdown);
-        return;
-    }
-    
-    // Check if current value exactly matches an option - if so, show all options for easy changing
-    let exactMatch = false;
-    options.forEach(option => {
-        const optionText = option.textContent.toLowerCase().trim();
-        if (optionText === searchTerm) {
-            exactMatch = true;
-        }
-    });
-    
-    if (exactMatch) {
-        // Show all options when user has selected an exact match (allows easy changing)
-        options.forEach(option => {
-            option.style.display = 'block';
-            hasVisibleOptions = true;
-        });
-    } else {
-        // Filter options based on search term
-        options.forEach(option => {
-            const optionText = option.textContent.toLowerCase();
-            const isMatch = optionText.includes(searchTerm);
-            
-            if (isMatch) {
-                option.style.display = 'block';
-                hasVisibleOptions = true;
-            } else {
-                option.style.display = 'none';
-            }
-        });
-    }
-    
-    // Show/hide dropdown based on whether there are matches
-    if (hasVisibleOptions) {
-        showDropdown(dropdown);
-    } else {
-        hideDropdown(dropdown);
-    }
-}
-
-function handleDropdownNavigation(e, dropdown, inputElement) {
-    if (!dropdown || dropdown.classList.contains('hidden')) return;
-    
-    const options = dropdown.querySelectorAll('.dropdown-option:not([style*="display: none"])');
-    const currentActive = dropdown.querySelector('.dropdown-option.bg-blue-100');
-    let currentIndex = currentActive ? Array.from(options).indexOf(currentActive) : -1;
-    
-    switch (e.key) {
-        case 'ArrowDown':
-            e.preventDefault();
-            if (currentActive) currentActive.classList.remove('bg-blue-100');
-            currentIndex = (currentIndex + 1) % options.length;
-            if (options[currentIndex]) {
-                options[currentIndex].classList.add('bg-blue-100');
-                options[currentIndex].scrollIntoView({ block: 'nearest' });
-            }
-            break;
-            
-        case 'ArrowUp':
-            e.preventDefault();
-            if (currentActive) currentActive.classList.remove('bg-blue-100');
-            currentIndex = currentIndex <= 0 ? options.length - 1 : currentIndex - 1;
-            if (options[currentIndex]) {
-                options[currentIndex].classList.add('bg-blue-100');
-                options[currentIndex].scrollIntoView({ block: 'nearest' });
-            }
-            break;
-            
-        case 'Enter':
-            e.preventDefault();
-            if (currentActive) {
-                const selectedValue = currentActive.dataset.value;
-                inputElement.value = selectedValue; // Use the specific input element
-                hideDropdown(dropdown);
-                performAttributeBasedSearch();
-            }
-            break;
-            
-        case 'Escape':
-            e.preventDefault();
-            hideDropdown(dropdown);
-            break;
-    }
+    console.log('Attribute search fields displayed');
 }
 
 // Clear project search
@@ -7441,26 +7266,19 @@ function clearProjectSearch() {
 // ===== ATTRIBUTE SEARCH FUNCTIONS (PHASE 2) =====
 
 // Perform attribute-based search
-function performAttributeBasedSearch() {
-    console.log('=== performAttributeBasedSearch START ===');
-    console.log('🔍 EXECUTION TRACE: Function called');
-    
+async function performAttributeBasedSearch() {
     if (!selectedSearchProject) {
-        console.log('❌ EXECUTION TRACE: No project selected');
         alert('Please select a project first');
         return;
     }
     
-    console.log('✅ EXECUTION TRACE: Project selected:', selectedSearchProject.id);
-    console.log('✅ EXECUTION TRACE: Project attributes:', selectedSearchProject.attributes?.length || 0);
+    console.log('Performing attribute-based search for project:', selectedSearchProject.id);
     
     // Collect attribute search criteria
     const attributeCriteria = {};
     const attributeInputs = document.querySelectorAll('[id^="attr-search-"]');
     
-    console.log('🔍 EXECUTION TRACE: Found attribute input fields:', attributeInputs.length);
-    
-    attributeInputs.forEach((input, idx) => {
+    attributeInputs.forEach(input => {
         const value = input.value.trim();
         if (value) {
             const attributeId = input.dataset.attributeId;
@@ -7469,9 +7287,6 @@ function performAttributeBasedSearch() {
                 name: attributeName,
                 value: value
             };
-            console.log(`✅ EXECUTION TRACE: Added criteria ${idx + 1}: ${attributeName} = ${value}`);
-        } else {
-            console.log(`⚪ EXECUTION TRACE: Skipping empty input ${idx + 1}: ${input.id}`);
         }
     });
     
@@ -7480,292 +7295,97 @@ function performAttributeBasedSearch() {
         uom: document.getElementById('search-uom')?.value.trim() || '',
         country: document.getElementById('search-country')?.value.trim() || '',
         model: document.getElementById('search-model')?.value.trim() || '',
-        erpStatus: document.getElementById('search-erp-status')?.value || '',
-        manufacturer: document.getElementById('search-manufacturer')?.value.trim() || '',
-        priceComparison: document.getElementById('price-comparison-type')?.value || '',
-        priceValue: document.getElementById('search-price-value')?.value || '',
-        priceMax: document.getElementById('search-price-max')?.value || '',
-        currency: document.getElementById('search-currency')?.value || ''
+        erpStatus: document.getElementById('search-erp-status')?.value || ''
     };
     
-    console.log('📊 EXECUTION TRACE: Final criteria count:', Object.keys(attributeCriteria).length);
-    console.log('📊 EXECUTION TRACE: Attribute criteria:', attributeCriteria);
+    console.log('Search criteria:', { attributeCriteria, additionalCriteria });
     
-    // Use already loaded approved codes data
-    if (!allApprovedCodes || allApprovedCodes.length === 0) {
-        console.log('❌ EXECUTION TRACE: No approved codes available');
-        alert('No approved item codes available. Please refresh the page.');
-        return;
+    try {
+        // Get all approved item codes for the selected project
+        const { data: itemCodes, error } = await supabase
+            .from('item_code_workflow')
+            .select('*')
+            .eq('project_id', selectedSearchProject.id)
+            .eq('status', 'approved');
+        
+        if (error) {
+            console.error('Error fetching item codes:', error);
+            return;
+        }
+        
+        console.log('Found item codes for project:', itemCodes?.length || 0);
+        
+        // Filter item codes based on search criteria
+        const filteredCodes = filterItemCodesByCriteria(itemCodes || [], attributeCriteria, additionalCriteria);
+        
+        console.log('Filtered item codes:', filteredCodes.length);
+        
+        // Display the search results
+        displaySearchResults(filteredCodes);
+        
+    } catch (error) {
+        console.error('Error in attribute-based search:', error);
+        alert('Error performing search. Please try again.');
     }
-    
-    console.log('📊 EXECUTION TRACE: Total approved codes available:', allApprovedCodes.length);
-    
-    // Filter by selected project first
-    const projectItemCodes = allApprovedCodes.filter(item => {
-        const matches = item.project_id === selectedSearchProject.id || 
-                       item.project_id === selectedSearchProject.project_id;
-        return matches;
-    });
-    
-    console.log('📊 EXECUTION TRACE: Found item codes for project:', projectItemCodes.length);
-    
-    if (projectItemCodes.length === 0) {
-        console.log('⚠️ EXECUTION TRACE: No items found for project, calling displaySearchResults([])');
-        displaySearchResults([]);
-        console.log('✅ EXECUTION TRACE: displaySearchResults([]) completed');
-        return;
-    }
-    
-    // Filter item codes based on search criteria
-    console.log('🔍 EXECUTION TRACE: About to call filterItemCodesByCriteria');
-    console.log('🔍 EXECUTION TRACE: Input codes:', projectItemCodes.length);
-    console.log('🔍 EXECUTION TRACE: Criteria:', { attributeCriteria, additionalCriteria });
-    
-    const filteredCodes = filterItemCodesByCriteria(projectItemCodes, attributeCriteria, additionalCriteria);
-    
-    console.log('📊 EXECUTION TRACE: Filter returned:', filteredCodes.length, 'items');
-    console.log('🔍 EXECUTION TRACE: About to call displaySearchResults with', filteredCodes.length, 'codes');
-    
-    // Display the search results
-    displaySearchResults(filteredCodes);
-    
-    console.log('✅ EXECUTION TRACE: displaySearchResults completed');
-    console.log('=== performAttributeBasedSearch END ===');
 }
 
 // Filter item codes based on search criteria
 function filterItemCodesByCriteria(itemCodes, attributeCriteria, additionalCriteria) {
-    console.log('=== FILTERING DEBUG ===');
-    console.log('Total items to filter:', itemCodes.length);
-    console.log('Attribute criteria:', attributeCriteria);
-    console.log('Number of attribute filters:', Object.keys(attributeCriteria).length);
-    
-    if (Object.keys(attributeCriteria).length === 0) {
-        // No attribute criteria, just apply additional criteria
-        console.log('No attribute criteria, applying only additional criteria');
-        return itemCodes.filter(item => applyAdditionalCriteria(item, additionalCriteria));
-    }
-    
-    // Apply filtering with detailed logging for each item
-    const results = itemCodes.filter((item, itemIndex) => {
-        console.log(`\n=== ITEM ${itemIndex + 1}/${itemCodes.length} ===`);
-        console.log('Item code:', item.item_code);
-        console.log('Description1:', item.description1);
-        
-        let criteriaResults = [];
-        
-        // Check each attribute criteria
-        for (const [attributeKey, criteria] of Object.entries(attributeCriteria)) {
-            console.log(`\n--- Checking attribute: ${criteria.name} (${attributeKey}) ---`);
-            console.log('Search value:', criteria.value);
+    return itemCodes.filter(item => {
+        // Check attribute criteria
+        for (const [attributeId, criteria] of Object.entries(attributeCriteria)) {
+            const attributeSelections = item.attribute_selections || {};
+            const itemAttributeValue = attributeSelections[attributeId];
             
-            const searchValue = criteria.value.toLowerCase().trim();
-            if (!searchValue) {
-                console.log('Empty search value, skipping');
-                continue;
+            if (!itemAttributeValue) {
+                continue; // Skip if item doesn't have this attribute
             }
             
-            const searchableFields = [
-                item.description1 || '',
-                item.description2 || '',
-                item.item_code || '',
-                item.manufacturer || '',
-                item.model_number || ''
-            ];
+            // Perform case-insensitive partial match
+            const searchValue = criteria.value.toLowerCase();
+            const itemValue = String(itemAttributeValue).toLowerCase();
             
-            let found = false;
-            for (const field of searchableFields) {
-                const fieldValue = String(field).toLowerCase();
-                if (fieldValue.includes(searchValue)) {
-                    console.log(`✅ Found "${criteria.value}" in field: "${field}"`);
-                    found = true;
-                    break;
-                }
+            if (!itemValue.includes(searchValue)) {
+                return false; // Item doesn't match this criteria
             }
-            
-            if (!found) {
-                console.log(`❌ "${criteria.value}" NOT found in any description fields`);
-            }
-            
-            criteriaResults.push({
-                attribute: criteria.name,
-                value: criteria.value,
-                found: found
-            });
-        }
-        
-        // Analyze results
-        const totalCriteria = criteriaResults.length;
-        const matchedCriteria = criteriaResults.filter(result => result.found).length;
-        
-        console.log(`RESULT: ${matchedCriteria}/${totalCriteria} criteria matched`);
-        console.log('Criteria details:', criteriaResults);
-        
-        // For now, require ALL criteria to match (strict AND)
-        const attributesMatch = matchedCriteria === totalCriteria && totalCriteria > 0;
-        
-        if (!attributesMatch) {
-            console.log('❌ Item REJECTED - not all criteria matched');
-            return false;
         }
         
         // Check additional criteria
-        const additionalMatch = applyAdditionalCriteria(item, additionalCriteria);
-        if (!additionalMatch) {
-            console.log('❌ Item REJECTED - additional criteria failed');
-            return false;
-        }
-        
-        console.log('✅ Item ACCEPTED - all criteria passed');
-        return true;
-    });
-    
-    console.log(`\n=== FILTERING COMPLETE ===`);
-    console.log(`Results: ${results.length}/${itemCodes.length} items passed filtering`);
-    
-    return results;
-}
-
-// Helper function to check if item matches ALL attribute criteria
-function matchAllAttributeCriteria(item, attributeCriteria) {
-    let matchedCriteria = 0;
-    let totalCriteria = 0;
-    
-    for (const [attributeKey, criteria] of Object.entries(attributeCriteria)) {
-        console.log(`\n--- Checking attribute: ${criteria.name} (${attributeKey}) ---`);
-        console.log('Search value:', criteria.value);
-        
-        const searchValue = criteria.value.toLowerCase().trim();
-        if (!searchValue) continue;
-        
-        totalCriteria++;
-        
-        const searchableFields = [
-            item.description1 || '',
-            item.description2 || '',
-            item.item_code || '',
-            item.manufacturer || '',
-            item.model_number || ''
-        ];
-        
-        let attributeValueFound = false;
-        for (const field of searchableFields) {
-            const fieldValue = String(field).toLowerCase();
-            if (fieldValue.includes(searchValue)) {
-                console.log(`✅ Found "${criteria.value}" in field: "${field}"`);
-                attributeValueFound = true;
-                matchedCriteria++;
-                break;
-            }
-        }
-        
-        if (!attributeValueFound) {
-            console.log(`❌ "${criteria.value}" not found in any description fields`);
-        }
-    }
-    
-    console.log(`Criteria matching: ${matchedCriteria}/${totalCriteria}`);
-    return matchedCriteria === totalCriteria && totalCriteria > 0;
-}
-
-// Helper function to apply additional criteria (UOM, Country, Model, ERP Status)
-function applyAdditionalCriteria(item, additionalCriteria) {
-    // Manufacturer filter
-    if (additionalCriteria.manufacturer) {
-        const searchManufacturer = additionalCriteria.manufacturer.toLowerCase();
-        const itemManufacturer = String(item.manufacturer || '').toLowerCase();
-        if (!itemManufacturer.includes(searchManufacturer)) {
-            console.log('❌ Manufacturer filter failed');
-            return false;
-        }
-    }
-    
-    // UOM filter
-    if (additionalCriteria.uom) {
-        const searchUom = additionalCriteria.uom.toLowerCase();
-        const itemUom = String(item.uom || '').toLowerCase();
-        if (!itemUom.includes(searchUom)) {
-            console.log('❌ UOM filter failed');
-            return false;
-        }
-    }
-    
-    // Country filter
-    if (additionalCriteria.country) {
-        const searchCountry = additionalCriteria.country.toLowerCase();
-        const itemCountry = String(item.country_of_origin || '').toLowerCase();
-        if (!itemCountry.includes(searchCountry)) {
-            console.log('❌ Country filter failed');
-            return false;
-        }
-    }
-    
-    // Model filter
-    if (additionalCriteria.model) {
-        const searchModel = additionalCriteria.model.toLowerCase();
-        const itemModel = String(item.model_number || '').toLowerCase();
-        if (!itemModel.includes(searchModel)) {
-            console.log('❌ Model filter failed');
-            return false;
-        }
-    }
-    
-    // ERP Status filter
-    if (additionalCriteria.erpStatus) {
-        if (additionalCriteria.erpStatus === 'integrated' && !item.erp_integrated) {
-            console.log('❌ ERP status filter failed - not integrated');
-            return false;
-        }
-        if (additionalCriteria.erpStatus === 'pending' && item.erp_integrated) {
-            console.log('❌ ERP status filter failed - already integrated');
-            return false;
-        }
-    }
-    
-    // Price comparison filter
-    if (additionalCriteria.priceComparison && additionalCriteria.priceValue) {
-        const itemPrice = parseFloat(item.unit_price || 0);
-        const searchPrice = parseFloat(additionalCriteria.priceValue);
-        const searchMaxPrice = parseFloat(additionalCriteria.priceMax || 0);
-        
-        // Currency filter (if specified, only compare prices with matching currency)
-        if (additionalCriteria.currency && item.currency) {
-            if (item.currency !== additionalCriteria.currency) {
-                console.log('❌ Currency filter failed - currency mismatch');
+        if (additionalCriteria.uom && item.uom) {
+            const searchUom = additionalCriteria.uom.toLowerCase();
+            const itemUom = String(item.uom).toLowerCase();
+            if (!itemUom.includes(searchUom)) {
                 return false;
             }
         }
         
-        // Apply price comparison logic
-        switch (additionalCriteria.priceComparison) {
-            case 'equal':
-                if (Math.abs(itemPrice - searchPrice) > 0.01) { // Allow for small floating point differences
-                    console.log(`❌ Price filter failed - ${itemPrice} not equal to ${searchPrice}`);
-                    return false;
-                }
-                break;
-            case 'greater':
-                if (itemPrice <= searchPrice) {
-                    console.log(`❌ Price filter failed - ${itemPrice} not greater than ${searchPrice}`);
-                    return false;
-                }
-                break;
-            case 'less':
-                if (itemPrice >= searchPrice) {
-                    console.log(`❌ Price filter failed - ${itemPrice} not less than ${searchPrice}`);
-                    return false;
-                }
-                break;
-            case 'between':
-                if (!searchMaxPrice || itemPrice < searchPrice || itemPrice > searchMaxPrice) {
-                    console.log(`❌ Price filter failed - ${itemPrice} not between ${searchPrice} and ${searchMaxPrice}`);
-                    return false;
-                }
-                break;
+        if (additionalCriteria.country && item.country_of_origin) {
+            const searchCountry = additionalCriteria.country.toLowerCase();
+            const itemCountry = String(item.country_of_origin).toLowerCase();
+            if (!itemCountry.includes(searchCountry)) {
+                return false;
+            }
         }
-    }
-    
-    return true;
+        
+        if (additionalCriteria.model && item.model_number) {
+            const searchModel = additionalCriteria.model.toLowerCase();
+            const itemModel = String(item.model_number).toLowerCase();
+            if (!itemModel.includes(searchModel)) {
+                return false;
+            }
+        }
+        
+        if (additionalCriteria.erpStatus) {
+            if (additionalCriteria.erpStatus === 'integrated' && !item.erp_integrated) {
+                return false;
+            }
+            if (additionalCriteria.erpStatus === 'pending' && item.erp_integrated) {
+                return false;
+            }
+        }
+        
+        return true; // Item matches all criteria
+    });
 }
 
 // Clear attribute search fields
@@ -7776,47 +7396,13 @@ function clearAttributeSearch() {
     });
     
     // Clear additional search fields
-    const additionalFields = [
-        {id: 'search-uom', placeholder: 'Search UOM...'},
-        {id: 'search-country', placeholder: 'Search country...'},
-        {id: 'search-model', placeholder: 'Search model...'},
-        {id: 'search-manufacturer', placeholder: 'Search manufacturer...'},
-        {id: 'search-erp-status', placeholder: ''},
-        {id: 'price-comparison-type', placeholder: ''},
-        {id: 'search-price-value', placeholder: ''},
-        {id: 'search-price-max', placeholder: ''},
-        {id: 'search-currency', placeholder: ''}
-    ];
-    
-    additionalFields.forEach(field => {
-        const element = document.getElementById(field.id);
-        if (element) {
-            element.value = '';
-            if (field.placeholder) {
-                element.placeholder = field.placeholder;
-            }
+    const additionalFields = ['search-uom', 'search-country', 'search-model', 'search-erp-status'];
+    additionalFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.value = '';
         }
     });
-    
-    // Hide all search dropdowns
-    const searchDropdowns = [
-        'manufacturer-search-dropdown',
-        'uom-search-dropdown', 
-        'country-search-dropdown',
-        'model-search-dropdown'
-    ];
-    searchDropdowns.forEach(dropdownId => {
-        const dropdown = document.getElementById(dropdownId);
-        if (dropdown) {
-            dropdown.classList.add('hidden');
-        }
-    });
-    
-    // Hide price max container when clearing
-    const maxContainer = document.getElementById('price-max-container');
-    if (maxContainer) {
-        maxContainer.classList.add('hidden');
-    }
     
     // Clear search results
     clearSearchResults();
@@ -7830,7 +7416,6 @@ function clearSearchResults() {
     const listView = document.getElementById('list-view');
     const tableView = document.getElementById('table-view-container');
     const summary = document.getElementById('search-summary');
-    const controls = document.getElementById('search-results-controls');
     const viewInfo = document.getElementById('view-info');
     
     if (hierarchyView) {
@@ -7851,10 +7436,6 @@ function clearSearchResults() {
         summary.classList.add('hidden');
     }
     
-    if (controls) {
-        controls.classList.add('hidden');
-    }
-    
     if (viewInfo) {
         viewInfo.classList.add('hidden');
     }
@@ -7863,120 +7444,9 @@ function clearSearchResults() {
 // Show view info when results are displayed
 function showResultsViewInfo() {
     const viewInfo = document.getElementById('view-info');
-    const summary = document.getElementById('search-summary');
-    const controls = document.getElementById('search-results-controls');
-    
     if (viewInfo) {
         viewInfo.classList.remove('hidden');
     }
-    
-    if (summary) {
-        summary.classList.remove('hidden');
-    }
-    
-    if (controls) {
-        controls.classList.remove('hidden');
-        
-        // Ensure event listeners are attached to the controls
-        setupSearchResultsControls();
-    }
-}
-
-// Setup event listeners for search results controls
-function setupSearchResultsControls() {
-    console.log('🔧 Setting up search results controls event listeners...');
-    
-    // Check if required functions exist
-    const functionChecks = [
-        { name: 'toggleSearchTableView', fn: window.toggleSearchTableView },
-        { name: 'toggleSearchView', fn: window.toggleSearchView },
-        { name: 'clearAttributeSearch', fn: window.clearAttributeSearch }
-    ];
-    
-    functionChecks.forEach(check => {
-        if (typeof check.fn === 'function') {
-            console.log(`✅ Function ${check.name} is available`);
-        } else {
-            console.error(`❌ Function ${check.name} is NOT available`);
-        }
-    });
-    
-    // Toggle table view button
-    const toggleTableBtn = document.getElementById('toggle-table-view-btn');
-    if (toggleTableBtn) {
-        console.log('🔍 Toggle table button found, attaching listener...');
-        
-        // Test if the function works
-        if (typeof toggleSearchTableView === 'function') {
-            console.log('✅ toggleSearchTableView function is available');
-            
-            // Add event listener using a more reliable method
-            toggleTableBtn.onclick = function(e) {
-                console.log('🔄 Toggle table view clicked via onclick');
-                e.preventDefault();
-                e.stopPropagation();
-                try {
-                    toggleSearchTableView();
-                    console.log('✅ toggleSearchTableView executed successfully');
-                } catch (error) {
-                    console.error('❌ Error executing toggleSearchTableView:', error);
-                }
-            };
-            console.log('✅ Toggle table view onclick handler attached');
-        } else {
-            console.error('❌ toggleSearchTableView function not found');
-        }
-    } else {
-        console.error('❌ Toggle table button not found');
-    }
-    
-    // Export dropdown button
-    const exportBtn = document.getElementById('export-dropdown-btn');
-    if (exportBtn) {
-        console.log('🔍 Export button found, attaching listener...');
-        
-        exportBtn.onclick = function(e) {
-            console.log('🔄 Export dropdown clicked via onclick');
-            e.preventDefault();
-            e.stopPropagation();
-            try {
-                const menu = document.getElementById('export-dropdown-menu');
-                if (menu) {
-                    menu.classList.toggle('hidden');
-                    console.log('✅ Export menu toggled');
-                } else {
-                    console.error('❌ Export menu not found');
-                }
-            } catch (error) {
-                console.error('❌ Error toggling export menu:', error);
-            }
-        };
-        console.log('✅ Export dropdown onclick handler attached');
-    } else {
-        console.error('❌ Export button not found');
-    }
-    
-    // Refresh search button
-    const refreshBtn = document.getElementById('refresh-search-btn');
-    if (refreshBtn) {
-        console.log('🔍 Refresh button found, attaching listener...');
-        
-        refreshBtn.onclick = function(e) {
-            console.log('🔄 Refresh search clicked via onclick');
-            e.preventDefault();
-            e.stopPropagation();
-            try {
-                location.reload();
-            } catch (error) {
-                console.error('❌ Error refreshing page:', error);
-            }
-        };
-        console.log('✅ Refresh search onclick handler attached');
-    } else {
-        console.error('❌ Refresh button not found');
-    }
-    
-    console.log('🎯 Search results controls setup complete');
 }
 
 // Perform search across all criteria
@@ -8082,287 +7552,55 @@ return matches;
 // Display search results in hierarchy or list view
 // Add this updated card generation for search results
 // Display search results in hierarchy or list view
-// Force reset all view states - useful for recovering from stuck conditions
-function resetViewStates() {
-    console.log('🔄 Force resetting all view states...');
-    
-    const hierarchyView = document.getElementById('hierarchy-view');
-    const listView = document.getElementById('list-view');
-    const tableView = document.getElementById('table-view-container');
-    const resultsContainer = document.getElementById('search-results-container');
-    
-    // Hide all views
-    if (hierarchyView) {
-        hierarchyView.classList.add('hidden');
-        hierarchyView.innerHTML = '';
-    }
-    if (listView) {
-        listView.classList.add('hidden');
-        listView.innerHTML = '';
-    }
-    if (tableView) {
-        tableView.classList.add('hidden');
-        // Clear table body content
-        const tableBody = document.getElementById('search-codes-table-body');
-        if (tableBody) {
-            tableBody.innerHTML = '';
-        }
-    }
-    
-    // Clear results container
-    if (resultsContainer) {
-        resultsContainer.innerHTML = '';
-    }
-    
-    // Reset button text to default
-    const toggleBtn = document.getElementById('toggle-table-view-btn');
-    if (toggleBtn) {
-        if (isSearchTableView) {
-            toggleBtn.textContent = 'Switch to Card View';
-        } else {
-            toggleBtn.textContent = 'Switch to Table View';
-        }
-    }
-    
-    console.log('✅ View state reset complete');
-}
-
-// Validate current view state and fix any inconsistencies
-function validateViewState() {
-    console.log('🔍 Validating view state...');
-    
-    const hierarchyView = document.getElementById('hierarchy-view');
-    const listView = document.getElementById('list-view');
-    const tableView = document.getElementById('table-view-container');
-    
-    const hierarchyVisible = hierarchyView && !hierarchyView.classList.contains('hidden');
-    const listVisible = listView && !listView.classList.contains('hidden');
-    const tableVisible = tableView && !tableView.classList.contains('hidden');
-    
-    console.log('Current visibility:', {
-        hierarchy: hierarchyVisible,
-        list: listVisible,
-        table: tableVisible,
-        isSearchTableView: isSearchTableView
-    });
-    
-    // Check for inconsistent states
-    if (isSearchTableView && !tableVisible) {
-        console.log('⚠️ State inconsistency: isSearchTableView=true but table not visible');
-        return false;
-    }
-    
-    if (!isSearchTableView && tableVisible) {
-        console.log('⚠️ State inconsistency: isSearchTableView=false but table is visible');
-        return false;
-    }
-    
-    const visibleViews = [hierarchyVisible, listVisible, tableVisible].filter(Boolean).length;
-    if (visibleViews > 1) {
-        console.log('⚠️ Multiple views visible simultaneously');
-        return false;
-    }
-    
-    console.log('✅ View state is valid');
-    return true;
-}
-
 function displaySearchResults(codes) {
-    console.log('=== displaySearchResults START ===');
-    console.log('🔍 DISPLAY TRACE: Function called with', codes.length, 'codes');
-    console.log('🔍 DISPLAY TRACE: Current isSearchTableView:', isSearchTableView);
-    
-    // CRITICAL FIX: Ensure we default to table view for search results
-    if (typeof isSearchTableView === 'undefined') {
-        isSearchTableView = true;
-        console.log('🔧 DISPLAY TRACE: isSearchTableView was undefined, defaulting to true');
-    }
-    
-    // Store filtered results globally for view toggling
-    window.lastFilteredResults = codes;
-    console.log('✅ DISPLAY TRACE: Stored results globally');
+    console.log('=== displaySearchResults called ===');
+    console.log('Codes received:', codes.length);
     
     const resultsContainer = document.getElementById('search-results-container');
     const emptyState = document.getElementById('empty-state');
     const hierarchyView = document.getElementById('hierarchy-view');
     const listView = document.getElementById('list-view');
-    const tableView = document.getElementById('table-view-container');
     const resultsCount = document.getElementById('results-count');
     const summary = document.getElementById('search-summary');
-    
-    console.log('🔍 DISPLAY TRACE: Element detection:', {
-        resultsContainer: !!resultsContainer,
-        hierarchyView: !!hierarchyView,
-        listView: !!listView,
-        tableView: !!tableView,
-        resultsCount: !!resultsCount,
-        summary: !!summary
-    });
     
     // Update results count and show summary
     if (resultsCount) {
         resultsCount.textContent = `${codes.length} item codes found`;
-        console.log('✅ DISPLAY TRACE: Updated results count');
     }
     
     if (summary) {
         summary.classList.toggle('hidden', codes.length === 0);
-        console.log('✅ DISPLAY TRACE: Updated summary visibility');
     }
     
     // Hide empty state if we have results
     if (emptyState) {
         emptyState.classList.toggle('hidden', codes.length > 0);
-        console.log('✅ DISPLAY TRACE: Updated empty state visibility');
     }
     
-    // CRITICAL: Reset all view states first to prevent stuck states
-    console.log('🔄 DISPLAY TRACE: Resetting all view states...');
-    if (hierarchyView) hierarchyView.classList.add('hidden');
-    if (listView) listView.classList.add('hidden'); 
-    if (tableView) tableView.classList.add('hidden');
-    console.log('✅ DISPLAY TRACE: All views hidden');
+    // Show/hide views based on results
+    if (hierarchyView) hierarchyView.classList.toggle('hidden', codes.length === 0);
+    if (listView) listView.classList.toggle('hidden', codes.length === 0);
     
-    // Handle zero results case
     if (codes.length === 0) {
-        console.log('⚠️ DISPLAY TRACE: Zero results - showing no results message WITHOUT destroying DOM');
-        
-        // Hide all view containers but preserve them
-        if (hierarchyView) hierarchyView.classList.add('hidden');
-        if (listView) listView.classList.add('hidden');
-        if (tableView) tableView.classList.add('hidden');
-        
-        // Show or create the no results message in empty state div
-        const searchEmpty = document.getElementById('search-empty');
-        if (searchEmpty) {
-            searchEmpty.classList.remove('hidden');
-            console.log('✅ DISPLAY TRACE: Showed existing search-empty div');
-        } else {
-            // Fallback: create temporary message without destroying container
-            console.log('⚠️ DISPLAY TRACE: search-empty div not found, using fallback');
-            
-            // Remove any existing temporary messages
-            const existingMessage = resultsContainer.querySelector('.temp-no-results');
-            if (existingMessage) {
-                existingMessage.remove();
-            }
-            
-            // Add temporary message as additional element (not replacement)
-            const tempMessage = document.createElement('div');
-            tempMessage.className = 'temp-no-results text-center py-8 text-gray-500';
-            tempMessage.textContent = 'No search results found';
-            resultsContainer.appendChild(tempMessage);
-            
-            console.log('✅ DISPLAY TRACE: Added temporary no results message');
+        if (resultsContainer) {
+            resultsContainer.innerHTML = '<div class="text-center py-8 text-gray-500">No search results found</div>';
         }
-        
-        console.log('=== displaySearchResults END (zero results) ===');
         return;
     }
     
-    // For results > 0, show the appropriate view
-    console.log('📊 DISPLAY TRACE: Processing', codes.length, 'results');
-    console.log('📊 DISPLAY TRACE: View mode:', isSearchTableView ? 'TABLE' : 'CARD');
-    
-    // Clean up any temporary no results messages
-    const existingMessage = resultsContainer?.querySelector('.temp-no-results');
-    if (existingMessage) {
-        existingMessage.remove();
-        console.log('🔧 DISPLAY TRACE: Removed temporary no results message');
-    }
-    
-    // Hide the search-empty div
-    const searchEmpty = document.getElementById('search-empty');
-    if (searchEmpty) {
-        searchEmpty.classList.add('hidden');
-        console.log('🔧 DISPLAY TRACE: Hidden search-empty div');
-    }
-    
     // Show results view info when we have results
-    try {
-        showResultsViewInfo();
-        console.log('✅ DISPLAY TRACE: showResultsViewInfo completed');
-    } catch (error) {
-        console.log('❌ DISPLAY TRACE: showResultsViewInfo failed:', error);
-    }
+    showResultsViewInfo();
     
-    // ALWAYS TRY TABLE VIEW FIRST for search results
-    if (tableView) {
-        console.log('🔧 DISPLAY TRACE: Table view container found, setting up TABLE view...');
-        isSearchTableView = true; // Force table view for search results
-        
-        tableView.classList.remove('hidden');
-        console.log('✅ DISPLAY TRACE: Table view made visible');
-        
-        // Update toggle button text
-        const toggleBtn = document.getElementById('toggle-table-view-btn');
-        if (toggleBtn) {
-            toggleBtn.textContent = 'Switch to Card View';
-            console.log('✅ DISPLAY TRACE: Toggle button updated');
-        }
-        
-        // Immediate table population attempt
-        const immediateTableBody = document.getElementById('search-codes-table-body');
-        if (immediateTableBody) {
-            console.log('✅ DISPLAY TRACE: Table body found immediately, populating...');
-            try {
-                populateTableBody(immediateTableBody, codes);
-                console.log('✅ DISPLAY TRACE: Table population successful');
-            } catch (error) {
-                console.log('❌ DISPLAY TRACE: Table population failed:', error);
-            }
-        } else {
-            console.log('⚠️ DISPLAY TRACE: Table body not found immediately, using timeout...');
-            
-            // Timeout-based population
-            setTimeout(() => {
-                console.log('🔄 DISPLAY TRACE: Timeout callback executing...');
-                const timeoutTableBody = document.getElementById('search-codes-table-body');
-                if (timeoutTableBody) {
-                    console.log('✅ DISPLAY TRACE: Table body found in timeout, populating...');
-                    try {
-                        populateTableBody(timeoutTableBody, codes);
-                        console.log('✅ DISPLAY TRACE: Timeout table population successful');
-                    } catch (error) {
-                        console.log('❌ DISPLAY TRACE: Timeout table population failed:', error);
-                    }
-                } else {
-                    console.log('❌ DISPLAY TRACE: Table body STILL not found after timeout');
-                    console.log('🔧 DISPLAY TRACE: Using fallback list view...');
-                    
-                    // Fallback to list view but keep trying table
-                    if (tableView) tableView.classList.add('hidden');
-                    if (listView) {
-                        listView.classList.remove('hidden');
-                        try {
-                            displayListView(codes);
-                            console.log('✅ DISPLAY TRACE: Fallback to list view successful');
-                        } catch (error) {
-                            console.log('❌ DISPLAY TRACE: Fallback to list view failed:', error);
-                        }
-                    }
-                }
-            }, 100);
-        }
+    // Check current view mode
+    const isHierarchyView = hierarchyView && !hierarchyView.classList.contains('hidden');
+    
+    if (isHierarchyView) {
+        // Render hierarchy view
+        displayHierarchyView(codes);
     } else {
-        console.log('❌ DISPLAY TRACE: Table view container NOT FOUND');
-        console.log('🔧 DISPLAY TRACE: Using fallback list view...');
-        
-        // Fallback to list view
-        if (listView) {
-            listView.classList.remove('hidden');
-            try {
-                displayListView(codes);
-                console.log('✅ DISPLAY TRACE: Fallback to list view successful');
-            } catch (error) {
-                console.log('❌ DISPLAY TRACE: Fallback to list view failed:', error);
-            }
-        } else {
-            console.log('❌ DISPLAY TRACE: No view containers found at all!');
-        }
+        // Render list view using our enhanced cards
+        displayListView(codes);
     }
-    
-    console.log('=== displaySearchResults END ===');
 }
 
 // Display codes in list view with enhanced cards
@@ -12162,6 +11400,9 @@ window.modifyRejectedRequest = modifyRejectedRequest;
 
 // ===== TABLE VIEW FUNCTIONALITY FOR SEARCH CODES =====
 
+// Global variable to track search view mode
+let isSearchTableView = false;
+
 // Toggle between card/hierarchy view and table view
 function toggleSearchTableView() {
     console.log(' Toggling search view mode...');
@@ -12188,13 +11429,8 @@ function toggleSearchTableView() {
         if (toggleBtn) toggleBtn.textContent = 'Switch to Card View';
         if (viewDescription) viewDescription.textContent = 'Showing table view with ERP integration controls for admins';
         
-        // Populate table with current filtered data
-        // Get the current filtered results from the last search
-        if (window.lastFilteredResults && window.lastFilteredResults.length > 0) {
-            populateSearchTable(window.lastFilteredResults);
-        } else {
-            populateSearchTable();
-        }
+        // Populate table with current data
+        populateSearchTable();
     } else {
         // Switch back to card/hierarchy view
         tableView.classList.add('hidden');
@@ -12212,101 +11448,34 @@ function toggleSearchTableView() {
                 'Showing hierarchical WBS view organized by CSI structure' : 
                 'Showing flat list view of all item codes';
         }
-        
-        // Repopulate the card view with current filtered data
-        if (window.lastFilteredResults && window.lastFilteredResults.length > 0) {
-            console.log('Repopulating card view with filtered results:', window.lastFilteredResults.length);
-            if (searchHierarchyView) {
-                displayHierarchyView(window.lastFilteredResults);
-            } else {
-                displayListView(window.lastFilteredResults);
-            }
-        } else {
-            // If no filtered results, trigger a new search to populate
-            console.log('No filtered results available, triggering new search');
-            performAttributeBasedSearch();
-        }
     }
     
     console.log(' Switched to', isSearchTableView ? 'table' : 'card', 'view');
 }
 
 // Populate the search table with approved codes
-function populateSearchTable(codes = null) {
+function populateSearchTable() {
     console.log(' Populating search table...');
-    console.log(' Current isSearchTableView:', isSearchTableView);
     
     const tableBody = document.getElementById('search-codes-table-body');
-    const tableView = document.getElementById('table-view-container');
-    
-    console.log(' Table body element:', tableBody);
-    console.log(' Table view container:', tableView);
-    
     if (!tableBody) {
         console.error(' Table body not found');
-        console.log(' All elements with search-codes-table-body:', document.querySelectorAll('#search-codes-table-body'));
-        console.log(' All elements with "table" in ID:', document.querySelectorAll('[id*="table"]'));
-        
-        // Force switch to table view and try again
-        const hierarchyView = document.getElementById('hierarchy-view');
-        const listView = document.getElementById('list-view');
-        
-        if (hierarchyView) hierarchyView.classList.add('hidden');
-        if (listView) listView.classList.add('hidden');
-        if (tableView) {
-            tableView.classList.remove('hidden');
-            console.log(' Forced table view visible');
-            
-            // Try to find table body again after showing table view
-            setTimeout(() => {
-                const retryTableBody = document.getElementById('search-codes-table-body');
-                console.log(' Retry table body found:', retryTableBody);
-                if (retryTableBody) {
-                    populateTableBody(retryTableBody, codes);
-                }
-            }, 100);
-        }
         return;
     }
     
-    // Ensure we're in table view mode when populating table
-    if (!isSearchTableView) {
-        console.log(' Not in table view mode, switching to table view first');
-        isSearchTableView = true;
-        
-        // Show table view and hide other views
-        const hierarchyView = document.getElementById('hierarchy-view');
-        const listView = document.getElementById('list-view');
-        
-        if (hierarchyView) hierarchyView.classList.add('hidden');
-        if (listView) listView.classList.add('hidden');
-        if (tableView) tableView.classList.remove('hidden');
-        
-        // Update button text
-        const toggleBtn = document.getElementById('toggle-table-view-btn');
-        if (toggleBtn) toggleBtn.textContent = 'Switch to Card View';
-    }
-    
-    populateTableBody(tableBody, codes);
-}
-
-// Helper function to populate the table body
-function populateTableBody(tableBody, codes) {
-    const dataToDisplay = codes || allApprovedCodes || [];
-    
-    if (dataToDisplay.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="12" class="px-4 py-8 text-center text-gray-500">No item codes found</td></tr>';
+    if (!allApprovedCodes || allApprovedCodes.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="12" class="px-4 py-8 text-center text-gray-500">No admin-approved codes found</td></tr>';
         return;
     }
     
-    console.log(' Populating table with', dataToDisplay.length, 'items');
+    console.log(' Populating table with', allApprovedCodes.length, 'admin-approved items');
     
     // Check if user is admin for showing checkboxes
     const isAdmin = currentUser && currentUser.role === 'admin';
     // Check if user is ERP data entry for showing ERP controls
     const isERPDataEntry = currentUser && currentUser.role === 'erp_data_entry';
     
-    tableBody.innerHTML = dataToDisplay.map((item, index) => `
+    tableBody.innerHTML = allApprovedCodes.map((item, index) => `
         <tr class="hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}">
             <td class="px-4 py-3 whitespace-nowrap text-sm font-mono font-semibold text-blue-600 border-b">${item.item_code || 'N/A'}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-b">${(item.classification_projects?.project_name || 'Unknown').substring(0, 30)}${(item.classification_projects?.project_name || '').length > 30 ? '...' : ''}</td>
@@ -14620,572 +13789,19 @@ window.debugAttributeSettings = function() {
 
 // ===== END ATTRIBUTE DISPLAY SETTINGS MANAGEMENT =====
 
-// ===== SEARCHABLE DROPDOWN FUNCTIONALITY FOR SEARCH FILTERS =====
+// NEW: Make deprecation functions globally available
+window.loadProjectAttributesWithDeprecationStatus = loadProjectAttributesWithDeprecationStatus;
+window.fallbackDuplicateCheck = fallbackDuplicateCheck;
+window.showDeprecationWarningInUI = showDeprecationWarningInUI;
 
-// Global variables to store dropdown data
-let searchDropdownData = {
-    manufacturers: [],
-    uoms: [],
-    countries: [],
-    models: []
-};
+// Make enhanced search functions globally available for testing
+window.setupAdvancedProjectSearch = setupAdvancedProjectSearch;
+window.escapeHtml = escapeHtml;
 
-// Toggle search dropdown visibility
-function toggleSearchDropdown(dropdownId, inputId) {
-    const dropdown = document.getElementById(dropdownId);
-    const input = document.getElementById(inputId);
-    
-    if (!dropdown || !input) {
-        console.warn(`⚠️ Dropdown elements not found: ${dropdownId}, ${inputId}`);
-        return;
-    }
-    
-    console.log(`🔽 Toggling dropdown: ${dropdownId}`);
-    
-    // Close all other dropdowns first
-    const allDropdowns = [
-        'manufacturer-search-dropdown',
-        'uom-search-dropdown',
-        'country-search-dropdown',
-        'model-search-dropdown'
-    ];
-    
-    allDropdowns.forEach(id => {
-        if (id !== dropdownId) {
-            const otherDropdown = document.getElementById(id);
-            if (otherDropdown) otherDropdown.classList.add('hidden');
-        }
-    });
-    
-    // Toggle current dropdown
-    const isHidden = dropdown.classList.contains('hidden');
-    if (isHidden) {
-        dropdown.classList.remove('hidden');
-        console.log(`✅ Opened dropdown: ${dropdownId}`);
-        
-        // Get the data key and populate initial options
-        const dataKey = getDataKeyFromDropdownId(dropdownId);
-        if (dataKey && searchDropdownData[dataKey]) {
-            console.log(`📊 Populating ${dropdownId} with ${searchDropdownData[dataKey].length} options`);
-            populateDropdownOptions(dropdownId, searchDropdownData[dataKey], input);
-        }
-        
-        // Focus on the search input inside the dropdown with delay to ensure it's rendered
-        setTimeout(() => {
-            const searchInput = dropdown.querySelector('input[type="text"]');
-            if (searchInput) {
-                searchInput.focus();
-                searchInput.value = ''; // Clear any previous search
-                console.log(`🎯 Focused on search input: ${searchInput.id}`);
-            } else {
-                console.warn(`⚠️ Search input not found in ${dropdownId}`);
-            }
-        }, 50);
-        
-    } else {
-        dropdown.classList.add('hidden');
-        console.log(`❌ Closed dropdown: ${dropdownId}`);
-    }
-}
-
-// Get data key from dropdown ID
-function getDataKeyFromDropdownId(dropdownId) {
-    const mapping = {
-        'manufacturer-search-dropdown': 'manufacturers',
-        'uom-search-dropdown': 'uoms',
-        'country-search-dropdown': 'countries',
-        'model-search-dropdown': 'models'
-    };
-    return mapping[dropdownId];
-}
-
-// Load unique values from approved codes for search dropdowns
-async function loadSearchDropdownData() {
-    console.log('📊 Loading search dropdown data...');
-    
-    try {
-        // Get all approved codes to extract unique values
-        if (!allApprovedCodes || allApprovedCodes.length === 0) {
-            console.log('⚠️ No approved codes available for dropdown data');
-            
-            // Set empty arrays so dropdowns still work
-            searchDropdownData = {
-                manufacturers: [],
-                uoms: [],
-                countries: [],
-                models: []
-            };
-            return;
-        }
-        
-        console.log('📊 Processing', allApprovedCodes.length, 'approved codes for dropdown data');
-        
-        // Extract unique manufacturers with detailed logging
-        const manufacturerValues = allApprovedCodes.map(item => item.manufacturer).filter(val => val && val.trim() !== '');
-        const manufacturers = [...new Set(manufacturerValues)].sort();
-        console.log('📊 Found', manufacturerValues.length, 'manufacturer entries, unique:', manufacturers.length);
-        
-        // Extract unique UOMs
-        const uomValues = allApprovedCodes.map(item => item.uom).filter(val => val && val.trim() !== '');
-        const uoms = [...new Set(uomValues)].sort();
-        console.log('📊 Found', uomValues.length, 'UOM entries, unique:', uoms.length);
-        
-        // Extract unique countries
-        const countryValues = allApprovedCodes.map(item => item.country_of_origin).filter(val => val && val.trim() !== '');
-        const countries = [...new Set(countryValues)].sort();
-        console.log('📊 Found', countryValues.length, 'country entries, unique:', countries.length);
-        
-        // Extract unique models
-        const modelValues = allApprovedCodes.map(item => item.model_number).filter(val => val && val.trim() !== '');
-        const models = [...new Set(modelValues)].sort();
-        console.log('📊 Found', modelValues.length, 'model entries, unique:', models.length);
-        
-        // Store the data
-        searchDropdownData = {
-            manufacturers: manufacturers,
-            uoms: uoms,
-            countries: countries,
-            models: models
-        };
-        
-        console.log('✅ Search dropdown data loaded:', {
-            manufacturers: manufacturers.length,
-            uoms: uoms.length,
-            countries: countries.length,
-            models: models.length
-        });
-        
-        // Show sample data for debugging
-        if (manufacturers.length > 0) {
-            console.log('📋 Sample manufacturers:', manufacturers.slice(0, 5));
-        }
-        if (uoms.length > 0) {
-            console.log('📋 Sample UOMs:', uoms.slice(0, 5));
-        }
-        if (countries.length > 0) {
-            console.log('📋 Sample countries:', countries.slice(0, 5));
-        }
-        if (models.length > 0) {
-            console.log('📋 Sample models:', models.slice(0, 5));
-        }
-        
-        // Setup search functionality for the search inputs
-        setupDropdownSearchInputs();
-        
-    } catch (error) {
-        console.error('❌ Error loading search dropdown data:', error);
-        
-        // Set empty arrays so dropdowns still work even on error
-        searchDropdownData = {
-            manufacturers: [],
-            uoms: [],
-            countries: [],
-            models: []
-        };
-    }
-}
-
-// Setup search inputs inside dropdowns
-function setupDropdownSearchInputs() {
-    const searchInputs = [
-        {
-            inputId: 'manufacturer-search-input',
-            dropdownId: 'manufacturer-search-dropdown',
-            optionsId: 'manufacturer-options',
-            dataKey: 'manufacturers',
-            targetInputId: 'search-manufacturer'
-        },
-        {
-            inputId: 'uom-search-input',
-            dropdownId: 'uom-search-dropdown',
-            optionsId: 'uom-options',
-            dataKey: 'uoms',
-            targetInputId: 'search-uom'
-        },
-        {
-            inputId: 'country-search-input',
-            dropdownId: 'country-search-dropdown',
-            optionsId: 'country-options',
-            dataKey: 'countries',
-            targetInputId: 'search-country'
-        },
-        {
-            inputId: 'model-search-input',
-            dropdownId: 'model-search-dropdown',
-            optionsId: 'model-options',
-            dataKey: 'models',
-            targetInputId: 'search-model'
-        }
-    ];
-    
-    searchInputs.forEach(config => {
-        // Wait for DOM elements to be available
-        setTimeout(() => {
-            const searchInput = document.getElementById(config.inputId);
-            if (searchInput) {
-                console.log(`✅ Setting up search for ${config.inputId}`);
-                
-                // Clear any existing listeners
-                searchInput.replaceWith(searchInput.cloneNode(true));
-                const newSearchInput = document.getElementById(config.inputId);
-                
-                newSearchInput.addEventListener('input', function() {
-                    const searchTerm = this.value.toLowerCase().trim();
-                    console.log(`🔍 Searching ${config.dataKey} for: "${searchTerm}"`);
-                    
-                    let filteredData;
-                    if (searchTerm === '') {
-                        // Show all data when search is empty
-                        filteredData = searchDropdownData[config.dataKey];
-                    } else {
-                        // Filter based on search term
-                        filteredData = searchDropdownData[config.dataKey].filter(item =>
-                            item.toLowerCase().includes(searchTerm)
-                        );
-                    }
-                    
-                    console.log(`📊 Filtered ${config.dataKey}:`, filteredData.length, 'results');
-                    
-                    const targetInput = document.getElementById(config.targetInputId);
-                    populateDropdownOptions(config.dropdownId, filteredData, targetInput, config.optionsId);
-                });
-                
-                // Also trigger initial population when input gets focus
-                newSearchInput.addEventListener('focus', function() {
-                    const targetInput = document.getElementById(config.targetInputId);
-                    populateDropdownOptions(config.dropdownId, searchDropdownData[config.dataKey], targetInput, config.optionsId);
-                });
-                
-                console.log(`✅ Search input ${config.inputId} configured`);
-            } else {
-                console.warn(`⚠️ Search input ${config.inputId} not found`);
-            }
-        }, 100);
-    });
-}
-
-// Populate dropdown options
-function populateDropdownOptions(dropdownId, data, targetInput, optionsId = null) {
-    // Find the options container - either the specified container or default to the dropdown itself
-    let optionsContainer;
-    if (optionsId) {
-        optionsContainer = document.getElementById(optionsId);
-    } else {
-        // Look for the options container within the dropdown
-        const dropdown = document.getElementById(dropdownId);
-        if (dropdown) {
-            optionsContainer = dropdown.querySelector('[id$="-options"]') || 
-                              dropdown.querySelector('.max-h-48') || 
-                              dropdown;
-        }
-    }
-    
-    if (!optionsContainer || !targetInput) {
-        console.warn(`⚠️ Options container or target input not found for ${dropdownId}`);
-        return;
-    }
-    
-    console.log(`📝 Populating ${dropdownId} with ${data.length} options`);
-    
-    optionsContainer.innerHTML = '';
-    
-    if (data.length === 0) {
-        optionsContainer.innerHTML = '<div class="px-3 py-2 text-gray-500 text-sm">No matches found</div>';
-        return;
-    }
-    
-    // Add "Clear Selection" option if there's a current value
-    if (targetInput.value.trim() !== '') {
-        const clearOption = document.createElement('div');
-        clearOption.className = 'px-3 py-2 text-sm cursor-pointer hover:bg-red-50 hover:text-red-700 border-b border-gray-100 text-red-600 font-medium';
-        clearOption.innerHTML = '✕ Clear Selection';
-        clearOption.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log(`🗑️ Clearing selection for ${dropdownId}`);
-            
-            targetInput.value = '';
-            // Reset placeholder to original
-            const originalPlaceholder = getOriginalPlaceholder(targetInput.id);
-            if (originalPlaceholder) {
-                targetInput.placeholder = originalPlaceholder;
-            }
-            
-            document.getElementById(dropdownId).classList.add('hidden');
-            performAttributeBasedSearch();
-        });
-        optionsContainer.appendChild(clearOption);
-    }
-    
-    // Limit to first 20 results for performance
-    const limitedData = data.slice(0, 20);
-    
-    limitedData.forEach((item, index) => {
-        const option = document.createElement('div');
-        option.className = 'px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 border-b border-gray-50';
-        option.textContent = item;
-        
-        option.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log(`✅ Selected: ${item} for ${dropdownId}`);
-            
-            targetInput.value = item;
-            targetInput.placeholder = `${item} (Selected)`;
-            document.getElementById(dropdownId).classList.add('hidden');
-            
-            // Trigger search when item is selected
-            performAttributeBasedSearch();
-        });
-        
-        optionsContainer.appendChild(option);
-    });
-    
-    console.log(`✅ Populated ${dropdownId} with ${limitedData.length} options`);
-}
-
-// Helper function to get original placeholder text
-function getOriginalPlaceholder(inputId) {
-    const placeholders = {
-        'search-manufacturer': 'Search manufacturer...',
-        'search-uom': 'Search UOM...',
-        'search-country': 'Search country...',
-        'search-model': 'Search model...'
-    };
-    return placeholders[inputId] || 'Search...';
-}
-
-// Close all search dropdowns when clicking outside
-document.addEventListener('click', function(e) {
-    const searchDropdowns = [
-        'manufacturer-search-dropdown',
-        'uom-search-dropdown',
-        'country-search-dropdown',
-        'model-search-dropdown'
-    ];
-    
-    searchDropdowns.forEach(dropdownId => {
-        const dropdown = document.getElementById(dropdownId);
-        if (dropdown && !dropdown.contains(e.target)) {
-            // Check if clicked element is the trigger input
-            const triggerInput = dropdown.previousElementSibling?.querySelector('input[readonly]');
-            if (triggerInput && !triggerInput.contains(e.target)) {
-                dropdown.classList.add('hidden');
-            }
-        }
-    });
-});
-
-// ===== END SEARCHABLE DROPDOWN FUNCTIONALITY =====
-
-// ===== SEARCH METHOD TABS AND DIRECT ITEM CODE SEARCH =====
-
-// Handle search method tab switching
-function initializeSearchMethodTabs() {
-    const tabButtons = document.querySelectorAll('.search-method-tab');
-    const contentSections = document.querySelectorAll('.search-method-content');
-    
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const method = this.dataset.method;
-            
-            // Update tab appearance
-            tabButtons.forEach(btn => {
-                btn.classList.remove('border-blue-500', 'text-blue-600');
-                btn.classList.add('border-transparent', 'text-gray-500');
-            });
-            
-            this.classList.remove('border-transparent', 'text-gray-500');
-            this.classList.add('border-blue-500', 'text-blue-600');
-            
-            // Show corresponding content
-            contentSections.forEach(section => {
-                section.classList.add('hidden');
-            });
-            
-            const targetSection = document.getElementById(`${method}-search-method`);
-            if (targetSection) {
-                targetSection.classList.remove('hidden');
-            }
-            
-            // Show/hide project-specific buttons in controls
-            updateSearchControlsVisibility(method);
-            
-            // Show/hide attribute search phase based on method
-            const attributePhase = document.getElementById('attribute-search-phase');
-            if (method === 'project') {
-                // Reset any existing search results when switching to project mode
-                clearSearchResults();
-            } else {
-                // Hide attribute search for direct item code search
-                if (attributePhase) {
-                    attributePhase.classList.add('hidden');
-                }
-                clearSearchResults();
-            }
-        });
-    });
-}
-
-// Update search controls visibility based on search method
-function updateSearchControlsVisibility(searchMethod) {
-    const projectOnlyButtons = document.querySelectorAll('.project-search-only');
-    
-    if (searchMethod === 'project') {
-        // Show project-specific buttons
-        projectOnlyButtons.forEach(button => {
-            button.style.display = 'inline-block';
-        });
-    } else {
-        // Hide project-specific buttons for direct item code search
-        projectOnlyButtons.forEach(button => {
-            button.style.display = 'none';
-        });
-    }
-}
-
-// Direct item code search functionality
-function performDirectItemCodeSearch() {
-    const searchInput = document.getElementById('direct-item-code-search');
-    const resultsInfo = document.getElementById('itemcode-search-info');
-    const resultsText = document.getElementById('itemcode-results-text');
-    
-    if (!searchInput || !searchInput.value.trim()) {
-        alert('Please enter at least one item code to search');
-        return;
-    }
-    
-    const searchTerms = searchInput.value
-        .split(',')
-        .map(term => term.trim().toLowerCase())
-        .filter(term => term.length > 0);
-    
-    console.log('🔍 Direct item code search:', searchTerms);
-    
-    if (!allApprovedCodes || allApprovedCodes.length === 0) {
-        alert('No approved item codes available. Please refresh the page.');
-        return;
-    }
-    
-    // Ensure controls are set for item code search context
-    updateSearchControlsVisibility('itemcode');
-    
-    // Filter items by item code matching
-    const matchedItems = allApprovedCodes.filter(item => {
-        const itemCode = String(item.item_code || '').toLowerCase();
-        return searchTerms.some(term => itemCode.includes(term));
-    });
-    
-    console.log(`📊 Found ${matchedItems.length} items matching search terms`);
-    
-    // Update results info
-    if (resultsInfo && resultsText) {
-        resultsText.textContent = `Found ${matchedItems.length} item code(s) matching your search`;
-        resultsInfo.classList.remove('hidden');
-        
-        // Hide after 3 seconds
-        setTimeout(() => {
-            resultsInfo.classList.add('hidden');
-        }, 3000);
-    }
-    
-    // Display results (this will show the controls section)
-    displaySearchResults(matchedItems);
-}
-
-// Clear direct item code search
-function clearDirectItemCodeSearch() {
-    const searchInput = document.getElementById('direct-item-code-search');
-    const resultsInfo = document.getElementById('itemcode-search-info');
-    
-    if (searchInput) {
-        searchInput.value = '';
-    }
-    
-    if (resultsInfo) {
-        resultsInfo.classList.add('hidden');
-    }
-    
-    clearSearchResults();
-}
-
-// Initialize search method functionality
+// Initialize deprecation system on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize search method tabs
-    initializeSearchMethodTabs();
-    
-    // Set initial context to project search (default active tab)
-    updateSearchControlsVisibility('project');
-    
-    // Note: loadSearchDropdownData() is now called from loadAllApprovedCodes()
-    // when the approved codes data is actually available
-    
-    // Add event listeners for direct item code search
-    const searchButton = document.getElementById('search-itemcode-btn');
-    const clearButton = document.getElementById('clear-itemcode-search-btn');
-    const searchInput = document.getElementById('direct-item-code-search');
-    
-    if (searchButton) {
-        searchButton.addEventListener('click', performDirectItemCodeSearch);
-    }
-    
-    if (clearButton) {
-        clearButton.addEventListener('click', clearDirectItemCodeSearch);
-    }
-    
-    // Allow Enter key to trigger search
-    if (searchInput) {
-        searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                performDirectItemCodeSearch();
-            }
-        });
-    }
+    console.log('🚀 Code Generation Portal with Deprecation System initialized');
 });
-
-// Simple export test function for debugging
-function testExport(format) {
-    console.log(`🔍 TEST EXPORT: Attempting to export as ${format}`);
-    alert(`Test export: ${format} export would happen here`);
-    
-    // Hide export dropdown
-    const menu = document.getElementById('export-dropdown-menu');
-    if (menu) {
-        menu.classList.add('hidden');
-        console.log('✅ Export menu hidden');
-    }
-}
-
-// Export current search results
-function exportCurrentResults(format) {
-    console.log(`📊 Exporting current search results as ${format}`);
-    
-    // Get current filtered results or all results if none filtered
-    const resultsToExport = window.lastFilteredResults || allApprovedCodes || [];
-    
-    if (!resultsToExport || resultsToExport.length === 0) {
-        alert('No search results to export');
-        return;
-    }
-    
-    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-    const filename = `search_results_${timestamp}`;
-    
-    if (format === 'excel') {
-        exportToExcel(resultsToExport, `${filename}.xlsx`);
-    } else if (format === 'pdf') {
-        exportToPDF(resultsToExport, `${filename}.pdf`, 'Search Results');
-    }
-    
-    // Hide export dropdown
-    const menu = document.getElementById('export-dropdown-menu');
-    if (menu) {
-        menu.classList.add('hidden');
-    }
-}
-
-// ===== END SEARCH METHOD TABS AND DIRECT ITEM CODE SEARCH =====
 
     </script>
 </body>
