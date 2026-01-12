@@ -248,6 +248,9 @@
                 <button id="erp-tab-button" class="tab-btn py-2 px-1 border-b-2 border-transparent text-gray-500 hidden" data-tab="erp">
                     ERP Integration
                 </button>
+                <button id="disabled-codes-tab-button" class="tab-btn py-2 px-1 border-b-2 border-transparent text-gray-500 hidden" data-tab="disabled-codes">
+                    Disabled Codes
+                </button>
             </nav>
         </div>
 
@@ -1141,6 +1144,7 @@
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Created Date</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b">ERP Status</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-red-600 uppercase tracking-wider border-b bg-yellow-50"> Admin: Mark ERP</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-red-600 uppercase tracking-wider border-b bg-red-50"> Admin: Disable</th>
                     </tr>
                 </thead>
                 <tbody id="search-codes-table-body" class="bg-white divide-y divide-gray-200">
@@ -1300,6 +1304,159 @@
                             </tr>
                         </thead>
                         <tbody id="erp-items-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Disabled Codes Tab -->
+        <div id="disabled-codes-tab" class="tab-content hidden">
+            <div class="bg-red-50 p-4 rounded-lg mb-6">
+                <h2 class="text-xl font-bold text-red-800 mb-2">🚫 Disabled Item Codes</h2>
+                <p class="text-red-700">View and manage disabled item codes. ERP users can mark codes as processed in ERP system.</p>
+            </div>
+
+            <!-- Disabled Codes Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-red-500">
+                    <div class="flex items-center">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-600">Total Disabled</p>
+                            <p id="disabled-total-count" class="text-2xl font-bold text-red-600">0</p>
+                        </div>
+                        <div class="text-red-500">🚫</div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-orange-500">
+                    <div class="flex items-center">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-600">ERP Pending</p>
+                            <p id="disabled-erp-pending-count" class="text-2xl font-bold text-orange-600">0</p>
+                        </div>
+                        <div class="text-orange-500">⏳</div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
+                    <div class="flex items-center">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-600">ERP Notified</p>
+                            <p id="disabled-erp-notified-count" class="text-2xl font-bold text-green-600">0</p>
+                        </div>
+                        <div class="text-green-500">✅</div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
+                    <div class="flex items-center">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-600">Can Re-enable</p>
+                            <p id="disabled-reenanable-count" class="text-2xl font-bold text-blue-600">0</p>
+                        </div>
+                        <div class="text-blue-500">🔄</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="bg-white p-4 rounded-lg shadow mb-6">
+                <div class="flex flex-wrap gap-4 items-center">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Filter by Project:</label>
+                        <select id="disabled-codes-project-filter" class="border border-gray-300 rounded px-3 py-2">
+                            <option value="">All Projects</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Filter by ERP Status:</label>
+                        <select id="disabled-codes-erp-filter" class="border border-gray-300 rounded px-3 py-2">
+                            <option value="">All Items</option>
+                            <option value="pending">ERP Pending</option>
+                            <option value="notified">ERP Notified</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Can Re-enable:</label>
+                        <select id="disabled-codes-reenable-filter" class="border border-gray-300 rounded px-3 py-2">
+                            <option value="">All Items</option>
+                            <option value="true">Can Re-enable</option>
+                            <option value="false">Cannot Re-enable</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Search:</label>
+                        <input type="text" id="disabled-codes-search-input" placeholder="Search item codes, descriptions..." 
+                               class="border border-gray-300 rounded px-3 py-2 w-64">
+                    </div>
+                    <div class="flex items-end space-x-2">
+                        <button id="disabled-codes-refresh-btn" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                            Refresh
+                        </button>
+                        <button id="disabled-codes-export-btn" 
+                                class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                            Export CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Admin Controls (Only visible to admins) -->
+                <div id="disabled-codes-admin-controls" class="mt-4 pt-4 border-t border-gray-200 hidden">
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Admin Controls:</h4>
+                    <div class="flex space-x-2">
+                        <button id="bulk-reenable-btn" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+                                disabled>
+                            Re-enable Selected (0)
+                        </button>
+                        <button id="bulk-disable-additional-btn" 
+                                class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                                onclick="showBulkDisableModal()">
+                            Disable Additional Codes
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ERP Controls (Only visible to ERP role users) -->
+                <div id="disabled-codes-erp-controls" class="mt-4 pt-4 border-t border-gray-200 hidden">
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">ERP Controls:</h4>
+                    <div class="flex space-x-2">
+                        <button id="bulk-mark-erp-notified-btn" 
+                                class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400"
+                                disabled>
+                            Mark as ERP Notified (0)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Disabled Codes Table -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-4 py-5 border-b border-gray-200">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Disabled Item Codes</h3>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500">Complete list of disabled item codes</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left">
+                                    <input type="checkbox" id="disabled-codes-select-all" class="rounded">
+                                </th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Code</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Disabled Reason</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Disabled By</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Disabled Date</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manufacturer</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ERP Status</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Can Re-enable</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="disabled-codes-table-body" class="bg-white divide-y divide-gray-200">
                             <!-- Will be populated by JavaScript -->
                         </tbody>
                     </table>
@@ -2576,6 +2733,19 @@ if (currentUser.role === 'admin') {
     console.log(' Admin user detected, showing admin tab and settings');
     document.getElementById('admin-tab').classList.remove('hidden');
     document.getElementById('settings-btn').classList.remove('hidden');
+    
+    // Show deprecation management button for admin users
+    const deprecationBtn = document.getElementById('manage-deprecation-btn');
+    if (deprecationBtn) {
+        deprecationBtn.classList.remove('hidden');
+        deprecationBtn.title = 'Manage Deprecation (Admin Only)';
+    }
+} else {
+    // Hide deprecation management button for non-admin users
+    const deprecationBtn = document.getElementById('manage-deprecation-btn');
+    if (deprecationBtn) {
+        deprecationBtn.style.display = 'none';
+    }
 }
 
 // Show ERP tab if ERP data entry or admin
@@ -2590,6 +2760,20 @@ if (currentUser.role === 'erp_data_entry' || currentUser.role === 'admin') {
     }
 } else {
     console.log('ERP access denied for role:', currentUser.role);
+}
+
+// Show Disabled Codes tab if admin or ERP user
+if (currentUser.role === 'admin' || currentUser.role === 'erp_data_entry') {
+    console.log('🚫 Disabled Codes access granted for role:', currentUser.role, 'showing Disabled Codes tab');
+    const disabledCodesTabBtn = document.getElementById('disabled-codes-tab-button');
+    if (disabledCodesTabBtn) {
+        disabledCodesTabBtn.classList.remove('hidden');
+        console.log('Disabled Codes tab button is now visible');
+    } else {
+        console.error('Disabled Codes tab button element not found!');
+    }
+} else {
+    console.log('Disabled Codes access denied for role:', currentUser.role);
 }
 
         // Load initial data in sequence to avoid race conditions
@@ -4186,70 +4370,153 @@ function renderAttributes() {
             `;
         } else {
             // Standard attributes with predefined values
-            // Modified section around line 1895-1917
-if (attr.standard_values && Array.isArray(attr.standard_values) && attr.standard_values.length > 0) {
-    attr.standard_values.forEach((value, valueIndex) => {
-        const radioId = `attr-${originalIndex}-val-${valueIndex}`;
-        
-        // Enhanced handling for units
-        let valueName, valueUnit;
-        if (typeof value === 'object' && value !== null) {
-            valueName = value.name || value.value || value;
-            valueUnit = value.unit || value.unit_code || '';
-        } else {
-            valueName = value;
-            // Look for unit in separate attribute property
-            valueUnit = attr.unit_of_measurement || attr.default_unit || '';
-        }
-        
-        // If no unit found in standard value, check attribute level
-        if (!valueUnit && attr.units && Array.isArray(attr.units) && attr.units.length > 0) {
-            valueUnit = attr.units[0]; // Use first available unit as default
-        }
-        
-        html += `
-            <label class="flex items-center">
-                <input type="radio" id="${radioId}" name="attr-${originalIndex}" 
-                       value="${valueName}" class="mr-1"
-                       data-unit="${valueUnit}"
-                       onchange="selectAttribute(${attr.attribute_id}, '${valueName}', ${valueIndex + 1}, '${valueUnit}')"
-                <span class="text-sm">${valueName} ${valueUnit ? `(${valueUnit})` : ''}</span>
-            </label>
-        `;
-    });
+            // Check if we have standard values AND at least some are not deprecated
+            const hasActiveStandardValues = attr.standard_values && 
+                Array.isArray(attr.standard_values) && 
+                attr.standard_values.length > 0 &&
+                attr.standard_values.some(value => {
+                    if (typeof value === 'object' && value !== null) {
+                        return value.status !== 'deprecated' && !value.deprecated;
+                    }
+                    return true; // Simple string values are considered active
+                });
 
-            } else {
-                // No standard values available - provide manual entry
+            if (hasActiveStandardValues) {
+                // CRITICAL: Filter out deprecated values from user selection
+                const activeValues = attr.standard_values.filter(value => {
+                    // Check if value is deprecated
+                    if (typeof value === 'object' && value !== null) {
+                        return value.status !== 'deprecated' && !value.deprecated;
+                    }
+                    return true; // Simple string values are considered active unless marked otherwise
+                });
+                
+                console.log(`🔍 Filtering attribute "${attr.attribute_name}": ${attr.standard_values.length} total → ${activeValues.length} active values`);
+                
+                // Only proceed if we have active (non-deprecated) values
+                if (activeValues.length > 0) {
+                    activeValues.forEach((value, valueIndex) => {
+                        const radioId = `attr-${originalIndex}-val-${valueIndex}`;
+                        
+                        // Enhanced handling for units
+                        let valueName, valueUnit;
+                        if (typeof value === 'object' && value !== null) {
+                            valueName = value.name || value.value || value;
+                            valueUnit = value.unit || value.unit_code || '';
+                        } else {
+                            valueName = value;
+                            // Look for unit in separate attribute property
+                            valueUnit = attr.unit_of_measurement || attr.default_unit || '';
+                        }
+                        
+                        // If no unit found in standard value, check attribute level
+                        if (!valueUnit && attr.units && Array.isArray(attr.units) && attr.units.length > 0) {
+                            valueUnit = attr.units[0]; // Use first available unit as default
+                        }
+                        
+                        html += `
+                            <label class="flex items-center">
+                                <input type="radio" id="${radioId}" name="attr-${originalIndex}" 
+                                       value="${valueName}" class="mr-1"
+                                       data-unit="${valueUnit}"
+                                       onchange="selectAttribute(${attr.attribute_id}, '${valueName}', ${valueIndex + 1}, '${valueUnit}')"
+                                <span class="text-sm">${valueName} ${valueUnit ? `(${valueUnit})` : ''}</span>
+                            </label>
+                        `;
+                    });
+                } else {
+                    // All values are deprecated - fall through to manual entry
+                    console.log(`⚠️ All values deprecated for attribute "${attr.attribute_name}" - enabling manual entry`);
+                }
+            }
+
+            // Handle case where no standard values or all are deprecated
+            if (!hasActiveStandardValues) {
+                // No standard values available OR all values are deprecated - provide manual entry
+                const hasStandardValues = attr.standard_values && Array.isArray(attr.standard_values) && attr.standard_values.length > 0;
+                const allValuesDeprecated = hasStandardValues && attr.standard_values.every(value => {
+                    if (typeof value === 'object' && value !== null) {
+                        return value.status === 'deprecated' || value.deprecated;
+                    }
+                    return false;
+                });
+                
                 const manualInputId = `manual-attr-${attr.attribute_id}`;
                 const unitSelectId = `unit-attr-${attr.attribute_id}`;
                 
+                let messageText = 'No standard values available - Enter custom value:';
+                if (allValuesDeprecated) {
+                    messageText = '⚠️ All standard values have been deprecated - Enter custom value:';
+                }
+                
                 html += `
-    <div class="w-full">
-        <div class="text-sm text-gray-500 italic mb-3">No standard values available - Enter custom value:</div>
-    </div>
-</div>
-<div class="w-full mt-3 p-4 bg-gray-50 border border-gray-300 rounded-lg">
-    <div class="space-y-3">
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Value</label>
-            <input type="text" 
-                   id="${manualInputId}" 
-                   placeholder="Enter custom value..." 
-                   class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                   data-attr-id="${attr.attribute_id}"
-                   autocomplete="off">
-        </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Unit (Optional)</label>
-            <select id="${unitSelectId}" 
-                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    data-attr-id="${attr.attribute_id}">
-                <option value="">Select unit...</option>
-            </select>
-        </div>
-        <p class="text-xs text-gray-600">Enter a custom value for this attribute since no standard values are configured.</p>
-    </div>
-`;
+                    <div class="w-full">
+                        <div class="text-sm ${allValuesDeprecated ? 'text-orange-600' : 'text-gray-500'} italic mb-3">${messageText}</div>
+                    </div>
+                </div>
+                <div class="w-full mt-3 p-4 ${allValuesDeprecated ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 border-gray-300'} border rounded-lg">
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Value</label>
+                            <input type="text" 
+                                   id="${manualInputId}" 
+                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+                                   placeholder="Enter custom value"
+                                   onchange="selectManualAttribute(${attr.attribute_id}, this.value, document.getElementById('${unitSelectId}').value)">
+                        </div>`;
+                
+                // Only show unit selection if there are predefined units
+                if (attr.units && Array.isArray(attr.units) && attr.units.length > 0) {
+                    html += `
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Unit</label>
+                            <select id="${unitSelectId}" 
+                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                    onchange="selectManualAttribute(${attr.attribute_id}, document.getElementById('${manualInputId}').value, this.value)">
+                                <option value="">Select unit (optional)</option>`;
+                    
+                    attr.units.forEach(unit => {
+                        html += `<option value="${unit}">${unit}</option>`;
+                    });
+                    
+                    html += `
+                            </select>
+                        </div>`;
+                }
+                
+                html += `
+                    </div>
+                `;
+            }
+                
+            if (!hasActiveStandardValues) {
+                html += `
+                    <div class="w-full">
+                        <div class="text-sm ${allValuesDeprecated ? 'text-orange-600' : 'text-gray-500'} italic mb-3">${messageText}</div>
+                    </div>
+                </div>
+                <div class="w-full mt-3 p-4 ${allValuesDeprecated ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 border-gray-300'} border rounded-lg">
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Value</label>
+                            <input type="text" 
+                                   id="${manualInputId}" 
+                                   placeholder="Enter custom value..." 
+                                   class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   data-attr-id="${attr.attribute_id}"
+                                   autocomplete="off">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Unit (Optional)</label>
+                            <select id="${unitSelectId}" 
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    data-attr-id="${attr.attribute_id}">
+                                <option value="">Select unit...</option>
+                            </select>
+                        </div>
+                        <p class="text-xs text-gray-600">Enter a custom value for this attribute since no standard values are configured.</p>
+                    </div>
+                `;
             }
 
             html += '</div>';
@@ -4267,8 +4534,6 @@ if (attr.standard_values && Array.isArray(attr.standard_values) && attr.standard
             }
         }
 
-        html += '</div>';
-        
         attrDiv.innerHTML = html;
         
         // Setup drag events if reordering is allowed
@@ -6157,6 +6422,11 @@ function renderHistoryTable() {
                             <button onclick="deleteItemCode(${item.id})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
                                 Delete
                             </button>
+                            ${item.status === 'admin_approved' ? `
+                                <button onclick="disableItemCodeFromGenerate(${item.id}, '${item.item_code}')" class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-sm">
+                                    🚫 Disable
+                                </button>
+                            ` : ''}
                         ` : ''}
                     </div>
                 </div>
@@ -6310,6 +6580,11 @@ function renderHistoryTable() {
                             <button onclick="deleteItemCode(${item.id})" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs">
                                 Delete
                             </button>
+                            ${item.status === 'admin_approved' ? `
+                                <button onclick="disableItemCodeFromGenerate(${item.id}, '${item.item_code}')" class="bg-orange-600 hover:bg-orange-700 text-white px-2 py-1 rounded text-xs">
+                                    🚫 Disable
+                                </button>
+                            ` : ''}
                         ` : ''}
                     </div>
                 </td>
@@ -7006,6 +7281,9 @@ window.exportAllRequests = exportAllRequests;        // PDF Export
             } else if (tabName === 'erp') {
                 console.log(' ERP tab clicked, loading dashboard...');
                 loadERPDashboard();
+            } else if (tabName === 'disabled-codes') {
+                console.log('🚫 Disabled Codes tab clicked, loading dashboard...');
+                loadDisabledCodesDashboard();
             }
         });
     });
@@ -7219,6 +7497,12 @@ window.selectAttribute = selectAttribute;
 
 // Show deprecation management modal
 function showDeprecationModal() {
+    // ADMIN-ONLY CHECK
+    if (!currentUser || currentUser.role !== 'admin') {
+        alert('Access denied. Only administrators can manage standard value deprecation.');
+        return;
+    }
+
     if (!currentProject) {
         alert('Please select a project first.');
         return;
@@ -7253,19 +7537,50 @@ async function loadAttributesForDeprecation() {
         }
 
         // Display attributes with their standard values
-        attributesList.innerHTML = projectAttributes.map(attr => {
+        console.log('🔍 DEBUG: Project attributes structure:', projectAttributes);
+        
+        attributesList.innerHTML = projectAttributes.map((attr, index) => {
+            console.log('🔍 DEBUG: Processing attribute:', attr);
+            
             const standardValues = attr.standard_values || [];
             const valueCount = standardValues.length;
             
+            // CRITICAL: Use the REAL database ID from the correct field
+            // get_all_approved_projects returns 'attribute_id', not 'id'
+            const attributeId = attr.attribute_id || attr.id; // Try attribute_id first, fallback to id
+            const attributeName = attr.attribute_name || attr.name || 'Unknown Attribute';
+            
+            console.log('🔍 DEBUG: Real database attributeId:', attributeId, 'for attribute:', attributeName);
+            console.log('🔍 DEBUG: Array index:', index, 'vs Database ID:', attributeId);
+            console.log('🔍 DEBUG: Attribute fields available:', Object.keys(attr));
+            
+            // Skip attributes without real database IDs
+            if (!attributeId) {
+                console.warn('⚠️ Skipping attribute without database ID:', attributeName);
+                return '<div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">' +
+                        '<div class="text-yellow-800">⚠️ Attribute "' + escapeHtml(attributeName) + '" has no database ID</div>' +
+                        '<div class="text-xs text-yellow-600">Available fields: ' + Object.keys(attr).join(', ') + '</div>' +
+                    '</div>';
+            }
+            
             return '<div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 cursor-pointer" ' +
-                     'onclick="selectAttributeForDeprecation(' + attr.id + ', \'' + escapeHtml(attr.attribute_name) + '\')">' +
+                     'onclick="selectAttributeForDeprecation(' + attributeId + ', \'' + escapeHtml(attributeName) + '\')">' +
                     '<div class="flex justify-between items-start">' +
                         '<div>' +
-                            '<div class="font-medium text-gray-900">' + escapeHtml(attr.attribute_name) + '</div>' +
+                            '<div class="font-medium text-gray-900">' + escapeHtml(attributeName) + '</div>' +
                             '<div class="text-sm text-gray-600">' +
                                 valueCount + ' standard value' + (valueCount !== 1 ? 's' : '') +
                                 (attr.is_mandatory ? '• <span class="text-red-600">Required</span>' : '• Optional') +
                             '</div>' +
+                            '<div class="text-xs text-gray-500">DB ID: ' + attributeId + ' | Index: ' + index + '</div>' +
+                        '</div>' +
+                        '<div class="text-xs text-blue-600">' +
+                            'Click to manage →' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+                            '</div>' +
+                            '<div class="text-xs text-gray-500">ID: ' + attributeId + '</div>' +
                         '</div>' +
                         '<div class="text-xs text-blue-600">' +
                             'Click to manage →' +
@@ -7286,42 +7601,128 @@ async function loadAttributesForDeprecation() {
 }
 
 // Select attribute for deprecation management
+// Function to update standard values dropdowns when attribute changes
+function updateStandardValuesDropdownsForAttribute(attributeId, standardValues) {
+    console.log('🔄 Updating standard values dropdowns for attribute:', attributeId);
+    
+    // Find all standard values dropdowns that need updating
+    const dropdowns = document.querySelectorAll('select[data-updates-for-attribute], select[id*="standard-value"], select[id*="value"]');
+    
+    dropdowns.forEach(dropdown => {
+        // Check if this dropdown should be updated for this attribute
+        const targetAttributeId = dropdown.dataset.updatesForAttribute;
+        
+        if (!targetAttributeId || targetAttributeId == attributeId) {
+            // Clear current options
+            dropdown.innerHTML = '<option value="">Loading...</option>';
+            
+            // Add new options based on standard values
+            if (standardValues && standardValues.length > 0) {
+                dropdown.innerHTML = '<option value="">Select a standard value</option>';
+                
+                standardValues.forEach(value => {
+                    const valueName = typeof value === 'object' ? value.name || value.value : String(value);
+                    const isDeprecated = value.deprecated || value.status === 'deprecated';
+                    
+                    // Only show active values for non-admin users
+                    if (!isDeprecated || (currentUser && currentUser.role === 'admin')) {
+                        const option = document.createElement('option');
+                        option.value = valueName;
+                        option.textContent = valueName;
+                        
+                        // Add deprecation indicator for admin users
+                        if (isDeprecated && currentUser && currentUser.role === 'admin') {
+                            option.textContent += ' [DEPRECATED]';
+                            option.style.color = '#F59E0B';
+                            option.style.fontStyle = 'italic';
+                        }
+                        
+                        dropdown.appendChild(option);
+                    }
+                });
+                
+                if (dropdown.children.length === 1) {
+                    dropdown.innerHTML = '<option value="">No active standard values available</option>';
+                }
+            } else {
+                dropdown.innerHTML = '<option value="">No standard values available</option>';
+            }
+        }
+    });
+    
+    console.log('✅ Updated', dropdowns.length, 'dropdowns for attribute', attributeId);
+}
+
 function selectAttributeForDeprecation(attributeId, attributeName) {
     console.log('🎯 Selected attribute for deprecation:', attributeId, attributeName);
+    console.log('🔍 Current project data:', currentProject);
+    console.log('🔍 Available attributes:', currentProject?.attributes);
     
-    // Find the attribute in current project
-    const attribute = currentProject.attributes?.find(attr => attr.id === attributeId);
+    // Find the attribute in current project using REAL database ID
+    let attribute;
+    
+    // First try to find by actual database ID (attribute_id field from get_all_approved_projects)
+    if (attributeId && currentProject.attributes) {
+        attribute = currentProject.attributes.find(attr => 
+            attr.attribute_id === attributeId || attr.id === attributeId
+        );
+        console.log('🔍 Found by database ID:', attribute);
+    }
+    
+    // If still not found, try by name as fallback
+    if (!attribute && attributeName && currentProject.attributes) {
+        attribute = currentProject.attributes.find(attr => 
+            (attr.attribute_name === attributeName) || (attr.name === attributeName)
+        );
+        console.log('🔍 Found by name fallback:', attribute);
+    }
+    
+    console.log('🔍 Final found attribute:', attribute);
+    console.log('🔍 Using attributeId for database call:', attributeId);
     
     if (!attribute) {
         alert('Attribute not found. Please refresh and try again.');
+        console.error('❌ Attribute lookup failed for:', { attributeId, attributeName, availableAttributes: currentProject?.attributes });
         return;
     }
     
     const actionsPanel = document.getElementById('deprecation-actions-panel');
     const standardValues = attribute.standard_values || [];
     
+    console.log('🔍 Standard values for this attribute:', standardValues);
+    console.log('🔍 Standard values count:', standardValues.length);
+    
+    // Clear the actions panel first to ensure fresh display
+    actionsPanel.innerHTML = '';
+    
     if (standardValues.length === 0) {
         actionsPanel.innerHTML = 
             '<div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">' +
                 '<h5 class="font-medium text-yellow-800">No Standard Values</h5>' +
                 '<p class="text-sm text-yellow-700 mt-1">' +
-                    'The attribute "' + attributeName + '" has no standard values to deprecate.' +
+                    'The attribute "' + escapeHtml(attributeName) + '" has no standard values to deprecate.' +
                 '</p>' +
             '</div>';
+        console.log('✅ Displayed no standard values message');
         return;
     }
     
-    actionsPanel.innerHTML = 
+    // Generate the HTML content
+    const headerHTML = 
         '<div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">' +
             '<h5 class="font-medium text-blue-800">Managing: ' + escapeHtml(attributeName) + '</h5>' +
             '<p class="text-sm text-blue-700 mt-1">' + standardValues.length + ' standard values available</p>' +
-        '</div>' +
-        
+            '<p class="text-xs text-blue-600 mt-1">Database Attribute ID: ' + attributeId + '</p>' +
+        '</div>';
+    
+    const valuesHTML = 
         '<div class="space-y-2">' +
-            '<h6 class="font-medium text-gray-700">Standard Values:</h6>' +
+            '<h6 class="font-medium text-gray-700">Standard Values for ' + escapeHtml(attributeName) + ':</h6>' +
             standardValues.map((value, index) => {
                 const valueName = typeof value === 'object' ? value.name || value.value || JSON.stringify(value) : String(value);
-                const isDeprecated = value.deprecated || false; // Assume deprecated flag exists or defaults to false
+                const isDeprecated = value.deprecated || value.status === 'deprecated' || false;
+                
+                console.log('🔍 Processing value:', valueName, 'isDeprecated:', isDeprecated);
                 
                 return '<div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg ' + (isDeprecated ? 'bg-orange-50 border-orange-200' : 'bg-white') + '">' +
                         '<div class="flex-1">' +
@@ -7329,14 +7730,14 @@ function selectAttributeForDeprecation(attributeId, attributeName) {
                                 escapeHtml(valueName) +
                             '</div>' +
                             (isDeprecated ? '<div class="text-xs text-orange-600">⚠️ Deprecated</div>' : '') +
+                            '<div class="text-xs text-gray-500">From attribute: ' + escapeHtml(attributeName) + ' (ID: ' + attributeId + ')</div>' +
                         '</div>' +
                         '<div class="flex space-x-2">' +
                             (!isDeprecated ? 
                                 '<button onclick="simulateDeprecateValue(\'' + escapeHtml(valueName) + '\', ' + attributeId + ')" ' +
                                         'class="px-3 py-1 bg-orange-600 text-white text-sm rounded hover:bg-orange-700">' +
                                     'Deprecate' +
-                                '</button>' 
-                                : 
+                                '</button>' :
                                 '<button onclick="simulateReactivateValue(\'' + escapeHtml(valueName) + '\', ' + attributeId + ')" ' +
                                         'class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">' +
                                     'Reactivate' +
@@ -7345,40 +7746,173 @@ function selectAttributeForDeprecation(attributeId, attributeName) {
                         '</div>' +
                     '</div>';
             }).join('') +
-        '</div>' +
-        
-        '<div class="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">' +
-            '<p class="text-xs text-gray-600">' +
-                '<strong>Note:</strong> This is a demonstration of deprecation functionality. ' +
-                'In a production environment, deprecation changes would be saved to the database ' +
-                'and require appropriate permissions.' +
-            '</p>' +
         '</div>';
+    
+    // Set the complete HTML content
+    actionsPanel.innerHTML = headerHTML + valuesHTML;
+    
+    console.log('✅ Updated actions panel for attribute:', attributeName, 'with', standardValues.length, 'values');
+    console.log('✅ Using database attribute ID:', attributeId, 'for database calls');
+    
+    // Add visual indicator that selection has changed
+    const attributeElements = document.querySelectorAll('#deprecation-attributes-list > div');
+    attributeElements.forEach(el => {
+        el.classList.remove('bg-blue-50', 'border-blue-300');
+        el.classList.add('bg-white', 'border-gray-200');
+    });
+    
+    // Highlight the selected attribute
+    const selectedAttributeElement = document.querySelector('#deprecation-attributes-list > div[onclick*="' + attributeId + '"]');
+    if (selectedAttributeElement) {
+        selectedAttributeElement.classList.remove('bg-white', 'border-gray-200');
+        selectedAttributeElement.classList.add('bg-blue-50', 'border-blue-300');
+    }
+    
+    console.log('✅ Highlighted selected attribute in list');
 }
 
-// Simulate value deprecation (demo function - would need database integration)
-function simulateDeprecateValue(valueName, attributeId) {
-    const confirmed = confirm('Deprecate standard value "' + valueName + '"?\n\nThis will:\n• Hide it from new item creation\n• Preserve it in existing items\n• Allow reactivation later\n\nContinue?');
+// Real value deprecation function - integrates with database
+async function simulateDeprecateValue(valueName, attributeId) {
+    // ADMIN-ONLY CHECK
+    if (!currentUser || currentUser.role !== 'admin') {
+        alert('Access denied. Only administrators can deprecate standard values.');
+        return;
+    }
+
+    // Get the reason for deprecation
+    const reason = prompt('Please provide a reason for deprecating "' + valueName + '":');
+    
+    if (reason === null) {
+        return; // User cancelled
+    }
+    
+    if (!reason || reason.trim() === '') {
+        alert('Deprecation reason is required.');
+        return;
+    }
+
+    const confirmed = confirm('Deprecate standard value "' + valueName + '"?\n\nReason: ' + reason.trim() + '\n\nThis will:\n• Hide it from new item creation\n• Preserve it in existing items\n• Allow reactivation later\n\nContinue?');
     
     if (confirmed) {
-        console.log('🚫 Simulating deprecation of value:', valueName);
-        alert('✅ Value "' + valueName + '" has been marked as deprecated.\n\n⚠️ This is a demonstration. In production:\n• Database would be updated\n• Audit trail would be created\n• Users would be notified');
-        
-        // Refresh the panel to show updated state
-        selectAttributeForDeprecation(attributeId, currentProject.attributes?.find(attr => attr.id === attributeId)?.attribute_name);
+        try {
+            console.log('🚫 Deprecating value:', valueName, 'from attribute:', attributeId);
+            
+            // Find the current project ID
+            const projectId = currentProject.id;
+            if (!projectId) {
+                throw new Error('Project ID not found');
+            }
+            
+            // Call the deprecation RPC function
+            const { data, error } = await supabase.rpc('deprecate_standard_value', {
+                project_id_param: projectId,
+                attribute_id_param: attributeId,
+                value_name_param: valueName,
+                reason_param: reason.trim(),
+                deprecated_by_param: currentUser.id
+            });
+            
+            if (error) {
+                console.error('Supabase error deprecating value:', error);
+                throw error;
+            }
+            
+            if (data && data.success) {
+                alert('✅ Value "' + valueName + '" has been deprecated successfully.\n\nReason: ' + reason.trim());
+                
+                // Reload the project data to reflect changes
+                await loadApprovedProjects();
+                
+                // Refresh the deprecation modal if still open
+                const modal = document.getElementById('deprecation-modal');
+                if (modal && !modal.classList.contains('hidden')) {
+                    await loadAttributesForDeprecation();
+                    // Re-select the same attribute to show updated values
+                    const attribute = currentProject.attributes?.find(attr => 
+                        (attr.attribute_id === attributeId || attr.id === attributeId)
+                    );
+                    if (attribute) {
+                        const attributeName = attribute.attribute_name || attribute.name;
+                        selectAttributeForDeprecation(attributeId, attributeName);
+                    }
+                }
+                
+                console.log('✅ Deprecation completed successfully');
+            } else {
+                throw new Error(data?.message || 'Deprecation failed');
+            }
+            
+        } catch (error) {
+            console.error('Error deprecating standard value:', error);
+            alert('Error deprecating standard value: ' + error.message + '\n\nPlease try again or contact support.');
+        }
     }
 }
 
-// Simulate value reactivation (demo function - would need database integration)  
-function simulateReactivateValue(valueName, attributeId) {
-    const confirmed = confirm('Reactivate standard value "' + valueName + '"?\n\nThis will:\n• Make it available for new item creation\n• Preserve all existing usage\n• Remove deprecation status\n\nContinue?');
+// Real value reactivation function - integrates with database  
+async function simulateReactivateValue(valueName, attributeId) {
+    // ADMIN-ONLY CHECK
+    if (!currentUser || currentUser.role !== 'admin') {
+        alert('Access denied. Only administrators can reactivate deprecated values.');
+        return;
+    }
+
+    const reason = prompt('Please provide a reason for reactivating "' + valueName + '" (optional):');
+    
+    if (reason === null) {
+        return; // User cancelled
+    }
+    
+    const finalReason = reason ? reason.trim() : 'Reactivated by administrator';
+
+    const confirmed = confirm('Reactivate standard value "' + valueName + '"?\n\nReason: ' + finalReason + '\n\nThis will:\n• Make it available for new item creation\n• Preserve all existing usage\n• Remove deprecation status\n\nContinue?');
     
     if (confirmed) {
-        console.log('✅ Simulating reactivation of value:', valueName);
-        alert('✅ Value "' + valueName + '" has been reactivated.\n\n⚠️ This is a demonstration. In production:\n• Database would be updated\n• Audit trail would be created\n• Users would be notified');
-        
-        // Refresh the panel to show updated state
-        selectAttributeForDeprecation(attributeId, currentProject.attributes?.find(attr => attr.id === attributeId)?.attribute_name);
+        try {
+            console.log('✅ Reactivating value:', valueName, 'for attribute:', attributeId);
+            
+            // Call the reactivation RPC function
+            const { data, error } = await supabase.rpc('reactivate_standard_value', {
+                project_id_param: currentProject.id,
+                attribute_id_param: attributeId,
+                value_name_param: valueName,
+                reactivated_by_param: currentUser.id
+            });
+            
+            if (error) {
+                console.error('Supabase error reactivating value:', error);
+                throw error;
+            }
+            
+            if (data && data.success) {
+                alert('✅ Value "' + valueName + '" has been reactivated successfully.\n\nReason: ' + finalReason);
+                
+                // Reload the project data to reflect changes
+                await loadApprovedProjects();
+                
+                // Refresh the deprecation modal if still open
+                const modal = document.getElementById('deprecation-modal');
+                if (modal && !modal.classList.contains('hidden')) {
+                    await loadAttributesForDeprecation();
+                    // Re-select the same attribute to show updated values
+                    const attribute = currentProject.attributes?.find(attr => 
+                        (typeof attributeId === 'number' ? currentProject.attributes[attributeId] === attr : attr.id === attributeId)
+                    );
+                    if (attribute) {
+                        const attributeName = attribute.attribute_name || attribute.name;
+                        selectAttributeForDeprecation(attributeId, attributeName);
+                    }
+                }
+                
+                console.log('✅ Reactivation completed successfully');
+            } else {
+                throw new Error(data?.message || 'Reactivation failed');
+            }
+            
+        } catch (error) {
+            console.error('Error reactivating standard value:', error);
+            alert('Error reactivating standard value: ' + error.message + '\n\nPlease try again or contact support.');
+        }
     }
 }
 
@@ -12422,6 +12956,21 @@ function renderSearchResults(results) {
                         <p class="text-gray-600 text-sm">Combination:</p>
                         <p class="text-gray-900 text-xs">${formatCombinationDisplay(item.attribute_selections)}</p>
                     </div>
+                    
+                    ${currentUser && currentUser.role === 'admin' && item.status === 'admin_approved' ? `
+                        <div class="mt-4 pt-4 border-t border-gray-200">
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="disableItemCodeFromSearch(${item.id}, '${item.item_code}')" 
+                                        class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors">
+                                    🚫 Disable
+                                </button>
+                                <button onclick="viewItemCode('${item.id}')" 
+                                        class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition-colors">
+                                    View Details
+                                </button>
+                            </div>
+                        </div>
+                    ` : ''}
                 </div>
             `).join('')}
         </div>
@@ -12849,6 +13398,165 @@ async function deleteItemCode(requestId) {
     } catch (error) {
         console.error('Error deleting item code:', error);
         alert('Failed to delete item code: ' + error.message);
+    }
+}
+
+// Disable item code from Generate tab (Admin only)
+async function disableItemCodeFromGenerate(itemId, itemCode) {
+    console.log('🚫 Admin disabling item code from Generate tab:', itemId, itemCode);
+    
+    try {
+        // Check admin permissions
+        if (!currentUser || currentUser.role !== 'admin') {
+            alert('Access denied. Admin role required to disable item codes.');
+            return;
+        }
+
+        // Validate itemId
+        if (!itemId || isNaN(itemId)) {
+            alert('Invalid item ID');
+            return;
+        }
+
+        // Get reason from user
+        const reason = prompt(`Disable item code: ${itemCode}\n\nPlease provide a reason for disabling this item code:`);
+        
+        if (!reason || reason.trim() === '') {
+            alert('Disable reason is required');
+            return;
+        }
+
+        if (!confirm(`Disable item code: ${itemCode}\n\nReason: ${reason.trim()}\n\nThis action will move the item code to the disabled codes list. Continue?`)) {
+            return;
+        }
+
+        console.log('🔍 Calling disable_item_codes with:', {
+            item_code_ids: [parseInt(itemId)], // ENSURE ARRAY OF INTEGERS
+            disabled_by_param: currentUser.id,
+            reason_param: reason.trim()
+        });
+
+        // Call the disable function - FIX: Ensure array format
+        const { data, error } = await supabase.rpc('disable_item_codes', {
+            item_code_ids: [parseInt(itemId)], // Convert to integer and wrap in array
+            disabled_by_param: currentUser.id,
+            reason_param: reason.trim()
+        });
+
+        if (error) {
+            console.error('Supabase error disabling item code:', error);
+            throw error;
+        }
+
+        console.log('🔍 Disable function response:', data);
+
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to disable item code');
+        }
+
+        // Show success message with debug info
+        const successMsg = `Item code ${itemCode} has been disabled successfully.\n\nReason: ${reason.trim()}`;
+        if (data.debug) {
+            console.log('🔍 Debug info:', data.debug);
+        }
+        alert(successMsg);
+
+        // Reload project history to refresh the view
+        if (typeof loadProjectHistory === 'function') {
+            await loadProjectHistory();
+        }
+
+        console.log('✅ Item code disabled successfully from Generate tab');
+
+    } catch (error) {
+        console.error('Error disabling item code:', error);
+        alert('Error disabling item code: ' + error.message);
+    }
+}
+
+// Re-enable item code from Disabled Codes tab (Admin only)
+async function reEnableItemCode(itemId, itemCode) {
+    console.log('🔄 Admin re-enabling item code:', itemId, itemCode);
+    
+    try {
+        // Check admin permissions
+        if (!currentUser || currentUser.role !== 'admin') {
+            alert('Access denied. Admin role required to re-enable item codes.');
+            return;
+        }
+
+        // Validate itemId
+        if (!itemId || isNaN(itemId)) {
+            alert('Invalid item ID');
+            return;
+        }
+
+        // Get reason from user (optional)
+        const reason = prompt(`Re-enable item code: ${itemCode}\n\nPlease provide a reason for re-enabling this item code (optional):`);
+        
+        if (reason === null) {
+            return; // User cancelled
+        }
+
+        const finalReason = reason.trim() || 'Re-enabled by admin';
+
+        if (!confirm(`Re-enable item code: ${itemCode}\n\nReason: ${finalReason}\n\nThis will make the item code active again. Continue?`)) {
+            return;
+        }
+
+        // Show loading state
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = 'Re-enabling...';
+        button.disabled = true;
+
+        console.log('🔍 Calling reenable_item_codes with:', {
+            item_code_ids: [parseInt(itemId)],
+            reenabled_by_param: currentUser.id,
+            reason_param: finalReason
+        });
+
+        // Call the re-enable function
+        const { data, error } = await supabase.rpc('reenable_item_codes', {
+            item_code_ids: [parseInt(itemId)],
+            reenabled_by_param: currentUser.id,
+            reason_param: finalReason
+        });
+
+        if (error) {
+            console.error('Supabase error re-enabling item code:', error);
+            throw error;
+        }
+
+        console.log('🔍 Re-enable function response:', data);
+
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to re-enable item code');
+        }
+
+        // Show success message with debug info
+        const successMsg = `Item code ${itemCode} has been re-enabled successfully.\n\nReason: ${finalReason}`;
+        if (data.debug) {
+            console.log('🔍 Debug info:', data.debug);
+        }
+        alert(successMsg);
+
+        // Reload the disabled codes dashboard to refresh the view
+        if (typeof loadDisabledCodesDashboard === 'function') {
+            await loadDisabledCodesDashboard();
+        }
+
+        console.log('✅ Item code re-enabled successfully');
+
+    } catch (error) {
+        console.error('Error re-enabling item code:', error);
+        alert('Error re-enabling item code: ' + error.message);
+        
+        // Restore button
+        if (button) {
+            button.textContent = originalText;
+            button.disabled = false;
+        }
     }
 }
 
@@ -13332,7 +14040,7 @@ function populateTableBody(tableBody, codes) {
     const dataToDisplay = codes || allApprovedCodes || [];
     
     if (dataToDisplay.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="12" class="px-4 py-8 text-center text-gray-500">No item codes found</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="13" class="px-4 py-8 text-center text-gray-500">No item codes found</td></tr>';
         return;
     }
     
@@ -13382,6 +14090,15 @@ function populateTableBody(tableBody, codes) {
                     ${item.erp_integrated && item.erp_integrated_at ? `<div class="text-xs text-gray-500 mt-1">${new Date(item.erp_integrated_at).toLocaleDateString()}</div>` : ''}
                 `}
             </td>
+            <td class="px-4 py-3 whitespace-nowrap text-center border-b bg-red-50">
+                ${isAdmin ? `
+                    <button onclick="disableItemCodeFromSearch(${item.id}, '${item.item_code}')" 
+                            class="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium transition-colors">
+                        🚫 Disable
+                    </button>
+                ` : `
+                    <span class="text-xs text-gray-500">Admin Only</span>
+                `}
             </td>
         </tr>
     `).join('');
@@ -13475,6 +14192,118 @@ async function handleERPToggleFromTable(checkbox, itemId) {
         alert('Error: ' + error.message);
         checkbox.checked = !checkbox.checked; // Revert
         checkbox.disabled = false;
+    }
+}
+
+// Disable item code from search results (Admin only)
+async function disableItemCodeFromSearch(itemId, itemCode) {
+    console.log('🚫 Admin disabling item code from search:', itemId, itemCode);
+    
+    try {
+        // Check admin permissions
+        if (!currentUser || currentUser.role !== 'admin') {
+            alert('Access denied. Admin role required to disable item codes.');
+            return;
+        }
+
+        // Validate itemId
+        if (!itemId || isNaN(itemId)) {
+            alert('Invalid item ID');
+            return;
+        }
+
+        // Get reason from user
+        const reason = prompt(`Disable item code: ${itemCode}\n\nPlease provide a reason for disabling this item code:`);
+        
+        if (!reason || reason.trim() === '') {
+            alert('Disable reason is required');
+            return;
+        }
+
+        if (!confirm(`Disable item code: ${itemCode}\n\nReason: ${reason.trim()}\n\nThis action will move the item code to the disabled codes list. Continue?`)) {
+            return;
+        }
+
+        // Show loading state
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = 'Disabling...';
+        button.disabled = true;
+
+        console.log('🔍 Calling disable_item_codes with:', {
+            item_code_ids: [parseInt(itemId)], // ENSURE ARRAY OF INTEGERS
+            disabled_by_param: currentUser.id,
+            reason_param: reason.trim()
+        });
+
+        // Call the disable function - FIX: Ensure array format
+        const { data, error } = await supabase.rpc('disable_item_codes', {
+            item_code_ids: [parseInt(itemId)], // Convert to integer and wrap in array
+            disabled_by_param: currentUser.id,
+            reason_param: reason.trim()
+        });
+
+        if (error) {
+            console.error('Supabase error disabling item code:', error);
+            throw error;
+        }
+
+        console.log('🔍 Disable function response:', data);
+
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to disable item code');
+        }
+
+        // Show success message with debug info
+        const successMsg = `Item code ${itemCode} has been disabled successfully.\n\nReason: ${reason.trim()}`;
+        if (data.debug) {
+            console.log('🔍 Debug info:', data.debug);
+        }
+        alert(successMsg);
+
+        // Remove the item from the current view
+        const tableBody = document.getElementById('search-codes-table-body');
+        if (tableBody) {
+            // Find and remove the row
+            const rows = tableBody.querySelectorAll('tr');
+            rows.forEach(row => {
+                const itemCodeCell = row.cells[0];
+                if (itemCodeCell && itemCodeCell.textContent.trim() === itemCode) {
+                    row.remove();
+                }
+            });
+        }
+
+        // Update the global data
+        if (window.allApprovedCodes) {
+            window.allApprovedCodes = window.allApprovedCodes.filter(item => item.id !== parseInt(itemId));
+        }
+        if (window.lastFilteredResults) {
+            window.lastFilteredResults = window.lastFilteredResults.filter(item => item.id !== parseInt(itemId));
+        }
+
+        // Update results count
+        const resultsCount = document.getElementById('results-count');
+        if (resultsCount) {
+            const currentText = resultsCount.textContent;
+            const match = currentText.match(/(\d+)/);
+            if (match) {
+                const currentCount = parseInt(match[1]);
+                resultsCount.textContent = currentText.replace(/\d+/, currentCount - 1);
+            }
+        }
+
+        console.log('✅ Item code disabled successfully from search');
+
+    } catch (error) {
+        console.error('Error disabling item code:', error);
+        alert('Error disabling item code: ' + error.message);
+        
+        // Restore button
+        if (button) {
+            button.textContent = originalText;
+            button.disabled = false;
+        }
     }
 }
 
@@ -14036,6 +14865,367 @@ function exportERPData(type) {
 // ===== END ERP EXPORT FUNCTIONALITY =====
 
 // ===== END ERP INTEGRATION FUNCTIONALITY =====
+
+// ===== DISABLED CODES FUNCTIONALITY =====
+
+// Global variables for disabled codes
+let disabledCodesData = [];
+let selectedDisabledCodes = [];
+
+// Load disabled codes dashboard
+async function loadDisabledCodesDashboard() {
+    console.log('🚫 Loading Disabled Codes dashboard...');
+    
+    try {
+        // Check user permissions
+        if (!currentUser || (currentUser.role !== 'erp_data_entry' && currentUser.role !== 'admin')) {
+            alert('Access denied. Admin or ERP Data Entry role required.');
+            return;
+        }
+
+        // First test if the disabled codes table exists
+        console.log('Testing disabled codes table...');
+        const { data: testResult, error: testError } = await supabase.rpc('test_disabled_codes_table');
+        
+        if (testError) {
+            console.error('Error testing disabled codes table:', testError);
+            throw new Error('Database setup required. Please run the disabled_item_codes_implementation.sql script first.');
+        }
+        
+        console.log('Table test result:', testResult);
+        
+        if (!testResult.table_exists) {
+            throw new Error('Disabled codes table not found. Please run the disabled_item_codes_implementation.sql script to create the required database tables.');
+        }
+
+        // Load disabled item codes
+        console.log('Loading disabled item codes...');
+        const { data: disabledCodes, error } = await supabase.rpc('get_disabled_item_codes', {
+            user_id_param: currentUser.id
+        });
+
+        if (error) {
+            console.error('Error loading disabled codes:', error);
+            throw error;
+        }
+
+        if (!disabledCodes.success) {
+            throw new Error(disabledCodes.message || 'Failed to load disabled codes');
+        }
+
+        disabledCodesData = disabledCodes.disabled_item_codes || [];
+        console.log('Loaded disabled codes:', disabledCodesData.length);
+
+        // Update statistics
+        updateDisabledCodesStats(disabledCodesData);
+        
+        // Populate table
+        populateDisabledCodesTable(disabledCodesData);
+        
+        // Populate project filter dropdown
+        populateDisabledCodesProjectFilter(disabledCodesData);
+        
+        // Show role-specific controls
+        showDisabledCodesRoleControls();
+        
+        // Store in global for filtering
+        window.disabledCodesItems = disabledCodesData;
+        
+    } catch (error) {
+        console.error('Error in loadDisabledCodesDashboard:', error);
+        alert('Error loading Disabled Codes dashboard: ' + error.message + '\n\nPlease ensure the disabled_item_codes_implementation.sql script has been executed on your database.');
+    }
+}
+
+// Update disabled codes statistics
+function updateDisabledCodesStats(items) {
+    console.log('updateDisabledCodesStats called with items:', items?.length || 0);
+    
+    const total = items?.length || 0;
+    const erpPending = items?.filter(item => !item.erp_notified).length || 0;
+    const erpNotified = items?.filter(item => item.erp_notified).length || 0;
+    const canReenableCount = items?.filter(item => item.can_be_reenabled).length || 0;
+
+    console.log('Disabled Codes Stats - Total:', total, 'ERP Pending:', erpPending, 'ERP Notified:', erpNotified, 'Can Re-enable:', canReenableCount);
+
+    const totalElement = document.getElementById('disabled-total-count');
+    const erpPendingElement = document.getElementById('disabled-erp-pending-count');
+    const erpNotifiedElement = document.getElementById('disabled-erp-notified-count');
+    const reenableElement = document.getElementById('disabled-reenanable-count');
+
+    if (totalElement) totalElement.textContent = total;
+    if (erpPendingElement) erpPendingElement.textContent = erpPending;
+    if (erpNotifiedElement) erpNotifiedElement.textContent = erpNotified;
+    if (reenableElement) reenableElement.textContent = canReenableCount;
+}
+
+// Populate disabled codes table
+function populateDisabledCodesTable(items) {
+    console.log('🚫 populateDisabledCodesTable called with items:', items?.length || 0);
+    
+    const tableBody = document.getElementById('disabled-codes-table-body');
+    if (!tableBody) {
+        console.error('Disabled codes table body not found');
+        return;
+    }
+
+    if (!items || items.length === 0) {
+        console.log('No disabled items to display');
+        tableBody.innerHTML = '<tr><td colspan="12" class="px-4 py-8 text-center text-gray-500">No disabled items found</td></tr>';
+        return;
+    }
+
+    // Apply filters
+    const projectFilter = document.getElementById('disabled-codes-project-filter')?.value || '';
+    const erpFilter = document.getElementById('disabled-codes-erp-filter')?.value || '';
+    const reenableFilter = document.getElementById('disabled-codes-reenable-filter')?.value || '';
+    const searchText = document.getElementById('disabled-codes-search-input')?.value?.toLowerCase() || '';
+
+    let filteredItems = items;
+
+    // Filter by project
+    if (projectFilter) {
+        filteredItems = filteredItems.filter(item => item.project_id.toString() === projectFilter);
+    }
+
+    // Filter by ERP status
+    if (erpFilter === 'pending') {
+        filteredItems = filteredItems.filter(item => !item.erp_notified);
+    } else if (erpFilter === 'notified') {
+        filteredItems = filteredItems.filter(item => item.erp_notified);
+    }
+
+    // Filter by re-enable capability
+    if (reenableFilter === 'true') {
+        filteredItems = filteredItems.filter(item => item.can_be_reenabled);
+    } else if (reenableFilter === 'false') {
+        filteredItems = filteredItems.filter(item => !item.can_be_reenabled);
+    }
+
+    // Filter by search text
+    if (searchText) {
+        filteredItems = filteredItems.filter(item => 
+            item.item_code?.toLowerCase().includes(searchText) ||
+            item.description1?.toLowerCase().includes(searchText) ||
+            item.disabled_reason?.toLowerCase().includes(searchText) ||
+            item.project_name?.toLowerCase().includes(searchText) ||
+            item.manufacturer?.toLowerCase().includes(searchText)
+        );
+    }
+
+    console.log('Filtered items:', filteredItems.length);
+
+    if (filteredItems.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="12" class="px-4 py-8 text-center text-gray-500">No items match the current filters</td></tr>';
+        return;
+    }
+
+    const rows = filteredItems.map(item => {
+        const erpStatus = item.erp_notified 
+            ? '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">✅ Notified</span>'
+            : '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">⏳ Pending</span>';
+        
+        const canReenableStatus = item.can_be_reenabled 
+            ? '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">🔄 Yes</span>'
+            : '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">❌ No</span>';
+
+        const actionButton = getDisabledCodeActionButton(item);
+
+        return `
+            <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3">
+                    <input type="checkbox" class="rounded disabled-code-checkbox" 
+                           data-item-id="${item.id}" data-can-reenable="${item.can_be_reenabled}">
+                </td>
+                <td class="px-4 py-3 text-sm font-medium text-gray-900">${item.item_code || 'N/A'}</td>
+                <td class="px-4 py-3 text-sm text-gray-900">${item.project_name || 'N/A'}</td>
+                <td class="px-4 py-3 text-sm text-gray-900">${item.description1 || 'N/A'}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">${item.disabled_reason || 'N/A'}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">${item.disabled_by_username || 'N/A'}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">${item.disabled_at ? new Date(item.disabled_at).toLocaleDateString() : 'N/A'}</td>
+                <td class="px-4 py-3 text-sm text-gray-900">
+                    ${item.unit_price ? item.unit_price + ' ' + (item.currency_code || '') : 'N/A'}
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-900">${item.manufacturer || 'N/A'}</td>
+                <td class="px-4 py-3 text-center">${erpStatus}</td>
+                <td class="px-4 py-3 text-center">${canReenableStatus}</td>
+                <td class="px-4 py-3 text-center">${actionButton}</td>
+            </tr>
+        `;
+    }).join('');
+
+    tableBody.innerHTML = rows;
+
+    // Add event listeners for checkboxes
+    addDisabledCodesCheckboxListeners();
+}
+
+// Get action button for disabled code based on user role and item status
+function getDisabledCodeActionButton(item) {
+    if (currentUser.role === 'admin') {
+        if (item.can_be_reenabled) {
+            return `<button onclick="reenableDisabledCode(${item.id})" class="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700">
+                        Re-enable
+                    </button>`;
+        } else {
+            return '<span class="text-xs text-gray-500">Cannot re-enable</span>';
+        }
+    } else if (currentUser.role === 'erp_data_entry') {
+        if (!item.erp_notified) {
+            return `<button onclick="markERPNotified([${item.id}])" class="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">
+                        Mark ERP Notified
+                    </button>`;
+        } else {
+            return '<span class="text-xs text-green-600">✅ ERP Notified</span>';
+        }
+    }
+    return '<span class="text-xs text-gray-500">No action available</span>';
+}
+
+// Populate project filter dropdown
+function populateDisabledCodesProjectFilter(items) {
+    const projectFilter = document.getElementById('disabled-codes-project-filter');
+    if (!projectFilter) return;
+
+    // Get unique projects
+    const projects = [...new Set(items.map(item => ({ id: item.project_id, name: item.project_name })))];
+    
+    // Clear existing options (keep "All Projects")
+    projectFilter.innerHTML = '<option value="">All Projects</option>';
+    
+    // Add project options
+    projects.forEach(project => {
+        if (project.id && project.name) {
+            const option = document.createElement('option');
+            option.value = project.id;
+            option.textContent = project.name;
+            projectFilter.appendChild(option);
+        }
+    });
+}
+
+// Show role-specific controls
+function showDisabledCodesRoleControls() {
+    const adminControls = document.getElementById('disabled-codes-admin-controls');
+    const erpControls = document.getElementById('disabled-codes-erp-controls');
+
+    if (currentUser.role === 'admin') {
+        adminControls?.classList.remove('hidden');
+        erpControls?.classList.add('hidden');
+    } else if (currentUser.role === 'erp_data_entry') {
+        adminControls?.classList.add('hidden');
+        erpControls?.classList.remove('hidden');
+    } else {
+        adminControls?.classList.add('hidden');
+        erpControls?.classList.add('hidden');
+    }
+}
+
+// Add checkbox event listeners
+function addDisabledCodesCheckboxListeners() {
+    // Select all checkbox
+    const selectAllCheckbox = document.getElementById('disabled-codes-select-all');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.disabled-code-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = this.checked;
+            });
+            updateDisabledCodesButtonStates();
+        });
+    }
+
+    // Individual checkboxes
+    document.querySelectorAll('.disabled-code-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateDisabledCodesButtonStates);
+    });
+}
+
+// Update button states based on selections
+function updateDisabledCodesButtonStates() {
+    const checkedBoxes = document.querySelectorAll('.disabled-code-checkbox:checked');
+    const selectedCount = checkedBoxes.length;
+    
+    // Update re-enable button
+    const reenableBtn = document.getElementById('bulk-reenable-btn');
+    if (reenableBtn) {
+        reenableBtn.disabled = selectedCount === 0;
+        reenableBtn.textContent = `Re-enable Selected (${selectedCount})`;
+    }
+    
+    // Update ERP notified button
+    const erpNotifiedBtn = document.getElementById('bulk-mark-erp-notified-btn');
+    if (erpNotifiedBtn) {
+        erpNotifiedBtn.disabled = selectedCount === 0;
+        erpNotifiedBtn.textContent = `Mark as ERP Notified (${selectedCount})`;
+    }
+}
+
+// Re-enable a single disabled code (Admin only)
+async function reenableDisabledCode(disabledItemId) {
+    if (!confirm('Are you sure you want to re-enable this item code?')) {
+        return;
+    }
+
+    try {
+        const { data, error } = await supabase.rpc('reenable_item_codes', {
+            item_code_ids: [disabledItemId],  // Fixed parameter name
+            reenabled_by_param: currentUser.id,
+            reason_param: 'Re-enabled from disabled codes dashboard'  // Added reason parameter
+        });
+
+        if (error) throw error;
+
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to re-enable item code');
+        }
+
+        alert(data.message || 'Item code re-enabled successfully');
+        
+        // Reload dashboard
+        await loadDisabledCodesDashboard();
+
+    } catch (error) {
+        console.error('Error re-enabling item code:', error);
+        alert('Error re-enabling item code: ' + error.message);
+    }
+}
+
+// Mark items as ERP notified (ERP role only)
+async function markERPNotified(disabledItemIds) {
+    if (!disabledItemIds || disabledItemIds.length === 0) {
+        alert('No items selected');
+        return;
+    }
+
+    if (!confirm(`Mark ${disabledItemIds.length} item(s) as ERP notified?`)) {
+        return;
+    }
+
+    try {
+        const { data, error } = await supabase.rpc('mark_disabled_codes_erp_notified', {
+            disabled_item_code_ids: disabledItemIds,
+            user_id_param: currentUser.id
+        });
+
+        if (error) throw error;
+
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to mark items as ERP notified');
+        }
+
+        alert(data.message || 'Items marked as ERP notified successfully');
+        
+        // Reload dashboard
+        await loadDisabledCodesDashboard();
+
+    } catch (error) {
+        console.error('Error marking items as ERP notified:', error);
+        alert('Error marking items as ERP notified: ' + error.message);
+    }
+}
+
+// ===== END DISABLED CODES FUNCTIONALITY =====
 
 
 // ===== USER HISTORY TAB - BRAND NEW IMPLEMENTATION =====
@@ -16744,6 +17934,147 @@ function exportCurrentResults(format) {
         });
         
         // ===== END EXPORT FUNCTION REPLACEMENTS =====
+
+        // ===== DISABLED CODES EVENT LISTENERS =====
+        // Add event listeners for disabled codes functionality
+        setTimeout(() => {
+            // Filter controls for disabled codes
+            const projectFilter = document.getElementById('disabled-codes-project-filter');
+            const erpFilter = document.getElementById('disabled-codes-erp-filter');
+            const reenableFilter = document.getElementById('disabled-codes-reenable-filter');
+            const searchInput = document.getElementById('disabled-codes-search-input');
+            const refreshBtn = document.getElementById('disabled-codes-refresh-btn');
+            const exportBtn = document.getElementById('disabled-codes-export-btn');
+
+            if (projectFilter) {
+                projectFilter.addEventListener('change', () => {
+                    if (window.disabledCodesItems) populateDisabledCodesTable(window.disabledCodesItems);
+                });
+            }
+
+            if (erpFilter) {
+                erpFilter.addEventListener('change', () => {
+                    if (window.disabledCodesItems) populateDisabledCodesTable(window.disabledCodesItems);
+                });
+            }
+
+            if (reenableFilter) {
+                reenableFilter.addEventListener('change', () => {
+                    if (window.disabledCodesItems) populateDisabledCodesTable(window.disabledCodesItems);
+                });
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', () => {
+                    if (window.disabledCodesItems) populateDisabledCodesTable(window.disabledCodesItems);
+                });
+            }
+
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', loadDisabledCodesDashboard);
+            }
+
+            if (exportBtn) {
+                exportBtn.addEventListener('click', () => {
+                    // Simple CSV export for disabled codes
+                    if (!disabledCodesData || disabledCodesData.length === 0) {
+                        alert('No data to export');
+                        return;
+                    }
+
+                    const csvHeaders = [
+                        'Item Code', 'Project', 'Description', 'Disabled Reason', 'Disabled By', 
+                        'Disabled Date', 'Price', 'Manufacturer', 'ERP Status', 'Can Re-enable'
+                    ];
+
+                    const csvRows = disabledCodesData.map(item => [
+                        item.item_code || '',
+                        item.project_name || '',
+                        item.description1 || '',
+                        item.disabled_reason || '',
+                        item.disabled_by_username || '',
+                        item.disabled_at ? new Date(item.disabled_at).toLocaleDateString() : '',
+                        item.unit_price ? `${item.unit_price} ${item.currency_code || ''}` : '',
+                        item.manufacturer || '',
+                        item.erp_notified ? 'Notified' : 'Pending',
+                        item.can_be_reenabled ? 'Yes' : 'No'
+                    ]);
+
+                    const csvContent = [csvHeaders, ...csvRows]
+                        .map(row => row.map(cell => `"${cell}"`).join(','))
+                        .join('\n');
+
+                    const blob = new Blob([csvContent], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `disabled_codes_${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                });
+            }
+
+            // Bulk action buttons
+            const bulkReenableBtn = document.getElementById('bulk-reenable-btn');
+            const bulkERPNotifiedBtn = document.getElementById('bulk-mark-erp-notified-btn');
+
+            if (bulkReenableBtn) {
+                bulkReenableBtn.addEventListener('click', async () => {
+                    const checkedBoxes = document.querySelectorAll('.disabled-code-checkbox:checked');
+                    const selectedIds = Array.from(checkedBoxes)
+                        .filter(cb => cb.dataset.canReenable === 'true')
+                        .map(cb => parseInt(cb.dataset.itemId))
+                        .filter(id => !isNaN(id));
+
+                    if (selectedIds.length === 0) {
+                        alert('No re-enableable items selected');
+                        return;
+                    }
+
+                    if (!confirm(`Re-enable ${selectedIds.length} selected item code(s)?`)) {
+                        return;
+                    }
+
+                    try {
+                        const { data, error } = await supabase.rpc('reenable_item_codes', {
+                            item_code_ids: selectedIds,  // Fixed parameter name
+                            reenabled_by_param: currentUser.id,
+                            reason_param: 'Bulk re-enabled from disabled codes dashboard'  // Added reason parameter
+                        });
+
+                        if (error) throw error;
+
+                        if (!data.success) {
+                            throw new Error(data.message || 'Failed to re-enable item codes');
+                        }
+
+                        alert(data.message || 'Item codes re-enabled successfully');
+                        
+                        // Reload dashboard
+                        await loadDisabledCodesDashboard();
+
+                    } catch (error) {
+                        console.error('Error bulk re-enabling item codes:', error);
+                        alert('Error bulk re-enabling item codes: ' + error.message);
+                    }
+                });
+            }
+
+            if (bulkERPNotifiedBtn) {
+                bulkERPNotifiedBtn.addEventListener('click', async () => {
+                    const checkedBoxes = document.querySelectorAll('.disabled-code-checkbox:checked');
+                    const selectedIds = Array.from(checkedBoxes)
+                        .map(cb => parseInt(cb.dataset.itemId))
+                        .filter(id => !isNaN(id));
+
+                    await markERPNotified(selectedIds);
+                });
+            }
+        }, 2000);
+        // ===== END DISABLED CODES EVENT LISTENERS =====
+
     </script>
 </body>
 </html>
