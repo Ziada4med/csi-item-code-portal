@@ -2557,7 +2557,7 @@ async function checkCombinationExists(combination, uom, country, modelNumber, un
                 // Get next variation number using the enhanced function that checks ALL statuses
                 const nextVariationNumber = await getNextVariationNumber(currentProject.id, baseSignature);
                 
-                console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ Base combination exists, can create variation');
+                console.log('Base combination exists, can create variation');
                 console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â  Approved variations found:', baseMatches.length);
                 console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ Next variation number will be:', nextVariationNumber);
                 
@@ -5158,7 +5158,7 @@ async function checkForDuplicates() {
             );
             
             if (baseMatch) {
-                console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ VARIATION DETECTED: Same attributes but different UOM/manufacturer/model/country');
+                console.log('VARIATION DETECTED: Same attributes but different UOM/manufacturer/model/country');
                 console.log(`   Base item: ${baseMatch.item_code} (UOM: ${baseMatch.uom}, Manufacturer: ${baseMatch.manufacturer})`);
                 console.log(`   Your item will be: NEW VARIATION (UOM: ${uom}, Manufacturer: ${manufacturer})`);
                 // This is ALLOWED - it's a variation, not a duplicate
@@ -5258,7 +5258,7 @@ async function checkForDuplicates() {
             );
             
             if (baseRequestMatch) {
-                console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ PENDING VARIATION DETECTED: Same attributes but different UOM/manufacturer/model/country');
+                console.log('PENDING VARIATION DETECTED: Same attributes but different UOM/manufacturer/model/country');
                 console.log(`   Pending item: ${baseRequestMatch.item_code} (UOM: ${baseRequestMatch.uom}, Manufacturer: ${baseRequestMatch.manufacturer})`);
                 console.log(`   Your item will be: NEW VARIATION (UOM: ${uom}, Manufacturer: ${manufacturer})`);
                 // This is ALLOWED - it's a variation, not a duplicate
@@ -5322,7 +5322,7 @@ async function checkForDuplicates() {
         }
         
         // No duplicates found
-        console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ NO DUPLICATES FOUND - UNIQUE COMBINATION');
+        console.log('NO DUPLICATES FOUND - UNIQUE COMBINATION');
         showUniqueStatusEnhanced(uom, country, modelNumber, manufacturer);
         return false;
         
@@ -5755,7 +5755,7 @@ function getFormattedCombination() {
                 const isTrueDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                 
                 if (attributesMatch && !isTrueDuplicate) {
-                    console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ VARIATION ALLOWED: Same attributes but different variation fields');
+                    console.log('VARIATION ALLOWED: Same attributes but different variation fields');
                     console.log(`   Existing: UOM=${code.uom}, Manufacturer=${code.manufacturer}, Model=${code.model_number}`);
                     console.log(`   New: UOM=${uom}, Manufacturer=${manufacturer}, Model=${modelNumber}`);
                 }
@@ -5808,7 +5808,7 @@ function getFormattedCombination() {
                 const isTrueDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                 
                 if (attributesMatch && !isTrueDuplicate) {
-                    console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ PENDING VARIATION ALLOWED: Same attributes but different variation fields');
+                    console.log('PENDING VARIATION ALLOWED: Same attributes but different variation fields');
                     console.log(`   Pending: UOM=${req.uom}, Manufacturer=${req.manufacturer}, Model=${req.model_number}`);
                     console.log(`   New: UOM=${uom}, Manufacturer=${manufacturer}, Model=${modelNumber}`);
                 }
@@ -5925,7 +5925,7 @@ function getFormattedCombination() {
                     const isTrueDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                     
                     if (attributesMatch && !isTrueDuplicate) {
-                        console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ SUBMIT VARIATION ALLOWED: Same attributes but different variation fields');
+                        console.log('SUBMIT VARIATION ALLOWED: Same attributes but different variation fields');
                         console.log(`   Existing: UOM=${code.uom}, Manufacturer=${code.manufacturer}`);
                         console.log(`   New: UOM=${uom}, Manufacturer=${manufacturer}`);
                     }
@@ -5977,7 +5977,7 @@ function getFormattedCombination() {
                     const isTrueDuplicate = attributesMatch && uomMatch && countryMatch && modelMatch && manufacturerMatch;
                     
                     if (attributesMatch && !isTrueDuplicate) {
-                        console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ SUBMIT PENDING VARIATION ALLOWED: Same attributes but different variation fields');
+                        console.log('SUBMIT PENDING VARIATION ALLOWED: Same attributes but different variation fields');
                         console.log(`   Pending: UOM=${req.uom}, Manufacturer=${req.manufacturer}`);
                         console.log(`   New: UOM=${uom}, Manufacturer=${manufacturer}`);
                     }
@@ -6460,7 +6460,7 @@ async function submitBlockRequest() {
             review_comments: item.reviewer_comments,
             // Determine display properties
             source: item.status === 'admin_approved' ? 'admin' : 'request',
-            sourceIcon: item.status === 'admin_approved' ? 'ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¹ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦' : 'ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¹ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³',
+            sourceIcon: item.status === 'admin_approved' ? '' : 'ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¹ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³',
             sourceDescription: item.status === 'admin_approved' ? 'Admin Generated' : 'User Request',
             isApproved: item.status === 'admin_approved',
             displayStatus: item.status,
@@ -6472,7 +6472,7 @@ async function submitBlockRequest() {
             } : null
         }));
         
-        console.log("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ Complete project history loaded:");
+        console.log("Complete project history loaded:");
         console.log('  - Total records:', historyData.length);
         console.log('  - Pending items:', historyData.filter(h => h.status === 'pending').length);
         console.log('  - Reviewer approved:', historyData.filter(h => h.status === 'reviewer_approved').length);  
@@ -6550,7 +6550,7 @@ function renderHistoryTable() {
                             <span class="text-lg">${item.sourceIcon}</span>
                             <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">${item.sourceDescription}</span>
                             ${item.erpStatus && item.erpStatus.erp_integrated ? 
-                                `<span class="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded">ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ ERP Integrated</span>` : ""}
+                                `<span class="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded">ERP Integrated</span>` : ""}
                         </div>
                         <h4 class="text-lg font-semibold text-gray-900 font-mono">${item.item_code}</h4>
                         <div class="flex items-center mt-1">
@@ -6667,7 +6667,7 @@ function renderHistoryTable() {
                     ${item.erpStatus && item.erpStatus.erp_integrated && item.erpStatus.erp_integrated_at ? `
                         <div>
                             <span class="font-medium text-gray-600">ERP Integration:</span>
-                            <p class="text-green-800 bg-green-50 p-2 rounded border">ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ Integrated on ${new Date(item.erpStatus.erp_integrated_at).toLocaleDateString()}</p>
+                            <p class="text-green-800 bg-green-50 p-2 rounded border">Integrated on ${new Date(item.erpStatus.erp_integrated_at).toLocaleDateString()}</p>
                         </div>
                     ` : ''}
                 </div>
@@ -6696,7 +6696,7 @@ function renderHistoryTable() {
                 <td class="px-4 py-3 border-b text-sm">
                     <span class="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">${item.sourceDescription}</span>
                     ${item.erpStatus && item.erpStatus.erp_integrated ? 
-                        `<br><span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded mt-1 inline-block">ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ ERP</span>` : ""}
+                        `<br><span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded mt-1 inline-block">ERP</span>` : ""}
                 </td>
                 <td class="px-4 py-3 border-b text-sm font-mono text-blue-600">#${item.id}</td>
                 <td class="px-4 py-3 border-b text-sm">
@@ -11948,7 +11948,7 @@ function renderSingleRequestCard(request, sectionType, index, color) {
         <div class="mt-3 p-3 rounded-lg ${request.erpStatus.erp_integrated ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}">
             <div class="flex items-center gap-2">
                 <span class="text-sm font-medium ${request.erpStatus.erp_integrated ? 'text-green-800' : 'text-yellow-800'}">
-                    ${request.erpStatus.erp_integrated ? "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ ERP INTEGRATED" : "PENDING ERP INTEGRATION"}
+                    ${request.erpStatus.erp_integrated ? "ERP INTEGRATED" : "PENDING ERP INTEGRATION"}
                 </span>
             </div>
             ${request.erpStatus.erp_integrated && request.erpStatus.erp_integrated_at ? `
@@ -12131,11 +12131,11 @@ function getEnhancedStatusInfo(status) {
             description: 'Approved by reviewer, awaiting admin'
         },
         'admin_approved': {
-            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ Admin Approved</span>',
+            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Admin Approved</span>',
             description: 'Fully approved'
         },
         'approved': {
-            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ Approved</span>',
+            badge: '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Approved</span>',
             description: 'Fully approved'
         },
         'reviewer_rejected': {
