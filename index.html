@@ -12183,7 +12183,7 @@ function renderWorkflowProgress(status) {
                     <div class="flex items-center ${index < steps.length - 1 ? 'flex-1' : ''}">
                         <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium
                             ${isCompleted ? 'bg-green-500 text-white' : isActive ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-600'}">
-                            ${isCompleted ? "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦" : index + 1}
+                            ${isCompleted ? "" : index + 1}
                         </div>
                         <div class="ml-1 text-xs ${isCompleted ? 'text-green-600 font-medium' : isActive ? 'text-blue-600 font-medium' : 'text-gray-500'}">
                             ${step.name}
@@ -12344,7 +12344,7 @@ function generateEnhancedRequestPDF(request, sectionType) {
     workflowSteps.forEach((step, index) => {
         const isCompleted = completedSteps[index];
         doc.setFont(undefined, isCompleted ? 'bold' : 'normal');
-        doc.text(`${index + 1}. ${step} ${isCompleted ? "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦" : ""}`, 20, yPosition);
+        doc.text(`${index + 1}. ${step} ${isCompleted ? "" : ""}`, 20, yPosition);
         yPosition += 6;
     });
     
