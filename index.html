@@ -1495,6 +1495,7 @@
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manufacturer</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ERP Status</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ERP Disabled</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Can Re-enable</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                             </tr>
@@ -15432,7 +15433,7 @@ function populateDisabledCodesTable(items) {
 
     if (!items || items.length === 0) {
         console.log('No disabled items to display');
-        tableBody.innerHTML = '<tr><td colspan="12" class="px-4 py-8 text-center text-gray-500">No disabled items found</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="13" class="px-4 py-8 text-center text-gray-500">No disabled items found</td></tr>';
         return;
     }
 
@@ -15477,7 +15478,7 @@ function populateDisabledCodesTable(items) {
     console.log('Filtered items:', filteredItems.length);
 
     if (filteredItems.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="12" class="px-4 py-8 text-center text-gray-500">No items match the current filters</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="13" class="px-4 py-8 text-center text-gray-500">No items match the current filters</td></tr>';
         return;
     }
 
@@ -15485,6 +15486,14 @@ function populateDisabledCodesTable(items) {
         const erpStatus = item.erp_notified 
             ? '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"> Notified</span>'
             : '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800"> Pending</span>';
+        
+        // ERP Disabled checkbox - only for ERP users
+        const erpDisabledCheckbox = (currentUser.role === 'erp_data_entry' || currentUser.role === 'admin') 
+            ? `<input type="checkbox" class="erp-disabled-checkbox w-4 h-4 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" 
+                       data-item-id="${item.id}" ${item.erp_disabled_by ? 'checked' : ''} 
+                       ${item.erp_disabled_by && item.erp_disabled_by !== currentUser.id ? 'disabled' : ''}
+                       title="${item.erp_disabled_by ? 'Marked as disabled in ERP on ' + (item.erp_disabled_at ? new Date(item.erp_disabled_at).toLocaleString() : 'unknown date') : 'Mark as disabled in ERP'}">`
+            : `<span class="text-xs text-gray-500">${item.erp_disabled_by ? 'Yes' : 'No'}</span>`;
         
         const canReenableStatus = item.can_be_reenabled 
             ? '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"> Yes</span>'
@@ -15509,6 +15518,7 @@ function populateDisabledCodesTable(items) {
                 </td>
                 <td class="px-4 py-3 text-sm text-gray-900">${item.manufacturer || 'N/A'}</td>
                 <td class="px-4 py-3 text-center">${erpStatus}</td>
+                <td class="px-4 py-3 text-center">${erpDisabledCheckbox}</td>
                 <td class="px-4 py-3 text-center">${canReenableStatus}</td>
                 <td class="px-4 py-3 text-center">${actionButton}</td>
             </tr>
@@ -15600,6 +15610,106 @@ function addDisabledCodesCheckboxListeners() {
     document.querySelectorAll('.disabled-code-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', updateDisabledCodesButtonStates);
     });
+    
+    // ERP disabled checkboxes - only for ERP users
+    if (currentUser.role === 'erp_data_entry' || currentUser.role === 'admin') {
+        document.querySelectorAll('.erp-disabled-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', async function() {
+                const itemId = this.getAttribute('data-item-id');
+                const isChecked = this.checked;
+                
+                console.log('ERP disabled checkbox changed for item:', itemId, 'checked:', isChecked);
+                
+                try {
+                    // Call RPC function to update ERP disabled status
+                    const { data, error } = await supabase.rpc('update_disabled_item_erp_status', {
+                        disabled_item_id: parseInt(itemId),
+                        erp_disabled: isChecked,
+                        erp_user_id: currentUser.id
+                    });
+                    
+                    /* 
+                    RPC FUNCTION NEEDED: update_disabled_item_erp_status
+                    
+                    CREATE OR REPLACE FUNCTION public.update_disabled_item_erp_status(
+                        disabled_item_id integer, 
+                        erp_disabled boolean, 
+                        erp_user_id integer
+                    )
+                    RETURNS json
+                    LANGUAGE plpgsql
+                    SECURITY DEFINER
+                    AS $$
+                    DECLARE
+                        user_record RECORD;
+                    BEGIN
+                        -- Verify user has ERP role or is admin
+                        SELECT * INTO user_record FROM users WHERE id = erp_user_id;
+                        
+                        IF user_record IS NULL THEN
+                            RETURN json_build_object('success', false, 'message', 'User not found');
+                        END IF;
+                        
+                        IF user_record.role NOT IN ('erp_data_entry', 'admin') THEN
+                            RETURN json_build_object('success', false, 'message', 'Only ERP role users can update ERP disabled status');
+                        END IF;
+                        
+                        -- Update the disabled item ERP status
+                        UPDATE disabled_item_codes 
+                        SET erp_disabled_by = CASE WHEN erp_disabled THEN erp_user_id ELSE NULL END,
+                            erp_disabled_at = CASE WHEN erp_disabled THEN NOW() ELSE NULL END
+                        WHERE id = disabled_item_id;
+                        
+                        IF NOT FOUND THEN
+                            RETURN json_build_object('success', false, 'message', 'Disabled item not found');
+                        END IF;
+                        
+                        RETURN json_build_object(
+                            'success', true,
+                            'message', 'ERP disabled status updated successfully'
+                        );
+                        
+                    EXCEPTION WHEN OTHERS THEN
+                        RETURN json_build_object('success', false, 'message', 'Error: ' || SQLERRM);
+                    END;
+                    $$;
+                    
+                    */
+                    
+                    if (error) {
+                        console.error('Error updating ERP disabled status:', error);
+                        // Revert checkbox state
+                        this.checked = !isChecked;
+                        alert('Error updating ERP status: ' + error.message);
+                        return;
+                    }
+                    
+                    if (!data.success) {
+                        console.error('RPC call failed:', data.message);
+                        // Revert checkbox state
+                        this.checked = !isChecked;
+                        alert('Error: ' + data.message);
+                        return;
+                    }
+                    
+                    console.log('ERP disabled status updated successfully');
+                    
+                    // Update tooltip
+                    if (isChecked) {
+                        this.setAttribute('title', 'Marked as disabled in ERP on ' + new Date().toLocaleString());
+                    } else {
+                        this.setAttribute('title', 'Mark as disabled in ERP');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error updating ERP disabled status:', error);
+                    // Revert checkbox state
+                    this.checked = !isChecked;
+                    alert('Error updating ERP status: ' + error.message);
+                }
+            });
+        });
+    }
 }
 
 // Update button states based on selections
@@ -18445,7 +18555,7 @@ function exportCurrentResults(format) {
 
                     const csvHeaders = [
                         'Item Code', 'Project', 'Description', 'Disabled Reason', 'Disabled By', 
-                        'Disabled Date', 'Price', 'Manufacturer', 'ERP Status', 'Can Re-enable'
+                        'Disabled Date', 'Price', 'Manufacturer', 'ERP Status', 'ERP Disabled', 'Can Re-enable'
                     ];
 
                     const csvRows = disabledCodesData.map(item => [
@@ -18458,6 +18568,7 @@ function exportCurrentResults(format) {
                         item.unit_price ? `${item.unit_price} ${item.currency_code || ''}` : '',
                         item.manufacturer || '',
                         item.erp_notified ? 'Notified' : 'Pending',
+                        item.erp_disabled_by ? 'Yes' : 'No',
                         item.can_be_reenabled ? 'Yes' : 'No'
                     ]);
 
@@ -18991,6 +19102,195 @@ function exportCurrentResults(format) {
     });
 
     // ===== END BULK SELECTION FUNCTIONALITY =====
+
+    // ===== SIMPLE RELIABLE EXPORT SYSTEM =====
+    
+    // Simple Excel export that works without complex dependencies
+    function simpleExcelExport(data, filename = 'export') {
+        if (!data || data.length === 0) {
+            alert('No data available for export');
+            return;
+        }
+
+        try {
+            // Check if XLSX is available
+            if (typeof XLSX === 'undefined') {
+                alert('Excel export library not loaded. Please refresh the page and try again.');
+                return;
+            }
+
+            console.log('Starting simple Excel export with', data.length, 'records');
+
+            // Convert data to simple format
+            const excelData = data.map(item => ({
+                'Item Code': item.item_code || '',
+                'Status': item.status || '',
+                'CSI Code': item.csi_base_code || '',
+                'Description 1': item.description1 || '',
+                'Description 2': item.description2 || '',
+                'UOM': item.uom || '',
+                'Country': item.country_of_origin || '',
+                'Model Number': item.model_number || '',
+                'Manufacturer': item.manufacturer || '',
+                'Unit Price': item.unit_price || '',
+                'Currency': item.currency_code || '',
+                'Created Date': item.created_at ? new Date(item.created_at).toLocaleDateString() : '',
+                'Created By': item.created_by_user?.username || '',
+                'Approved By': item.approved_by_user?.username || '',
+                'Serial Number': item.serial_number || ''
+            }));
+
+            // Create workbook
+            const workbook = XLSX.utils.book_new();
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Item Codes');
+
+            // Download
+            const finalFilename = filename.endsWith('.xlsx') ? filename : `${filename}.xlsx`;
+            XLSX.writeFile(workbook, finalFilename);
+            
+            console.log('Excel export completed successfully');
+            
+        } catch (error) {
+            console.error('Excel export error:', error);
+            alert('Excel export failed: ' + error.message);
+        }
+    }
+
+    // Simple PDF export that works without complex dependencies  
+    function simplePDFExport(data, filename = 'export', title = 'Export Data') {
+        if (!data || data.length === 0) {
+            alert('No data available for export');
+            return;
+        }
+
+        try {
+            // Check if jsPDF is available
+            if (typeof window.jspdf === 'undefined') {
+                alert('PDF export library not loaded. Please refresh the page and try again.');
+                return;
+            }
+
+            console.log('Starting simple PDF export with', data.length, 'records');
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape', 'pt', 'a4');
+
+            // Add title
+            doc.setFontSize(16);
+            doc.text(title, 40, 40);
+            
+            // Add metadata
+            doc.setFontSize(10);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 40, 65);
+            doc.text(`Total Records: ${data.length}`, 40, 80);
+
+            // Prepare table data
+            const headers = ['Item Code', 'Status', 'CSI Code', 'Description', 'UOM', 'Manufacturer', 'Created Date'];
+            const rows = data.map(item => [
+                item.item_code || '',
+                item.status || '',
+                item.csi_base_code || '',
+                (item.description1 || '').substring(0, 30) + '...',
+                item.uom || '',
+                (item.manufacturer || '').substring(0, 20),
+                item.created_at ? new Date(item.created_at).toLocaleDateString() : ''
+            ]);
+
+            // Add table
+            if (typeof doc.autoTable !== 'undefined') {
+                doc.autoTable({
+                    head: [headers],
+                    body: rows,
+                    startY: 100,
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: [41, 128, 185] }
+                });
+            } else {
+                // Fallback if autoTable not available
+                let yPos = 120;
+                headers.forEach((header, index) => {
+                    doc.text(header, 40 + (index * 100), yPos);
+                });
+                
+                yPos += 20;
+                rows.forEach((row, rowIndex) => {
+                    if (yPos > 500) { // New page
+                        doc.addPage();
+                        yPos = 40;
+                    }
+                    row.forEach((cell, cellIndex) => {
+                        doc.text(String(cell).substring(0, 15), 40 + (cellIndex * 100), yPos);
+                    });
+                    yPos += 15;
+                });
+            }
+
+            // Download
+            const finalFilename = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
+            doc.save(finalFilename);
+            
+            console.log('PDF export completed successfully');
+            
+        } catch (error) {
+            console.error('PDF export error:', error);
+            alert('PDF export failed: ' + error.message);
+        }
+    }
+
+    // Fixed export functions
+    function exportAllItemsFixed(format) {
+        console.log('Starting fixed export for format:', format);
+        
+        if (!historyData || historyData.length === 0) {
+            alert('No data available for export. Please ensure you have item codes in your history.');
+            return;
+        }
+
+        const projectName = currentProject?.project_name?.replace(/[^a-zA-Z0-9]/g, '_') || 'project';
+        const filename = `${projectName}_all_items_${new Date().toISOString().split('T')[0]}`;
+        
+        if (format === 'excel') {
+            simpleExcelExport(historyData, filename);
+        } else if (format === 'pdf') {
+            const title = `All Item Codes - ${currentProject?.project_name || 'Project'}`;
+            simplePDFExport(historyData, filename, title);
+        } else {
+            alert('Unsupported export format: ' + format);
+        }
+    }
+
+    function exportSingleItemFixed(index, format) {
+        console.log('Starting fixed single item export, index:', index, 'format:', format);
+        
+        const item = historyData[index];
+        if (!item) {
+            alert('Item not found for export.');
+            return;
+        }
+
+        const filename = `item_${item.item_code}_${new Date().toISOString().split('T')[0]}`;
+        
+        if (format === 'excel') {
+            simpleExcelExport([item], filename);
+        } else if (format === 'pdf') {
+            const title = `Item Code: ${item.item_code}`;
+            simplePDFExport([item], filename, title);
+        } else {
+            alert('Unsupported export format: ' + format);
+        }
+    }
+
+    // Override the existing export functions with working versions
+    window.exportAllItems = exportAllItemsFixed;
+    window.exportSingleItem = exportSingleItemFixed;
+    window.simpleExcelExport = simpleExcelExport;
+    window.simplePDFExport = simplePDFExport;
+
+    console.log('Simple export system loaded and ready');
+
+    // ===== END SIMPLE RELIABLE EXPORT SYSTEM =====
 
     </script>
 </body>
