@@ -1495,7 +1495,6 @@
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manufacturer</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ERP Status</th>
-                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ERP Disabled</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Can Re-enable</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                             </tr>
@@ -2371,6 +2370,18 @@ async function getNextVariationNumber(projectId, baseSignature) {
 // Function to get next serial number by checking existing codes
 async function getNextSerialNumber() {
     try {
+        if (!currentProject) {
+            console.error('Error: No current project selected for serial number generation');
+            return 1;
+        }
+        
+        // Try to fix ID issues
+        if (!ensureCurrentProjectHasId()) {
+            console.error('Error: No current project selected or project ID is undefined');
+            console.error('Current project state:', currentProject);
+            return 1;
+        }
+        
         console.log(' Getting next serial for project:', currentProject.id);
         
         // Get highest serial from all codes (active and disabled) to prevent reuse
@@ -2400,12 +2411,16 @@ async function getNextSerialNumber() {
             console.log(' No workflow codes found');
         }
         
-        // ADDITIONAL CHECK: Also check disabled_item_codes table (for codes moved there by project deletion/archival)
-        console.log(' Checking disabled codes in disabled_item_codes table...');
+        // ADDITIONAL CHECK: Also check disabled_item_codes table by CSI base code 
+        // (for codes moved there by project deletion/archival - these should be found by CSI path, not project_id)
+        console.log(' Checking disabled codes in disabled_item_codes table by CSI base code...');
+        const csiBaseCode = `${currentProject.division_code}-${currentProject.section_code}-${currentProject.detailed_section_code}-${currentProject.item_code}`;
+        console.log(' CSI base code for disabled codes lookup:', csiBaseCode);
+        
         const { data: disabledCodes, error: disabledError } = await supabase
             .from('disabled_item_codes')
             .select('serial_number')
-            .eq('project_id', currentProject.id)
+            .eq('csi_base_code', csiBaseCode)
             .order('serial_number', { ascending: false })
             .limit(1);
             
@@ -2451,6 +2466,21 @@ async function getNextSerialNumber() {
     }
 }
 
+    // Helper function to fix currentProject ID issues
+    function ensureCurrentProjectHasId() {
+        if (!currentProject) return false;
+        
+        if (!currentProject.id && currentProject.project_id) {
+            console.log('ðŸ”„ Fixing currentProject: copying project_id to id property');
+            currentProject.id = currentProject.project_id;
+        } else if (!currentProject.project_id && currentProject.id) {
+            console.log('ðŸ”„ Fixing currentProject: copying id to project_id property');
+            currentProject.project_id = currentProject.id;
+        }
+        
+        return !!(currentProject.id);
+    }
+
 // CORRECTED: Traditional serial numbering (no reuse) + combination availability
 async function getNextSerialNumberWithoutReuse() {
     try {
@@ -2459,57 +2489,408 @@ async function getNextSerialNumberWithoutReuse() {
             return 1;
         }
         
-        console.log('Getting next sequential serial for project:', currentProject.id);
-        console.log('NOTE: Serial numbers are never reused - combinations are freed for new serials');
-        
-        let highestSerial = 0;
-        
-        // Get highest from active workflow codes
-        const { data: highestActive, error: activeError } = await supabase
-            .from('item_code_workflow')
-            .select('serial_number')
-            .eq('project_id', currentProject.id)
-            .not('serial_number', 'is', null)
-            .order('serial_number', { ascending: false })
-            .limit(1);
-        
-        if (activeError) {
-            console.error('Error querying active serials:', activeError);
-            throw activeError;
+        // Try to fix ID issues
+        if (!ensureCurrentProjectHasId()) {
+            console.error('Error: No current project selected or project ID is undefined');
+            console.error('Current project state:', currentProject);
+            return 1;
         }
         
-        if (highestActive && highestActive.length > 0) {
-            highestSerial = Math.max(highestSerial, highestActive[0].serial_number);
-            console.log('Highest active serial:', highestActive[0].serial_number);
-        }
-
-        // Get highest from disabled codes table (they keep their serial numbers permanently)
-        const { data: highestDisabled, error: disabledError } = await supabase
-            .from('disabled_item_codes')
-            .select('serial_number')
-            .eq('project_id', currentProject.id)
-            .not('serial_number', 'is', null)
-            .order('serial_number', { ascending: false })
-            .limit(1);
-            
-        if (disabledError) {
-            console.error('Error querying disabled serials:', disabledError);
-        } else if (highestDisabled && highestDisabled.length > 0) {
-            highestSerial = Math.max(highestSerial, highestDisabled[0].serial_number);
-            console.log('Highest disabled serial (kept permanently):', highestDisabled[0].serial_number);
+        console.log('🔢 Getting next sequential serial for project:', currentProject.id);
+        console.log('📍 Project CSI Path:', `${currentProject.division_code}-${currentProject.section_code}-${currentProject.detailed_section_code}-${currentProject.item_code}`);
+        
+        // Use the robust RPC function that handles all edge cases
+        const { data: rpcResult, error: rpcError } = await supabase.rpc('get_next_serial_comprehensive_working', {
+            project_id_param: currentProject.id
+        });
+        
+        if (rpcError) {
+            console.error('🚨 RPC function failed, falling back to JavaScript logic:', rpcError);
+            // Fallback to enhanced JavaScript logic
+            return await getNextSerialNumberFallback();
         }
         
-        const nextSerial = highestSerial + 1;
-        console.log(`Next sequential serial: ${nextSerial} (serials never reused)`);
-        console.log(`NOTE: Disabling frees COMBINATIONS for reuse with new serials`);
-        
-        return nextSerial;
+        console.log('✅ RPC returned next serial:', rpcResult);
+        return rpcResult;
         
     } catch (error) {
-        console.error('Error in traditional serial generation:', error);
-        return 1;
+        console.error('🚨 Error in serial generation, using fallback:', error);
+        return await getNextSerialNumberFallback();
     }
 }
+
+// CRITICAL: Global item code uniqueness check - handles ALL formats including additional levels
+async function ensureItemCodeUniqueness(proposedItemCode, maxAttempts = 100) {
+    console.log(`🔒 GLOBAL UNIQUENESS CHECK for: ${proposedItemCode}`);
+    
+    let attempt = 0;
+    let testCode = proposedItemCode;
+    
+    while (attempt < maxAttempts) {
+        // Check both active and disabled tables for this exact item code
+        const [activeCheck, disabledCheck] = await Promise.all([
+            // Check active codes
+            supabase
+                .from('item_code_workflow')
+                .select('item_code')
+                .eq('item_code', testCode)
+                .limit(1),
+            
+            // Check disabled codes - THIS IS THE CRITICAL CHECK
+            supabase
+                .from('disabled_item_codes')
+                .select('item_code, disabled_reason, disabled_at')
+                .eq('item_code', testCode)
+                .limit(1)
+        ]);
+        
+        const activeExists = activeCheck.data && activeCheck.data.length > 0;
+        const disabledExists = disabledCheck.data && disabledCheck.data.length > 0;
+        
+        if (!activeExists && !disabledExists) {
+            if (attempt > 0) {
+                console.log(`✅ Found unique code after ${attempt + 1} attempts: ${testCode}`);
+            } else {
+                console.log(`✅ Proposed code is unique: ${testCode}`);
+            }
+            return testCode;
+        }
+        
+        if (disabledExists) {
+            console.warn(`🚫 Code ${testCode} exists in DISABLED codes - blocked!`);
+            console.warn(`   Disabled reason: ${disabledCheck.data[0]?.disabled_reason}`);
+            console.warn(`   Disabled date: ${disabledCheck.data[0]?.disabled_at}`);
+        }
+        
+        if (activeExists) {
+            console.warn(`🚫 Code ${testCode} exists in ACTIVE codes - blocked!`);
+        }
+        
+        // Enhanced serial increment logic to handle different formats
+        testCode = incrementItemCodeSerial(testCode, attempt + 1);
+        attempt++;
+        console.log(`🔄 Trying attempt ${attempt}: ${testCode}`);
+    }
+    
+    throw new Error(`Failed to find unique item code after ${maxAttempts} attempts. Last attempt: ${testCode}`);
+}
+
+// Helper function to intelligently increment item code serials for different formats
+function incrementItemCodeSerial(itemCode, incrementBy = 1) {
+    const parts = itemCode.split('-');
+    
+    // Find the last part that looks like a serial number (3-5 digits)
+    for (let i = parts.length - 1; i >= 0; i--) {
+        const part = parts[i];
+        
+        // Check for 3-5 digit numeric pattern (serials)
+        if (part.match(/^\d{3,5}$/)) {
+            const currentSerial = parseInt(part, 10);
+            const newSerial = currentSerial + incrementBy;
+            const paddingLength = part.length; // Preserve original padding
+            parts[i] = newSerial.toString().padStart(paddingLength, '0');
+            return parts.join('-');
+        }
+        
+        // Check for variation format (numbers after slash)
+        if (part.includes('/')) {
+            const [base, variation] = part.split('/');
+            const newVariation = parseInt(variation, 10) + incrementBy;
+            parts[i] = `${base}/${newVariation}`;
+            return parts.join('-');
+        }
+    }
+    
+    // If no recognizable serial format, append increment to the end
+    return `${itemCode}-${incrementBy.toString().padStart(3, '0')}`;
+}
+
+// Enhanced fallback function with COMPREHENSIVE pattern matching for all item code formats
+async function getNextSerialNumberFallback() {
+    console.log('🔢 ENHANCED SERIAL GENERATION with Comprehensive Pattern Matching');
+    
+    let highestSerial = 0;
+    
+    // Step 1: Get highest from active workflow codes for current project
+    const { data: highestActive, error: activeError } = await supabase
+        .from('item_code_workflow')
+        .select('serial_number')
+        .eq('project_id', currentProject.id)
+        .not('serial_number', 'is', null)
+        .order('serial_number', { ascending: false })
+        .limit(1);
+    
+    if (!activeError && highestActive && highestActive.length > 0) {
+        highestSerial = Math.max(highestSerial, highestActive[0].serial_number);
+        console.log('📈 Highest active serial in current project:', highestActive[0].serial_number);
+    }
+
+    // Step 2: Build the base CSI pattern for comprehensive checking
+    const csiBase = `${currentProject.division_code}-${currentProject.section_code}-${currentProject.detailed_section_code}-${currentProject.item_code}`;
+    console.log('🔍 Base CSI pattern:', csiBase);
+    
+    // Step 3: COMPREHENSIVE disabled code pattern matching
+    // This will find ALL disabled codes that start with the same CSI base, regardless of format
+    const { data: allMatchingDisabled, error: disabledError } = await supabase
+        .from('disabled_item_codes')
+        .select('serial_number, item_code, csi_base_code, disabled_reason')
+        .like('item_code', `${csiBase}%`) // This catches ALL formats: xxbbgggg-57-00001, xxbbgggg-57-001-001, etc.
+        .not('serial_number', 'is', null)
+        .order('serial_number', { ascending: false });
+    
+    if (!disabledError && allMatchingDisabled && allMatchingDisabled.length > 0) {
+        const disabledHighest = Math.max(...allMatchingDisabled.map(d => d.serial_number));
+        highestSerial = Math.max(highestSerial, disabledHighest);
+        console.log(`🚫 Found ${allMatchingDisabled.length} disabled codes matching pattern ${csiBase}%`);
+        console.log('🔢 Highest serial from ALL disabled codes:', disabledHighest);
+        
+        // Show examples of the different formats found
+        const formatExamples = allMatchingDisabled.slice(0, 10).map(d => 
+            `${d.item_code}(S:${d.serial_number})`);
+        console.log('📋 Example disabled codes found:', formatExamples.join(', '));
+        
+        // If we found many codes, show the range
+        if (allMatchingDisabled.length > 10) {
+            console.log(`📊 ... and ${allMatchingDisabled.length - 10} more disabled codes`);
+        }
+    } else {
+        console.log('⚠️ No disabled codes found for pattern:', `${csiBase}%`);
+    }
+    
+    // Step 4: Additional safety check - look for exact CSI base code matches
+    const { data: exactCsiMatch, error: exactError } = await supabase
+        .from('disabled_item_codes')
+        .select('serial_number, item_code')
+        .eq('csi_base_code', csiBase)
+        .not('serial_number', 'is', null)
+        .order('serial_number', { ascending: false });
+    
+    if (!exactError && exactCsiMatch && exactCsiMatch.length > 0) {
+        const exactHighest = Math.max(...exactCsiMatch.map(d => d.serial_number));
+        highestSerial = Math.max(highestSerial, exactHighest);
+        console.log('🎯 Additional check - Exact CSI base match highest serial:', exactHighest);
+    }
+    
+    const calculatedSerial = highestSerial + 1;
+    console.log(`🎯 Final calculated serial: ${calculatedSerial}`);
+    console.log(`📝 This serial will be used to generate a new unique item code`);
+    
+    return calculatedSerial;
+}
+
+// Enhanced diagnostic function specifically for rope project format analysis
+window.checkDisabledCodesForCSI = async function(csiPath) {
+    console.log(`🔍 DIAGNOSTIC: Comprehensive analysis for CSI path: ${csiPath}`);
+    console.log('=' .repeat(60));
+    
+    try {
+        // Strategy 1: Exact item code prefix match (catches all formats)
+        const { data: prefixMatch, error: prefixError } = await supabase
+            .from('disabled_item_codes')
+            .select('id, item_code, serial_number, csi_base_code, original_project_id, disabled_reason, disabled_at')
+            .like('item_code', `${csiPath}%`)
+            .order('serial_number', { ascending: true });
+        
+        if (prefixError) {
+            console.error('❌ Error querying prefix match:', prefixError);
+        } else {
+            console.log(`📊 Item codes starting with "${csiPath}": ${prefixMatch?.length || 0} codes`);
+            if (prefixMatch && prefixMatch.length > 0) {
+                console.log('📋 Found disabled codes:');
+                prefixMatch.forEach(code => {
+                    console.log(`  • ${code.item_code} (Serial: ${code.serial_number}) - Disabled: ${new Date(code.disabled_at).toLocaleDateString()}`);
+                });
+                const maxSerial = Math.max(...prefixMatch.map(c => c.serial_number));
+                console.log(`📈 HIGHEST SERIAL from disabled codes: ${maxSerial}`);
+                console.log(`🎯 NEXT SAFE SERIAL should be: ${maxSerial + 1}`);
+                
+                // Analyze format patterns
+                const formatPatterns = {};
+                prefixMatch.forEach(code => {
+                    const parts = code.item_code.split('-');
+                    const pattern = parts.map((part, index) => {
+                        if (part.match(/^\d{3,5}$/)) return `[${part.length}digits]`;
+                        if (part === 'n') return '[n]';
+                        return part;
+                    }).join('-');
+                    formatPatterns[pattern] = (formatPatterns[pattern] || 0) + 1;
+                });
+                
+                console.log('📊 Format patterns found:');
+                Object.entries(formatPatterns).forEach(([pattern, count]) => {
+                    console.log(`  • ${pattern}: ${count} codes`);
+                });
+            }
+        }
+        
+        // Strategy 2: Check by exact CSI base code
+        const { data: exactMatch, error: exactError } = await supabase
+            .from('disabled_item_codes')
+            .select('id, item_code, serial_number, csi_base_code')
+            .eq('csi_base_code', csiPath)
+            .order('serial_number', { ascending: true });
+        
+        if (!exactError && exactMatch && exactMatch.length > 0) {
+            console.log(`🔍 Exact CSI base match: ${exactMatch.length} codes`);
+            exactMatch.forEach(code => {
+                console.log(`  • ${code.item_code} (Serial: ${code.serial_number}) - CSI: ${code.csi_base_code}`);
+            });
+        }
+        
+        // Strategy 3: Check current active projects with same CSI path
+        const csiComponents = csiPath.split('-');
+        if (csiComponents.length >= 4) {
+            const { data: projects, error: projectsError } = await supabase
+                .from('classification_projects')
+                .select('id, project_name, status, additional_level_name, additional_level_value')
+                .eq('division_code', csiComponents[0])
+                .eq('section_code', csiComponents[1])
+                .eq('detailed_section_code', csiComponents[2])
+                .eq('item_code', csiComponents[3]);
+            
+            if (!projectsError && projects) {
+                console.log(`🏗️ Current projects with same CSI path: ${projects.length}`);
+                projects.forEach(proj => {
+                    const addLevel = proj.additional_level_value ? ` (${proj.additional_level_name}: ${proj.additional_level_value})` : '';
+                    console.log(`  • Project ID: ${proj.id} - Name: ${proj.project_name} - Status: ${proj.status}${addLevel}`);
+                });
+            }
+        }
+        
+    } catch (error) {
+        console.error('🚨 Diagnostic error:', error);
+    }
+    
+    console.log('=' .repeat(60));
+};
+
+// Specific rope project test with format analysis
+window.testRopeProjectIssue = async function() {
+    console.log('🧪 TESTING ROPE PROJECT ISSUE - Format Analysis');
+    console.log('Testing CSI path: xxbbgggg-57');
+    
+    // First show what's in disabled codes
+    await window.checkDisabledCodesForCSI('xxbbgggg-57');
+    
+    // Then show what the current system would generate
+    if (currentProject) {
+        console.log('\n🔮 CURRENT PROJECT GENERATION TEST:');
+        console.log('Current project CSI:', `${currentProject.division_code}-${currentProject.section_code}-${currentProject.detailed_section_code}-${currentProject.item_code}`);
+        console.log('Additional level value:', currentProject.additional_level_value || 'None');
+        
+        try {
+            const nextSerial = await getNextSerialNumber();
+            console.log('Next serial calculated:', nextSerial);
+            
+            const proposedCode = await generateItemCodeWithVariations();
+            console.log('Proposed item code:', proposedCode);
+            
+            // Check if this conflicts
+            const { data: conflictCheck } = await supabase
+                .from('disabled_item_codes')
+                .select('item_code, disabled_reason')
+                .eq('item_code', proposedCode)
+                .limit(1);
+            
+            if (conflictCheck && conflictCheck.length > 0) {
+                console.error('🚨 CONFLICT: Proposed code exists in disabled codes!');
+            } else {
+                console.log('✅ No conflict detected with disabled codes');
+            }
+        } catch (error) {
+            console.error('Error in generation test:', error);
+        }
+    } else {
+        console.log('⚠️ No current project selected for generation test');
+    }
+};
+
+// Quick test function for the rope project issue
+window.testRopeProjectIssue = async function() {
+    console.log('🧪 TESTING ROPE PROJECT ISSUE');
+    console.log('Testing CSI path: xxbbgggg-57');
+    await window.checkDisabledCodesForCSI('xxbbgggg-57');
+};
+
+// Test the global uniqueness check function
+window.testGlobalUniqueness = async function(testCode) {
+    console.log(`🧪 TESTING GLOBAL UNIQUENESS for: ${testCode}`);
+    try {
+        const result = await ensureItemCodeUniqueness(testCode || 'xxbbgggg-57-00001');
+        console.log('✅ Uniqueness test result:', result);
+    } catch (error) {
+        console.error('❌ Uniqueness test failed:', error);
+    }
+};
+
+// Comprehensive test for item code generation with disabled codes
+window.testItemCodeGenerationRobustness = async function() {
+    console.log('🧪 COMPREHENSIVE ITEM CODE GENERATION TEST');
+    console.log('=' .repeat(60));
+    
+    if (!currentProject) {
+        console.log('❌ No current project selected');
+        return;
+    }
+    
+    try {
+        // Test 1: Check what serial number would be generated
+        console.log('📊 Step 1: Testing serial number calculation');
+        const nextSerial = await getNextSerialNumber();
+        console.log(`📈 Next serial calculated: ${nextSerial}`);
+        
+        // Test 2: Check what item code would be generated
+        console.log('\n📊 Step 2: Testing item code generation');
+        const itemCode = await generateItemCodeWithVariations();
+        console.log(`🏷️  Generated item code: ${itemCode}`);
+        
+        // Test 3: Check if the generated code conflicts with disabled codes
+        console.log('\n📊 Step 3: Testing against disabled codes');
+        const { data: conflictCheck } = await supabase
+            .from('disabled_item_codes')
+            .select('item_code, disabled_reason, disabled_at')
+            .eq('item_code', itemCode)
+            .limit(1);
+        
+        if (conflictCheck && conflictCheck.length > 0) {
+            console.error('🚨 CONFLICT DETECTED! Generated code exists in disabled codes:');
+            console.error('   Item Code:', conflictCheck[0].item_code);
+            console.error('   Disabled Reason:', conflictCheck[0].disabled_reason);
+            console.error('   Disabled Date:', conflictCheck[0].disabled_at);
+        } else {
+            console.log('✅ No conflict with disabled codes');
+        }
+        
+        // Test 4: Check active codes conflict
+        const { data: activeConflict } = await supabase
+            .from('item_code_workflow')
+            .select('item_code')
+            .eq('item_code', itemCode)
+            .limit(1);
+        
+        if (activeConflict && activeConflict.length > 0) {
+            console.error('🚨 CONFLICT DETECTED! Generated code exists in active codes:');
+            console.error('   Item Code:', activeConflict[0].item_code);
+        } else {
+            console.log('✅ No conflict with active codes');
+        }
+        
+        console.log('\n🎯 TEST SUMMARY:');
+        console.log(`   Project: ${currentProject.project_name}`);
+        console.log(`   CSI Path: ${currentProject.division_code}-${currentProject.section_code}-${currentProject.detailed_section_code}-${currentProject.item_code}`);
+        console.log(`   Next Serial: ${nextSerial}`);
+        console.log(`   Generated Code: ${itemCode}`);
+        console.log(`   Safe to use: ${(!conflictCheck?.length && !activeConflict?.length) ? 'YES ✅' : 'NO ❌'}`);
+        
+    } catch (error) {
+        console.error('🚨 Test failed with error:', error);
+    }
+    
+    console.log('=' .repeat(60));
+};
+
+// Add the diagnostic function to the debug tools
+window.debugSerialNumberDetection = window.checkDisabledCodesForCSI;
 
 // Override original function to use traditional serial numbering (no reuse)
 const originalGetNextSerialNumber = getNextSerialNumber;
@@ -4128,13 +4509,28 @@ function selectProjectFromData(project) {
         return;
     }
     
-    currentProject = project;
+    // Normalize the project object to ensure it has a proper id property
+    const normalizedProject = {
+        ...project,
+        id: project.id || project.project_id, // Ensure id property exists
+        project_id: project.project_id || project.id // Ensure backward compatibility
+    };
+    
+    console.log('Normalized project object:', normalizedProject);
+    
+    if (!normalizedProject.id) {
+        console.error('Project object missing both id and project_id properties:', project);
+        alert('Invalid project selected. Please try again.');
+        return;
+    }
+    
+    currentProject = normalizedProject;
 
 // Load the correct next serial number for this project
 getNextSerialNumber().then(serial => {
     nextSerial = serial;
     updatePreview(); // Update preview with correct serial
-    console.log(`Loaded next serial for project ${project.id}: ${nextSerial}`);
+    console.log(`Loaded next serial for project ${normalizedProject.id}: ${nextSerial}`);
 }).catch(error => {
     console.error('Error loading serial:', error);
     nextSerial = 1; // Fallback
@@ -5079,10 +5475,10 @@ async function checkBlockedCombination(projectId, combinationSignature) {
     try {
         // Get the next available serial number from the database
         const correctSerial = await getNextSerialNumber();
-        console.log('Using serial number:', correctSerial);
+        console.log('🔢 Using starting serial number:', correctSerial);
         
         const csiCode = currentProject.item_code.replace(/\s+/g, '');
-        let code = csiCode;
+        let baseCode = csiCode;
         
         const hasAdditionalLevel = currentProject.additional_level_value && 
                                   currentProject.additional_level_value.trim() !== '';
@@ -5099,27 +5495,34 @@ async function checkBlockedCombination(projectId, combinationSignature) {
                 currentProject.item_code,
                 currentProject.additional_level_value
             );
-            console.log('Additional level order for', currentProject.additional_level_value, ':', additionalLevelOrder);
+            console.log('📋 Additional level order for', currentProject.additional_level_value, ':', additionalLevelOrder);
         }
         
+        // Build the proposed code
+        let proposedCode;
         if (hasAdditionalLevel && hasModelNumber) {
-            code += `-${additionalLevelOrder}-n-${String(correctSerial).padStart(5, '0')}`;
+            proposedCode = `${baseCode}-${additionalLevelOrder}-n-${String(correctSerial).padStart(5, '0')}`;
         } else if (hasAdditionalLevel) {
-            code += `-${additionalLevelOrder}-${String(correctSerial).padStart(5, '0')}`;
+            proposedCode = `${baseCode}-${additionalLevelOrder}-${String(correctSerial).padStart(5, '0')}`;
         } else if (hasModelNumber) {
-            code += `-n-${String(correctSerial).padStart(5, '0')}`;
+            proposedCode = `${baseCode}-n-${String(correctSerial).padStart(5, '0')}`;
         } else {
-            code += `-${String(correctSerial).padStart(5, '0')}`;
+            proposedCode = `${baseCode}-${String(correctSerial).padStart(5, '0')}`;
         }
         
-        return code;
+        // *** CRITICAL: GLOBAL UNIQUENESS CHECK ***
+        const uniqueCode = await ensureItemCodeUniqueness(proposedCode);
+        
+        console.log(`✅ Final unique item code: ${uniqueCode}`);
+        return uniqueCode;
+        
     } catch (error) {
-        console.error('Error generating item code:', error);
+        console.error('🚨 Error generating item code:', error);
         return 'Error generating code';
     }
 }
 
-// NEW: Enhanced item code generation with variation support
+// NEW: Enhanced item code generation with variation support and global uniqueness
 async function generateItemCodeWithVariations() {
     if (!currentProject) return 'No project selected';
     
@@ -5138,16 +5541,21 @@ async function generateItemCodeWithVariations() {
         if (duplicateCheck.willBeVariation) {
             // This will be a variation - use base item code + variation suffix
             const variationNumber = duplicateCheck.nextVariationNumber;
-            console.log('Creating variation:', `${duplicateCheck.baseItemCode}/${variationNumber}`);
-            return `${duplicateCheck.baseItemCode}/${variationNumber}`;
+            const proposedVariationCode = `${duplicateCheck.baseItemCode}/${variationNumber}`;
+            console.log('🔄 Creating variation:', proposedVariationCode);
+            
+            // *** CRITICAL: GLOBAL UNIQUENESS CHECK FOR VARIATIONS ***
+            const uniqueVariationCode = await ensureItemCodeUniqueness(proposedVariationCode);
+            console.log('✅ Final unique variation code:', uniqueVariationCode);
+            return uniqueVariationCode;
         } else {
-            // This will be a new base item - generate normally
-            console.log('Creating new base item');
-            return await generateItemCode(); // Use existing logic for new items
+            // This will be a new base item - generate normally with uniqueness check
+            console.log('🆕 Creating new base item');
+            return await generateItemCode(); // This now includes global uniqueness check
         }
         
     } catch (error) {
-        console.error('Error generating item code with variations:', error);
+        console.error('🚨 Error generating item code with variations:', error);
         return await generateItemCode(); // Fallback to original function
     }
 }      
@@ -15433,7 +15841,7 @@ function populateDisabledCodesTable(items) {
 
     if (!items || items.length === 0) {
         console.log('No disabled items to display');
-        tableBody.innerHTML = '<tr><td colspan="13" class="px-4 py-8 text-center text-gray-500">No disabled items found</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="12" class="px-4 py-8 text-center text-gray-500">No disabled items found</td></tr>';
         return;
     }
 
@@ -15478,7 +15886,7 @@ function populateDisabledCodesTable(items) {
     console.log('Filtered items:', filteredItems.length);
 
     if (filteredItems.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="13" class="px-4 py-8 text-center text-gray-500">No items match the current filters</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="12" class="px-4 py-8 text-center text-gray-500">No items match the current filters</td></tr>';
         return;
     }
 
@@ -15486,14 +15894,6 @@ function populateDisabledCodesTable(items) {
         const erpStatus = item.erp_notified 
             ? '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"> Notified</span>'
             : '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800"> Pending</span>';
-        
-        // ERP Disabled checkbox - only for ERP users
-        const erpDisabledCheckbox = (currentUser.role === 'erp_data_entry' || currentUser.role === 'admin') 
-            ? `<input type="checkbox" class="erp-disabled-checkbox w-4 h-4 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" 
-                       data-item-id="${item.id}" ${item.erp_disabled_by ? 'checked' : ''} 
-                       ${item.erp_disabled_by && item.erp_disabled_by !== currentUser.id ? 'disabled' : ''}
-                       title="${item.erp_disabled_by ? 'Marked as disabled in ERP on ' + (item.erp_disabled_at ? new Date(item.erp_disabled_at).toLocaleString() : 'unknown date') : 'Mark as disabled in ERP'}">`
-            : `<span class="text-xs text-gray-500">${item.erp_disabled_by ? 'Yes' : 'No'}</span>`;
         
         const canReenableStatus = item.can_be_reenabled 
             ? '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"> Yes</span>'
@@ -15518,7 +15918,6 @@ function populateDisabledCodesTable(items) {
                 </td>
                 <td class="px-4 py-3 text-sm text-gray-900">${item.manufacturer || 'N/A'}</td>
                 <td class="px-4 py-3 text-center">${erpStatus}</td>
-                <td class="px-4 py-3 text-center">${erpDisabledCheckbox}</td>
                 <td class="px-4 py-3 text-center">${canReenableStatus}</td>
                 <td class="px-4 py-3 text-center">${actionButton}</td>
             </tr>
@@ -15610,106 +16009,6 @@ function addDisabledCodesCheckboxListeners() {
     document.querySelectorAll('.disabled-code-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', updateDisabledCodesButtonStates);
     });
-    
-    // ERP disabled checkboxes - only for ERP users
-    if (currentUser.role === 'erp_data_entry' || currentUser.role === 'admin') {
-        document.querySelectorAll('.erp-disabled-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', async function() {
-                const itemId = this.getAttribute('data-item-id');
-                const isChecked = this.checked;
-                
-                console.log('ERP disabled checkbox changed for item:', itemId, 'checked:', isChecked);
-                
-                try {
-                    // Call RPC function to update ERP disabled status
-                    const { data, error } = await supabase.rpc('update_disabled_item_erp_status', {
-                        disabled_item_id: parseInt(itemId),
-                        erp_disabled: isChecked,
-                        erp_user_id: currentUser.id
-                    });
-                    
-                    /* 
-                    RPC FUNCTION NEEDED: update_disabled_item_erp_status
-                    
-                    CREATE OR REPLACE FUNCTION public.update_disabled_item_erp_status(
-                        disabled_item_id integer, 
-                        erp_disabled boolean, 
-                        erp_user_id integer
-                    )
-                    RETURNS json
-                    LANGUAGE plpgsql
-                    SECURITY DEFINER
-                    AS $$
-                    DECLARE
-                        user_record RECORD;
-                    BEGIN
-                        -- Verify user has ERP role or is admin
-                        SELECT * INTO user_record FROM users WHERE id = erp_user_id;
-                        
-                        IF user_record IS NULL THEN
-                            RETURN json_build_object('success', false, 'message', 'User not found');
-                        END IF;
-                        
-                        IF user_record.role NOT IN ('erp_data_entry', 'admin') THEN
-                            RETURN json_build_object('success', false, 'message', 'Only ERP role users can update ERP disabled status');
-                        END IF;
-                        
-                        -- Update the disabled item ERP status
-                        UPDATE disabled_item_codes 
-                        SET erp_disabled_by = CASE WHEN erp_disabled THEN erp_user_id ELSE NULL END,
-                            erp_disabled_at = CASE WHEN erp_disabled THEN NOW() ELSE NULL END
-                        WHERE id = disabled_item_id;
-                        
-                        IF NOT FOUND THEN
-                            RETURN json_build_object('success', false, 'message', 'Disabled item not found');
-                        END IF;
-                        
-                        RETURN json_build_object(
-                            'success', true,
-                            'message', 'ERP disabled status updated successfully'
-                        );
-                        
-                    EXCEPTION WHEN OTHERS THEN
-                        RETURN json_build_object('success', false, 'message', 'Error: ' || SQLERRM);
-                    END;
-                    $$;
-                    
-                    */
-                    
-                    if (error) {
-                        console.error('Error updating ERP disabled status:', error);
-                        // Revert checkbox state
-                        this.checked = !isChecked;
-                        alert('Error updating ERP status: ' + error.message);
-                        return;
-                    }
-                    
-                    if (!data.success) {
-                        console.error('RPC call failed:', data.message);
-                        // Revert checkbox state
-                        this.checked = !isChecked;
-                        alert('Error: ' + data.message);
-                        return;
-                    }
-                    
-                    console.log('ERP disabled status updated successfully');
-                    
-                    // Update tooltip
-                    if (isChecked) {
-                        this.setAttribute('title', 'Marked as disabled in ERP on ' + new Date().toLocaleString());
-                    } else {
-                        this.setAttribute('title', 'Mark as disabled in ERP');
-                    }
-                    
-                } catch (error) {
-                    console.error('Error updating ERP disabled status:', error);
-                    // Revert checkbox state
-                    this.checked = !isChecked;
-                    alert('Error updating ERP status: ' + error.message);
-                }
-            });
-        });
-    }
 }
 
 // Update button states based on selections
@@ -18555,7 +18854,7 @@ function exportCurrentResults(format) {
 
                     const csvHeaders = [
                         'Item Code', 'Project', 'Description', 'Disabled Reason', 'Disabled By', 
-                        'Disabled Date', 'Price', 'Manufacturer', 'ERP Status', 'ERP Disabled', 'Can Re-enable'
+                        'Disabled Date', 'Price', 'Manufacturer', 'ERP Status', 'Can Re-enable'
                     ];
 
                     const csvRows = disabledCodesData.map(item => [
@@ -18568,7 +18867,6 @@ function exportCurrentResults(format) {
                         item.unit_price ? `${item.unit_price} ${item.currency_code || ''}` : '',
                         item.manufacturer || '',
                         item.erp_notified ? 'Notified' : 'Pending',
-                        item.erp_disabled_by ? 'Yes' : 'No',
                         item.can_be_reenabled ? 'Yes' : 'No'
                     ]);
 
@@ -19085,6 +19383,237 @@ function exportCurrentResults(format) {
 
     // ===== END ENHANCED SEARCH WITH DISABLED CODES =====
 
+    // ===== DEBUGGING FUNCTIONS FOR SERIAL NUMBER DETECTION =====
+    
+    // Function to validate current project state
+    function validateCurrentProject(functionName) {
+        console.log(`ðŸ” [${functionName}] Validating current project...`);
+        
+        if (!currentProject) {
+            console.error(`âŒ [${functionName}] currentProject is null/undefined`);
+            console.error('Project loading state may be incomplete');
+            return false;
+        }
+        
+        console.log(`ðŸ” [${functionName}] currentProject object properties:`, Object.keys(currentProject));
+        console.log(`ðŸ” [${functionName}] Full currentProject object:`, currentProject);
+        
+        if (!currentProject.id) {
+            console.error(`âŒ [${functionName}] currentProject.id is undefined`);
+            console.error('Checking for alternative ID properties...');
+            if (currentProject.project_id) {
+                console.log(`ðŸ”„ [${functionName}] Found project_id instead:`, currentProject.project_id);
+                console.log(`ðŸ”„ [${functionName}] Attempting to fix by setting id = project_id`);
+                currentProject.id = currentProject.project_id;
+            } else {
+                console.error('Current project object:', currentProject);
+                return false;
+            }
+        }
+        
+        console.log(`âœ… [${functionName}] Project validation passed:`, {
+            id: currentProject.id,
+            project_id: currentProject.project_id,
+            division_code: currentProject.division_code,
+            section_code: currentProject.section_code,
+            detailed_section_code: currentProject.detailed_section_code,
+            item_code: currentProject.item_code
+        });
+        
+        return true;
+    }
+
+    // Debug the serial number detection comprehensively
+    async function debugSerialNumberDetection() {
+        console.log('ðŸ” DEBUGGING SERIAL NUMBER DETECTION');
+        console.log('=' .repeat(60));
+        
+        if (!validateCurrentProject('debugSerialNumberDetection')) {
+            console.log('âŒ Cannot proceed with debugging - no valid current project');
+            return;
+        }
+        
+        console.log('Current Project:', currentProject);
+        
+        // Test 1: Check what CSI base code we're constructing
+        const csiBaseCode = `${currentProject.division_code}-${currentProject.section_code}-${currentProject.detailed_section_code}-${currentProject.item_code}`;
+        console.log('ðŸ—ï¸ Constructed CSI Base Code:', csiBaseCode);
+        
+        // Test 2: Query workflow table
+        console.log('\nðŸ“Š TESTING WORKFLOW TABLE QUERY:');
+        try {
+            const { data: workflowCodes, error: workflowError } = await supabase
+                .from('item_code_workflow')
+                .select('serial_number, item_code, status, csi_base_code')
+                .eq('project_id', currentProject.id)
+                .order('serial_number', { ascending: false });
+            
+            if (workflowError) {
+                console.error('âŒ Workflow query error:', workflowError);
+            } else {
+                console.log('âœ… Workflow codes found:', workflowCodes?.length || 0);
+                if (workflowCodes && workflowCodes.length > 0) {
+                    console.log('ðŸ“ˆ Highest workflow serial:', workflowCodes[0].serial_number);
+                    console.log('ðŸ”¢ All workflow serials:', workflowCodes.map(c => c.serial_number).filter(s => s !== null));
+                }
+            }
+        } catch (error) {
+            console.error('ðŸ’¥ Workflow query exception:', error);
+        }
+        
+        // Test 3: Query disabled table by project_id (old way)
+        console.log('\nðŸš« TESTING DISABLED TABLE BY PROJECT_ID (OLD WAY):');
+        try {
+            const { data: disabledByProject, error: disabledProjectError } = await supabase
+                .from('disabled_item_codes')
+                .select('serial_number, item_code, csi_base_code, project_id, original_project_id')
+                .eq('project_id', currentProject.id)
+                .order('serial_number', { ascending: false });
+            
+            if (disabledProjectError) {
+                console.error('âŒ Disabled by project query error:', disabledProjectError);
+            } else {
+                console.log('âœ… Disabled codes by project_id found:', disabledByProject?.length || 0);
+                if (disabledByProject && disabledByProject.length > 0) {
+                    console.log('ðŸ“ˆ Highest disabled serial (by project_id):', disabledByProject[0].serial_number);
+                }
+            }
+        } catch (error) {
+            console.error('ðŸ’¥ Disabled by project query exception:', error);
+        }
+        
+        // Test 4: Query disabled table by CSI base code (new way)
+        console.log('\nðŸš« TESTING DISABLED TABLE BY CSI BASE CODE (NEW WAY):');
+        try {
+            const { data: disabledByCsi, error: disabledCsiError } = await supabase
+                .from('disabled_item_codes')
+                .select('serial_number, item_code, csi_base_code, project_id, original_project_id, disabled_reason')
+                .eq('csi_base_code', csiBaseCode)
+                .order('serial_number', { ascending: false });
+            
+            if (disabledCsiError) {
+                console.error('âŒ Disabled by CSI query error:', disabledCsiError);
+            } else {
+                console.log('âœ… Disabled codes by CSI base code found:', disabledByCsi?.length || 0);
+                if (disabledByCsi && disabledByCsi.length > 0) {
+                    console.log('ðŸ“ˆ Highest disabled serial (by CSI):', disabledByCsi[0].serial_number);
+                    console.log('ðŸ” Sample disabled codes:', disabledByCsi.slice(0, 3));
+                }
+            }
+        } catch (error) {
+            console.error('ðŸ’¥ Disabled by CSI query exception:', error);
+        }
+        
+        // Test 5: Query ALL disabled codes to see what CSI base codes exist
+        console.log('\nðŸ” SAMPLING ALL DISABLED CODES:');
+        try {
+            const { data: allDisabled, error: allDisabledError } = await supabase
+                .from('disabled_item_codes')
+                .select('serial_number, item_code, csi_base_code, project_id, original_project_id')
+                .not('serial_number', 'is', null)
+                .order('serial_number', { ascending: false })
+                .limit(10);
+            
+            if (allDisabledError) {
+                console.error('âŒ All disabled query error:', allDisabledError);
+            } else {
+                console.log('âœ… Sample of all disabled codes:', allDisabled?.length || 0);
+                if (allDisabled && allDisabled.length > 0) {
+                    console.log('ðŸ” Sample CSI base codes in disabled table:');
+                    const uniqueCsi = [...new Set(allDisabled.map(d => d.csi_base_code))];
+                    uniqueCsi.forEach(csi => console.log(`   - ${csi}`));
+                    console.log('ðŸ” Our CSI base code:', csiBaseCode);
+                    console.log('ðŸ” Matches found:', uniqueCsi.includes(csiBaseCode) ? 'âœ… YES' : 'âŒ NO');
+                }
+            }
+        } catch (error) {
+            console.error('ðŸ’¥ All disabled query exception:', error);
+        }
+        
+        // Test 6: Test RPC function call
+        console.log('\nðŸ”§ TESTING RPC FUNCTION CALL:');
+        try {
+            const { data: rpcResult, error: rpcError } = await supabase.rpc('test_serial_detection_comprehensive', {
+                project_id_param: currentProject.id,
+                show_details: true
+            });
+            
+            if (rpcError) {
+                console.error('âŒ RPC function error:', rpcError);
+            } else {
+                console.log('âœ… RPC function result:', rpcResult);
+            }
+        } catch (error) {
+            console.error('ðŸ’¥ RPC function exception:', error);
+        }
+        
+        console.log('\n' + '=' .repeat(60));
+        console.log('ðŸ” DEBUG COMPLETE - Check the logs above for issues');
+    }
+
+    // Test the current serial function
+    async function testCurrentSerialFunction() {
+        console.log('ðŸ§ª TESTING CURRENT getNextSerialNumber() FUNCTION');
+        
+        if (!validateCurrentProject('testCurrentSerialFunction')) {
+            console.log('âŒ Cannot test serial function - no valid current project');
+            return;
+        }
+        
+        try {
+            const result = await getNextSerialNumber();
+            console.log('âœ… Current function returned:', result);
+            
+            // Also test the comprehensive version if it exists
+            if (typeof getNextSerialNumberWithoutReuse === 'function') {
+                const comprehensiveResult = await getNextSerialNumberWithoutReuse();
+                console.log('âœ… Comprehensive function returned:', comprehensiveResult);
+            }
+        } catch (error) {
+            console.error('âŒ Serial function error:', error);
+        }
+    }
+
+    // Add debugging functions to window
+    window.ensureCurrentProjectHasId = ensureCurrentProjectHasId;
+    window.validateCurrentProject = validateCurrentProject;
+    window.debugSerialNumberDetection = debugSerialNumberDetection;
+    window.testCurrentSerialFunction = testCurrentSerialFunction;
+    
+    // Quick debug command to check specific project serial detection
+    window.quickDebugSerial = async function(projectId) {
+        if (!projectId && currentProject) {
+            projectId = currentProject.id;
+        }
+        if (!projectId) {
+            console.log('âŒ No project ID provided and no current project');
+            return;
+        }
+        
+        console.log('ðŸ” QUICK DEBUG for project:', projectId);
+        
+        try {
+            const { data: rpcResult, error: rpcError } = await supabase.rpc('test_serial_detection_comprehensive', {
+                project_id_param: projectId,
+                show_details: true
+            });
+            
+            if (rpcError) {
+                console.error('âŒ RPC function error:', rpcError);
+            } else {
+                console.log('âœ… COMPREHENSIVE SERIAL DEBUG RESULT:');
+                console.log('ðŸ“Š Workflow Analysis:', rpcResult.workflow_table_analysis);
+                console.log('ðŸš« Disabled Analysis:', rpcResult.disabled_table_analysis);
+                console.log('ðŸŽ¯ Final Calculation:', rpcResult.serial_calculation);
+                console.log('ðŸ” Queries Used:', rpcResult.queries_used);
+            }
+        } catch (error) {
+            console.error('ðŸ’¥ RPC debug exception:', error);
+        }
+    };
+
+    // ===== END DEBUGGING FUNCTIONS =====
+
     // ===== BULK SELECTION AND SERIAL REUSE FUNCTIONALITY =====
     
     // Make bulk functions globally available
@@ -19102,195 +19631,6 @@ function exportCurrentResults(format) {
     });
 
     // ===== END BULK SELECTION FUNCTIONALITY =====
-
-    // ===== SIMPLE RELIABLE EXPORT SYSTEM =====
-    
-    // Simple Excel export that works without complex dependencies
-    function simpleExcelExport(data, filename = 'export') {
-        if (!data || data.length === 0) {
-            alert('No data available for export');
-            return;
-        }
-
-        try {
-            // Check if XLSX is available
-            if (typeof XLSX === 'undefined') {
-                alert('Excel export library not loaded. Please refresh the page and try again.');
-                return;
-            }
-
-            console.log('Starting simple Excel export with', data.length, 'records');
-
-            // Convert data to simple format
-            const excelData = data.map(item => ({
-                'Item Code': item.item_code || '',
-                'Status': item.status || '',
-                'CSI Code': item.csi_base_code || '',
-                'Description 1': item.description1 || '',
-                'Description 2': item.description2 || '',
-                'UOM': item.uom || '',
-                'Country': item.country_of_origin || '',
-                'Model Number': item.model_number || '',
-                'Manufacturer': item.manufacturer || '',
-                'Unit Price': item.unit_price || '',
-                'Currency': item.currency_code || '',
-                'Created Date': item.created_at ? new Date(item.created_at).toLocaleDateString() : '',
-                'Created By': item.created_by_user?.username || '',
-                'Approved By': item.approved_by_user?.username || '',
-                'Serial Number': item.serial_number || ''
-            }));
-
-            // Create workbook
-            const workbook = XLSX.utils.book_new();
-            const worksheet = XLSX.utils.json_to_sheet(excelData);
-            
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'Item Codes');
-
-            // Download
-            const finalFilename = filename.endsWith('.xlsx') ? filename : `${filename}.xlsx`;
-            XLSX.writeFile(workbook, finalFilename);
-            
-            console.log('Excel export completed successfully');
-            
-        } catch (error) {
-            console.error('Excel export error:', error);
-            alert('Excel export failed: ' + error.message);
-        }
-    }
-
-    // Simple PDF export that works without complex dependencies  
-    function simplePDFExport(data, filename = 'export', title = 'Export Data') {
-        if (!data || data.length === 0) {
-            alert('No data available for export');
-            return;
-        }
-
-        try {
-            // Check if jsPDF is available
-            if (typeof window.jspdf === 'undefined') {
-                alert('PDF export library not loaded. Please refresh the page and try again.');
-                return;
-            }
-
-            console.log('Starting simple PDF export with', data.length, 'records');
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('landscape', 'pt', 'a4');
-
-            // Add title
-            doc.setFontSize(16);
-            doc.text(title, 40, 40);
-            
-            // Add metadata
-            doc.setFontSize(10);
-            doc.text(`Generated: ${new Date().toLocaleString()}`, 40, 65);
-            doc.text(`Total Records: ${data.length}`, 40, 80);
-
-            // Prepare table data
-            const headers = ['Item Code', 'Status', 'CSI Code', 'Description', 'UOM', 'Manufacturer', 'Created Date'];
-            const rows = data.map(item => [
-                item.item_code || '',
-                item.status || '',
-                item.csi_base_code || '',
-                (item.description1 || '').substring(0, 30) + '...',
-                item.uom || '',
-                (item.manufacturer || '').substring(0, 20),
-                item.created_at ? new Date(item.created_at).toLocaleDateString() : ''
-            ]);
-
-            // Add table
-            if (typeof doc.autoTable !== 'undefined') {
-                doc.autoTable({
-                    head: [headers],
-                    body: rows,
-                    startY: 100,
-                    styles: { fontSize: 8 },
-                    headStyles: { fillColor: [41, 128, 185] }
-                });
-            } else {
-                // Fallback if autoTable not available
-                let yPos = 120;
-                headers.forEach((header, index) => {
-                    doc.text(header, 40 + (index * 100), yPos);
-                });
-                
-                yPos += 20;
-                rows.forEach((row, rowIndex) => {
-                    if (yPos > 500) { // New page
-                        doc.addPage();
-                        yPos = 40;
-                    }
-                    row.forEach((cell, cellIndex) => {
-                        doc.text(String(cell).substring(0, 15), 40 + (cellIndex * 100), yPos);
-                    });
-                    yPos += 15;
-                });
-            }
-
-            // Download
-            const finalFilename = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
-            doc.save(finalFilename);
-            
-            console.log('PDF export completed successfully');
-            
-        } catch (error) {
-            console.error('PDF export error:', error);
-            alert('PDF export failed: ' + error.message);
-        }
-    }
-
-    // Fixed export functions
-    function exportAllItemsFixed(format) {
-        console.log('Starting fixed export for format:', format);
-        
-        if (!historyData || historyData.length === 0) {
-            alert('No data available for export. Please ensure you have item codes in your history.');
-            return;
-        }
-
-        const projectName = currentProject?.project_name?.replace(/[^a-zA-Z0-9]/g, '_') || 'project';
-        const filename = `${projectName}_all_items_${new Date().toISOString().split('T')[0]}`;
-        
-        if (format === 'excel') {
-            simpleExcelExport(historyData, filename);
-        } else if (format === 'pdf') {
-            const title = `All Item Codes - ${currentProject?.project_name || 'Project'}`;
-            simplePDFExport(historyData, filename, title);
-        } else {
-            alert('Unsupported export format: ' + format);
-        }
-    }
-
-    function exportSingleItemFixed(index, format) {
-        console.log('Starting fixed single item export, index:', index, 'format:', format);
-        
-        const item = historyData[index];
-        if (!item) {
-            alert('Item not found for export.');
-            return;
-        }
-
-        const filename = `item_${item.item_code}_${new Date().toISOString().split('T')[0]}`;
-        
-        if (format === 'excel') {
-            simpleExcelExport([item], filename);
-        } else if (format === 'pdf') {
-            const title = `Item Code: ${item.item_code}`;
-            simplePDFExport([item], filename, title);
-        } else {
-            alert('Unsupported export format: ' + format);
-        }
-    }
-
-    // Override the existing export functions with working versions
-    window.exportAllItems = exportAllItemsFixed;
-    window.exportSingleItem = exportSingleItemFixed;
-    window.simpleExcelExport = simpleExcelExport;
-    window.simplePDFExport = simplePDFExport;
-
-    console.log('Simple export system loaded and ready');
-
-    // ===== END SIMPLE RELIABLE EXPORT SYSTEM =====
 
     </script>
 </body>
