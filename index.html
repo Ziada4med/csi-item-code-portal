@@ -383,11 +383,113 @@
         </div>
     </div>
 
+    <!-- Multi-Item Generation Mode -->
+    <div class="bg-yellow-50 p-4 rounded-lg mb-6 border border-yellow-200">
+        <div class="flex items-center justify-between mb-3">
+            <label class="flex items-center space-x-3 cursor-pointer">
+                <input type="checkbox" id="multi-item-mode" class="h-5 w-5 text-blue-600 rounded">
+                <span class="text-lg font-semibold text-gray-800">🚀 Multi-Item Generation Mode</span>
+            </label>
+            <div class="text-sm text-gray-600">
+                Generate multiple item codes at once
+            </div>
+        </div>
+        
+        <!-- Combination Counter -->
+        <div id="combination-counter" class="hidden mt-3 p-3 rounded-lg border">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm font-medium text-gray-700">Combinations to Generate:</span>
+                    <span id="combination-count" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-bold">0</span>
+                </div>
+                <div class="text-xs text-gray-500">
+                    Maximum: <span id="max-combinations">100</span>
+                </div>
+            </div>
+            
+            <!-- Progress Bar for Limit -->
+            <div class="mt-2">
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="combination-progress" class="bg-gradient-to-r from-green-500 to-yellow-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <!-- Warning Alert -->
+            <div id="combination-warning" class="hidden mt-2 p-2 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                ⚠️ <strong>Maximum limit exceeded!</strong> Please reduce your selections to continue.
+            </div>
+        </div>
+        
+        <div id="multi-item-info" class="hidden mt-3 text-sm text-yellow-700 bg-yellow-100 p-3 rounded">
+            <p><strong>Multi-Item Mode:</strong> Select multiple values for each attribute to generate all possible combinations.</p>
+            <p><strong>Note:</strong> UOM, Country, Manufacturer, Unit Price, and Currency must be unified for all generated items.</p>
+        </div>
+    </div>
+
     <!-- Generation Controls -->
     <div class="bg-blue-50 p-6 rounded-lg mb-6">
         <h3 class="text-lg font-semibold text-gray-800 mb-4">Code Generation</h3>
         
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+        <!-- Unified Settings for Multi-Item Mode (Hidden by default) -->
+        <div id="unified-settings" class="hidden mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <h4 class="text-md font-semibold text-green-800 mb-3">📦 Unified Settings (Applied to All Generated Items)</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Unit of Measurement *</label>
+                    <select id="unified-uom-select" class="mt-1 w-full rounded-md border-gray-300">
+                        <option value="">Select UoM...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Country of Origin *</label>
+                    <select id="unified-country-select" class="mt-1 w-full rounded-md border-gray-300">
+                        <option value="">Select country...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Manufacturer (Optional)</label>
+                    <div class="flex space-x-2 mt-1">
+                        <select id="unified-manufacturer-select" class="flex-1 rounded-md border-gray-300">
+                            <option value="">Select manufacturer...</option>
+                        </select>
+                        <button type="button" id="add-unified-manufacturer-btn" 
+                                class="px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm whitespace-nowrap">
+                            Add Manufacturer
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Model Number</label>
+                    <input type="text" id="unified-model-input" 
+                           class="mt-1 w-full rounded-md border-gray-300"
+                           placeholder="Enter model...">
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Unit Price *</label>
+                    <input type="number" id="unified-price-input" step="0.01"
+                           class="mt-1 w-full rounded-md border-gray-300"
+                           placeholder="0.00">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Currency *</label>
+                    <select id="unified-currency-select" class="mt-1 w-full rounded-md border-gray-300">
+                        <option value="">Select currency...</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button id="preview-combinations-btn" 
+                            class="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md">
+                        🔍 Preview Combinations
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Standard Single-Item Settings -->
+        <div id="standard-settings" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700">Unit of Measurement *</label>
                 <select id="uom-select" class="mt-1 w-full rounded-md border-gray-300">
@@ -487,8 +589,9 @@
         </div>
 
         <div class="flex space-x-4">
-            <button id="generate-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md" disabled>
-                Submit for Approval
+            <button id="generate-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <span id="generate-btn-text">Submit for Approval</span>
+                <span id="multi-generate-btn-text" class="hidden">Generate <span id="btn-combination-count">0</span> Item Codes</span>
             </button>
             <button id="block-btn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-md">
                 Block Combination
@@ -1508,7 +1611,117 @@
         </div>
     </div>
 
-    <!-- Add Standard Value Modal -->
+    <!-- Combination Preview Modal -->
+    <div id="combination-preview-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-96">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold">🔍 Generated Combinations Preview</h3>
+                        <div class="text-sm text-gray-600">
+                            <span id="preview-combination-count">0</span> combinations will be generated
+                        </div>
+                    </div>
+                    
+                    <div class="max-h-64 overflow-y-auto">
+                        <div id="combinations-preview-list" class="space-y-2">
+                            <!-- Combinations will be rendered here -->
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-6 pt-4 border-t">
+                        <button onclick="closeCombinationPreview()" 
+                                class="px-4 py-2 text-gray-600 border rounded-md hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button onclick="proceedWithMultiSubmission()" 
+                                class="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                            🚀 Generate All Items
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Multi-Item Progress Modal -->
+    <div id="multi-item-progress-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold">🚀 Generating Multiple Item Codes</h3>
+                        <div class="text-sm text-gray-600">
+                            <span id="progress-current">0</span> / <span id="progress-total">0</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="w-full bg-gray-200 rounded-full h-4 mb-4">
+                        <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-green-500 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    
+                    <!-- Status Display -->
+                    <div class="space-y-2 mb-4">
+                        <div class="flex justify-between text-sm">
+                            <span>✅ Successful:</span>
+                            <span id="success-count" class="font-bold text-green-600">0</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span>⚠️ Duplicates Skipped:</span>
+                            <span id="duplicate-count" class="font-bold text-yellow-600">0</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span>❌ Failed:</span>
+                            <span id="failure-count" class="font-bold text-red-600">0</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Current Item Display -->
+                    <div class="bg-blue-50 p-3 rounded-lg mb-4">
+                        <div class="text-sm font-medium text-blue-800">Currently Processing:</div>
+                        <div id="current-item-display" class="text-sm text-blue-700 font-mono">
+                            Initializing...
+                        </div>
+                    </div>
+                    
+                    <!-- Results Log -->
+                    <div class="max-h-32 overflow-y-auto bg-gray-50 p-3 rounded border">
+                        <div id="progress-log" class="text-xs font-mono text-gray-600">
+                            Starting batch generation...
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-6 pt-4 border-t">
+                        <button id="close-progress-btn" onclick="closeProgressModal()" 
+                                class="hidden px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">
+                            Close
+                        </button>
+                        <button id="cancel-progress-btn" onclick="cancelMultiSubmission()" 
+                                class="px-4 py-2 text-red-600 border border-red-300 rounded-md hover:bg-red-50">
+                            Cancel Process
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batch Approval Enhancement Notice -->
+    <div id="batch-approval-notice" class="fixed bottom-4 right-4 bg-yellow-50 border border-yellow-200 p-4 rounded-lg shadow-lg hidden max-w-sm">
+        <div class="flex items-start">
+            <svg class="w-5 h-5 text-yellow-600 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+                <div class="text-sm font-medium text-yellow-800 mb-1">Batch Approval Available</div>
+                <div class="text-xs text-yellow-700">Multiple item codes submitted. Use the Approval Portal's batch approval feature to process them efficiently.</div>
+                <button onclick="hideBatchApprovalNotice()" class="mt-2 text-xs text-yellow-600 hover:text-yellow-800">Dismiss</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Standard Value Modal (UNCHANGED) -->
     <div id="add-value-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50 flex items-center justify-center">
         <div class="bg-white p-6 rounded-lg w-96">
             <h3 class="text-lg font-semibold mb-4">Request New Standard Value</h3>
@@ -2158,6 +2371,13 @@ var supabase = window.supabaseClient;
 let requestsData = [];
 let historyData = [];
 let isCardView = true;
+
+// Multi-item generation state
+let isMultiItemMode = false;
+let multiAttributeSelections = {};
+let maxCombinations = 100; // Default limit
+let combinationCount = 0;
+let isMultiSubmissionCanceled = false;
 // MD5 hash function to match database
 function md5(string) {
     function md5cycle(x, k) {
@@ -2298,33 +2518,69 @@ function md5(string) {
 async function getNextVariationNumber(projectId, baseSignature) {
     try {
         console.log(' Getting next variation number for base signature:', baseSignature);
+        console.log(' Searching for variations with signature:', baseSignature);
         
         // Query ALL variations (approved AND pending) with same base signature
+        // CRITICAL FIX: Also find variations by item_code pattern, not just is_variation flag
         const { data: existingVariations, error } = await supabase
             .from('item_code_workflow')
-            .select('variation_number, item_code, status')
+            .select('variation_number, item_code, status, base_combination_signature, is_variation')
             .eq('project_id', projectId)
             .eq('base_combination_signature', baseSignature)
-            .eq('is_variation', true)
             .order('variation_number', { ascending: false });
+            
+        // Also query ALL variations to see what signatures actually exist
+        const { data: allVariations, error: allError } = await supabase
+            .from('item_code_workflow')
+            .select('variation_number, item_code, status, base_combination_signature, is_variation')
+            .eq('project_id', projectId)
+            .order('variation_number', { ascending: false });
+            
+        if (allVariations) {
+            console.log(' ALL existing variations in database:');
+            allVariations.forEach(v => {
+                const hasVariationSuffix = v.item_code && v.item_code.includes('/');
+                console.log(`   ${v.item_code} | signature: ${v.base_combination_signature} | status: ${v.status} | is_variation: ${v.is_variation} | has_suffix: ${hasVariationSuffix}`);
+            });
+        }
             
         if (error) {
             console.error('Error fetching variations:', error);
             return 1; // Default to first variation
         }
-        
+            
         console.log('Existing variations found:', existingVariations);
         
-        // Track maximum variation number found
+        // Filter to only actual variations (either is_variation=true OR has variation suffix in item_code)
+        const actualVariations = existingVariations ? existingVariations.filter(v => 
+            v.is_variation === true || (v.item_code && v.item_code.includes('/'))
+        ) : [];
+        
+        console.log('Filtered actual variations:', actualVariations);
+        
+        // Track maximum variation number found by extracting from item_code suffix
         let maxVariationNumber = 0;
         
-        if (!existingVariations || existingVariations.length === 0) {
+        if (!actualVariations || actualVariations.length === 0) {
             console.log(' No active variations found');
         } else {
-            // Get the highest variation number from active codes
-            maxVariationNumber = Math.max(...existingVariations.map(v => v.variation_number || 0));
-            console.log(` Active variations found: ${existingVariations.length}, highest: /${maxVariationNumber}`);
-            console.log('Active variation breakdown:', existingVariations.map(v => `${v.item_code} (${v.status}) = /${v.variation_number}`));
+            // Extract variation numbers from item codes (more reliable than stored variation_number field)
+            const variationNumbers = actualVariations.map(v => {
+                if (v.item_code && v.item_code.includes('/')) {
+                    const suffix = v.item_code.split('/')[1];
+                    return parseInt(suffix) || 0;
+                }
+                return v.variation_number || 0;
+            });
+            
+            maxVariationNumber = Math.max(...variationNumbers);
+            console.log(` Active variations found: ${actualVariations.length}, highest: /${maxVariationNumber}`);
+            console.log('Active variation breakdown:', actualVariations.map(v => {
+                const extractedNum = v.item_code && v.item_code.includes('/') 
+                    ? parseInt(v.item_code.split('/')[1]) || 0 
+                    : v.variation_number || 0;
+                return `${v.item_code} (${v.status}) = /${extractedNum} | is_variation: ${v.is_variation}`;
+            }));
         }
         
         // CRITICAL: Also check disabled_item_codes table for variations
@@ -2471,10 +2727,10 @@ async function getNextSerialNumber() {
         if (!currentProject) return false;
         
         if (!currentProject.id && currentProject.project_id) {
-            console.log('ðŸ”„ Fixing currentProject: copying project_id to id property');
+            console.log('Ã°Å¸â€â€ž Fixing currentProject: copying project_id to id property');
             currentProject.id = currentProject.project_id;
         } else if (!currentProject.project_id && currentProject.id) {
-            console.log('ðŸ”„ Fixing currentProject: copying id to project_id property');
+            console.log('Ã°Å¸â€â€ž Fixing currentProject: copying id to project_id property');
             currentProject.project_id = currentProject.id;
         }
         
@@ -2496,32 +2752,32 @@ async function getNextSerialNumberWithoutReuse() {
             return 1;
         }
         
-        console.log('🔢 Getting next sequential serial for project:', currentProject.id);
-        console.log('📍 Project CSI Path:', `${currentProject.division_code}-${currentProject.section_code}-${currentProject.detailed_section_code}-${currentProject.item_code}`);
+        console.log('ðŸ”¢ Getting next sequential serial for project:', currentProject.id);
+        console.log('ðŸ“ Project CSI Path:', `${currentProject.division_code}-${currentProject.section_code}-${currentProject.detailed_section_code}-${currentProject.item_code}`);
         
         // Use the robust RPC function that handles all edge cases
-        const { data: rpcResult, error: rpcError } = await supabase.rpc('get_next_serial_comprehensive_working', {
+        const { data: rpcResult, error: rpcError } = await supabase.rpc('get_next_serial_enhanced', {
             project_id_param: currentProject.id
         });
         
         if (rpcError) {
-            console.error('🚨 RPC function failed, falling back to JavaScript logic:', rpcError);
+            console.error('ðŸš¨ RPC function failed, falling back to JavaScript logic:', rpcError);
             // Fallback to enhanced JavaScript logic
             return await getNextSerialNumberFallback();
         }
         
-        console.log('✅ RPC returned next serial:', rpcResult);
+        console.log('âœ… RPC returned next serial:', rpcResult);
         return rpcResult;
         
     } catch (error) {
-        console.error('🚨 Error in serial generation, using fallback:', error);
+        console.error('ðŸš¨ Error in serial generation, using fallback:', error);
         return await getNextSerialNumberFallback();
     }
 }
 
 // CRITICAL: Global item code uniqueness check - handles ALL formats including additional levels
 async function ensureItemCodeUniqueness(proposedItemCode, maxAttempts = 100) {
-    console.log(`🔒 GLOBAL UNIQUENESS CHECK for: ${proposedItemCode}`);
+    console.log(`ðŸ”’ GLOBAL UNIQUENESS CHECK for: ${proposedItemCode}`);
     
     let attempt = 0;
     let testCode = proposedItemCode;
@@ -2549,27 +2805,27 @@ async function ensureItemCodeUniqueness(proposedItemCode, maxAttempts = 100) {
         
         if (!activeExists && !disabledExists) {
             if (attempt > 0) {
-                console.log(`✅ Found unique code after ${attempt + 1} attempts: ${testCode}`);
+                console.log(`âœ… Found unique code after ${attempt + 1} attempts: ${testCode}`);
             } else {
-                console.log(`✅ Proposed code is unique: ${testCode}`);
+                console.log(`âœ… Proposed code is unique: ${testCode}`);
             }
             return testCode;
         }
         
         if (disabledExists) {
-            console.warn(`🚫 Code ${testCode} exists in DISABLED codes - blocked!`);
+            console.warn(`ðŸš« Code ${testCode} exists in DISABLED codes - blocked!`);
             console.warn(`   Disabled reason: ${disabledCheck.data[0]?.disabled_reason}`);
             console.warn(`   Disabled date: ${disabledCheck.data[0]?.disabled_at}`);
         }
         
         if (activeExists) {
-            console.warn(`🚫 Code ${testCode} exists in ACTIVE codes - blocked!`);
+            console.warn(`ðŸš« Code ${testCode} exists in ACTIVE codes - blocked!`);
         }
         
         // Enhanced serial increment logic to handle different formats
         testCode = incrementItemCodeSerial(testCode, attempt + 1);
         attempt++;
-        console.log(`🔄 Trying attempt ${attempt}: ${testCode}`);
+        console.log(`ðŸ”„ Trying attempt ${attempt}: ${testCode}`);
     }
     
     throw new Error(`Failed to find unique item code after ${maxAttempts} attempts. Last attempt: ${testCode}`);
@@ -2607,7 +2863,7 @@ function incrementItemCodeSerial(itemCode, incrementBy = 1) {
 
 // Enhanced fallback function with COMPREHENSIVE pattern matching for all item code formats
 async function getNextSerialNumberFallback() {
-    console.log('🔢 ENHANCED SERIAL GENERATION with Comprehensive Pattern Matching');
+    console.log('ðŸ”¢ ENHANCED SERIAL GENERATION with Comprehensive Pattern Matching');
     
     let highestSerial = 0;
     
@@ -2622,12 +2878,12 @@ async function getNextSerialNumberFallback() {
     
     if (!activeError && highestActive && highestActive.length > 0) {
         highestSerial = Math.max(highestSerial, highestActive[0].serial_number);
-        console.log('📈 Highest active serial in current project:', highestActive[0].serial_number);
+        console.log('ðŸ“ˆ Highest active serial in current project:', highestActive[0].serial_number);
     }
 
     // Step 2: Build the base CSI pattern for comprehensive checking
     const csiBase = `${currentProject.division_code}-${currentProject.section_code}-${currentProject.detailed_section_code}-${currentProject.item_code}`;
-    console.log('🔍 Base CSI pattern:', csiBase);
+    console.log('ðŸ” Base CSI pattern:', csiBase);
     
     // Step 3: COMPREHENSIVE disabled code pattern matching
     // This will find ALL disabled codes that start with the same CSI base, regardless of format
@@ -2641,20 +2897,20 @@ async function getNextSerialNumberFallback() {
     if (!disabledError && allMatchingDisabled && allMatchingDisabled.length > 0) {
         const disabledHighest = Math.max(...allMatchingDisabled.map(d => d.serial_number));
         highestSerial = Math.max(highestSerial, disabledHighest);
-        console.log(`🚫 Found ${allMatchingDisabled.length} disabled codes matching pattern ${csiBase}%`);
-        console.log('🔢 Highest serial from ALL disabled codes:', disabledHighest);
+        console.log(`ðŸš« Found ${allMatchingDisabled.length} disabled codes matching pattern ${csiBase}%`);
+        console.log('ðŸ”¢ Highest serial from ALL disabled codes:', disabledHighest);
         
         // Show examples of the different formats found
         const formatExamples = allMatchingDisabled.slice(0, 10).map(d => 
             `${d.item_code}(S:${d.serial_number})`);
-        console.log('📋 Example disabled codes found:', formatExamples.join(', '));
+        console.log('ðŸ“‹ Example disabled codes found:', formatExamples.join(', '));
         
         // If we found many codes, show the range
         if (allMatchingDisabled.length > 10) {
-            console.log(`📊 ... and ${allMatchingDisabled.length - 10} more disabled codes`);
+            console.log(`ðŸ“Š ... and ${allMatchingDisabled.length - 10} more disabled codes`);
         }
     } else {
-        console.log('⚠️ No disabled codes found for pattern:', `${csiBase}%`);
+        console.log('âš ï¸ No disabled codes found for pattern:', `${csiBase}%`);
     }
     
     // Step 4: Additional safety check - look for exact CSI base code matches
@@ -2668,19 +2924,19 @@ async function getNextSerialNumberFallback() {
     if (!exactError && exactCsiMatch && exactCsiMatch.length > 0) {
         const exactHighest = Math.max(...exactCsiMatch.map(d => d.serial_number));
         highestSerial = Math.max(highestSerial, exactHighest);
-        console.log('🎯 Additional check - Exact CSI base match highest serial:', exactHighest);
+        console.log('ðŸŽ¯ Additional check - Exact CSI base match highest serial:', exactHighest);
     }
     
     const calculatedSerial = highestSerial + 1;
-    console.log(`🎯 Final calculated serial: ${calculatedSerial}`);
-    console.log(`📝 This serial will be used to generate a new unique item code`);
+    console.log(`ðŸŽ¯ Final calculated serial: ${calculatedSerial}`);
+    console.log(`ðŸ“ This serial will be used to generate a new unique item code`);
     
     return calculatedSerial;
 }
 
 // Enhanced diagnostic function specifically for rope project format analysis
 window.checkDisabledCodesForCSI = async function(csiPath) {
-    console.log(`🔍 DIAGNOSTIC: Comprehensive analysis for CSI path: ${csiPath}`);
+    console.log(`ðŸ” DIAGNOSTIC: Comprehensive analysis for CSI path: ${csiPath}`);
     console.log('=' .repeat(60));
     
     try {
@@ -2692,17 +2948,17 @@ window.checkDisabledCodesForCSI = async function(csiPath) {
             .order('serial_number', { ascending: true });
         
         if (prefixError) {
-            console.error('❌ Error querying prefix match:', prefixError);
+            console.error('âŒ Error querying prefix match:', prefixError);
         } else {
-            console.log(`📊 Item codes starting with "${csiPath}": ${prefixMatch?.length || 0} codes`);
+            console.log(`ðŸ“Š Item codes starting with "${csiPath}": ${prefixMatch?.length || 0} codes`);
             if (prefixMatch && prefixMatch.length > 0) {
-                console.log('📋 Found disabled codes:');
+                console.log('ðŸ“‹ Found disabled codes:');
                 prefixMatch.forEach(code => {
-                    console.log(`  • ${code.item_code} (Serial: ${code.serial_number}) - Disabled: ${new Date(code.disabled_at).toLocaleDateString()}`);
+                    console.log(`  â€¢ ${code.item_code} (Serial: ${code.serial_number}) - Disabled: ${new Date(code.disabled_at).toLocaleDateString()}`);
                 });
                 const maxSerial = Math.max(...prefixMatch.map(c => c.serial_number));
-                console.log(`📈 HIGHEST SERIAL from disabled codes: ${maxSerial}`);
-                console.log(`🎯 NEXT SAFE SERIAL should be: ${maxSerial + 1}`);
+                console.log(`ðŸ“ˆ HIGHEST SERIAL from disabled codes: ${maxSerial}`);
+                console.log(`ðŸŽ¯ NEXT SAFE SERIAL should be: ${maxSerial + 1}`);
                 
                 // Analyze format patterns
                 const formatPatterns = {};
@@ -2716,9 +2972,9 @@ window.checkDisabledCodesForCSI = async function(csiPath) {
                     formatPatterns[pattern] = (formatPatterns[pattern] || 0) + 1;
                 });
                 
-                console.log('📊 Format patterns found:');
+                console.log('ðŸ“Š Format patterns found:');
                 Object.entries(formatPatterns).forEach(([pattern, count]) => {
-                    console.log(`  • ${pattern}: ${count} codes`);
+                    console.log(`  â€¢ ${pattern}: ${count} codes`);
                 });
             }
         }
@@ -2731,9 +2987,9 @@ window.checkDisabledCodesForCSI = async function(csiPath) {
             .order('serial_number', { ascending: true });
         
         if (!exactError && exactMatch && exactMatch.length > 0) {
-            console.log(`🔍 Exact CSI base match: ${exactMatch.length} codes`);
+            console.log(`ðŸ” Exact CSI base match: ${exactMatch.length} codes`);
             exactMatch.forEach(code => {
-                console.log(`  • ${code.item_code} (Serial: ${code.serial_number}) - CSI: ${code.csi_base_code}`);
+                console.log(`  â€¢ ${code.item_code} (Serial: ${code.serial_number}) - CSI: ${code.csi_base_code}`);
             });
         }
         
@@ -2749,16 +3005,16 @@ window.checkDisabledCodesForCSI = async function(csiPath) {
                 .eq('item_code', csiComponents[3]);
             
             if (!projectsError && projects) {
-                console.log(`🏗️ Current projects with same CSI path: ${projects.length}`);
+                console.log(`ðŸ—ï¸ Current projects with same CSI path: ${projects.length}`);
                 projects.forEach(proj => {
                     const addLevel = proj.additional_level_value ? ` (${proj.additional_level_name}: ${proj.additional_level_value})` : '';
-                    console.log(`  • Project ID: ${proj.id} - Name: ${proj.project_name} - Status: ${proj.status}${addLevel}`);
+                    console.log(`  â€¢ Project ID: ${proj.id} - Name: ${proj.project_name} - Status: ${proj.status}${addLevel}`);
                 });
             }
         }
         
     } catch (error) {
-        console.error('🚨 Diagnostic error:', error);
+        console.error('ðŸš¨ Diagnostic error:', error);
     }
     
     console.log('=' .repeat(60));
@@ -2766,7 +3022,7 @@ window.checkDisabledCodesForCSI = async function(csiPath) {
 
 // Specific rope project test with format analysis
 window.testRopeProjectIssue = async function() {
-    console.log('🧪 TESTING ROPE PROJECT ISSUE - Format Analysis');
+    console.log('ðŸ§ª TESTING ROPE PROJECT ISSUE - Format Analysis');
     console.log('Testing CSI path: xxbbgggg-57');
     
     // First show what's in disabled codes
@@ -2774,7 +3030,7 @@ window.testRopeProjectIssue = async function() {
     
     // Then show what the current system would generate
     if (currentProject) {
-        console.log('\n🔮 CURRENT PROJECT GENERATION TEST:');
+        console.log('\nðŸ”® CURRENT PROJECT GENERATION TEST:');
         console.log('Current project CSI:', `${currentProject.division_code}-${currentProject.section_code}-${currentProject.detailed_section_code}-${currentProject.item_code}`);
         console.log('Additional level value:', currentProject.additional_level_value || 'None');
         
@@ -2793,59 +3049,59 @@ window.testRopeProjectIssue = async function() {
                 .limit(1);
             
             if (conflictCheck && conflictCheck.length > 0) {
-                console.error('🚨 CONFLICT: Proposed code exists in disabled codes!');
+                console.error('ðŸš¨ CONFLICT: Proposed code exists in disabled codes!');
             } else {
-                console.log('✅ No conflict detected with disabled codes');
+                console.log('âœ… No conflict detected with disabled codes');
             }
         } catch (error) {
             console.error('Error in generation test:', error);
         }
     } else {
-        console.log('⚠️ No current project selected for generation test');
+        console.log('âš ï¸ No current project selected for generation test');
     }
 };
 
 // Quick test function for the rope project issue
 window.testRopeProjectIssue = async function() {
-    console.log('🧪 TESTING ROPE PROJECT ISSUE');
+    console.log('ðŸ§ª TESTING ROPE PROJECT ISSUE');
     console.log('Testing CSI path: xxbbgggg-57');
     await window.checkDisabledCodesForCSI('xxbbgggg-57');
 };
 
 // Test the global uniqueness check function
 window.testGlobalUniqueness = async function(testCode) {
-    console.log(`🧪 TESTING GLOBAL UNIQUENESS for: ${testCode}`);
+    console.log(`ðŸ§ª TESTING GLOBAL UNIQUENESS for: ${testCode}`);
     try {
         const result = await ensureItemCodeUniqueness(testCode || 'xxbbgggg-57-00001');
-        console.log('✅ Uniqueness test result:', result);
+        console.log('âœ… Uniqueness test result:', result);
     } catch (error) {
-        console.error('❌ Uniqueness test failed:', error);
+        console.error('âŒ Uniqueness test failed:', error);
     }
 };
 
 // Comprehensive test for item code generation with disabled codes
 window.testItemCodeGenerationRobustness = async function() {
-    console.log('🧪 COMPREHENSIVE ITEM CODE GENERATION TEST');
+    console.log('ðŸ§ª COMPREHENSIVE ITEM CODE GENERATION TEST');
     console.log('=' .repeat(60));
     
     if (!currentProject) {
-        console.log('❌ No current project selected');
+        console.log('âŒ No current project selected');
         return;
     }
     
     try {
         // Test 1: Check what serial number would be generated
-        console.log('📊 Step 1: Testing serial number calculation');
+        console.log('ðŸ“Š Step 1: Testing serial number calculation');
         const nextSerial = await getNextSerialNumber();
-        console.log(`📈 Next serial calculated: ${nextSerial}`);
+        console.log(`ðŸ“ˆ Next serial calculated: ${nextSerial}`);
         
         // Test 2: Check what item code would be generated
-        console.log('\n📊 Step 2: Testing item code generation');
+        console.log('\nðŸ“Š Step 2: Testing item code generation');
         const itemCode = await generateItemCodeWithVariations();
-        console.log(`🏷️  Generated item code: ${itemCode}`);
+        console.log(`ðŸ·ï¸  Generated item code: ${itemCode}`);
         
         // Test 3: Check if the generated code conflicts with disabled codes
-        console.log('\n📊 Step 3: Testing against disabled codes');
+        console.log('\nðŸ“Š Step 3: Testing against disabled codes');
         const { data: conflictCheck } = await supabase
             .from('disabled_item_codes')
             .select('item_code, disabled_reason, disabled_at')
@@ -2853,12 +3109,12 @@ window.testItemCodeGenerationRobustness = async function() {
             .limit(1);
         
         if (conflictCheck && conflictCheck.length > 0) {
-            console.error('🚨 CONFLICT DETECTED! Generated code exists in disabled codes:');
+            console.error('ðŸš¨ CONFLICT DETECTED! Generated code exists in disabled codes:');
             console.error('   Item Code:', conflictCheck[0].item_code);
             console.error('   Disabled Reason:', conflictCheck[0].disabled_reason);
             console.error('   Disabled Date:', conflictCheck[0].disabled_at);
         } else {
-            console.log('✅ No conflict with disabled codes');
+            console.log('âœ… No conflict with disabled codes');
         }
         
         // Test 4: Check active codes conflict
@@ -2869,21 +3125,21 @@ window.testItemCodeGenerationRobustness = async function() {
             .limit(1);
         
         if (activeConflict && activeConflict.length > 0) {
-            console.error('🚨 CONFLICT DETECTED! Generated code exists in active codes:');
+            console.error('ðŸš¨ CONFLICT DETECTED! Generated code exists in active codes:');
             console.error('   Item Code:', activeConflict[0].item_code);
         } else {
-            console.log('✅ No conflict with active codes');
+            console.log('âœ… No conflict with active codes');
         }
         
-        console.log('\n🎯 TEST SUMMARY:');
+        console.log('\nðŸŽ¯ TEST SUMMARY:');
         console.log(`   Project: ${currentProject.project_name}`);
         console.log(`   CSI Path: ${currentProject.division_code}-${currentProject.section_code}-${currentProject.detailed_section_code}-${currentProject.item_code}`);
         console.log(`   Next Serial: ${nextSerial}`);
         console.log(`   Generated Code: ${itemCode}`);
-        console.log(`   Safe to use: ${(!conflictCheck?.length && !activeConflict?.length) ? 'YES ✅' : 'NO ❌'}`);
+        console.log(`   Safe to use: ${(!conflictCheck?.length && !activeConflict?.length) ? 'YES âœ…' : 'NO âŒ'}`);
         
     } catch (error) {
-        console.error('🚨 Test failed with error:', error);
+        console.error('ðŸš¨ Test failed with error:', error);
     }
     
     console.log('=' .repeat(60));
@@ -3052,10 +3308,14 @@ async function checkCombinationExists(combination, uom, country, modelNumber, un
                 console.log(' Approved variations found:', baseMatches.length);
                 console.log(' Next variation number will be:', nextVariationNumber);
                 
+                // Extract base item code by removing variation suffix (everything after first '/')
+                const baseItemCode = baseItem.item_code.split('/')[0];
+                console.log(' Base item code extracted:', baseItemCode, 'from:', baseItem.item_code);
+                
                 return { 
                     exists: false, 
                     canCreateVariation: true,
-                    baseItemCode: baseItem.item_code,
+                    baseItemCode: baseItemCode,
                     existingVariations: baseMatches.length,
                     willBeVariation: true,
                     nextVariationNumber: nextVariationNumber
@@ -4839,7 +5099,7 @@ async function loadUOMs() {
             }
         }
 // Load currencies
-        async function loadCurrencies() {
+        async function loadCurrencies(targetElement = null) {
             try {
                 const { data, error } = await supabase
                     .from('currencies')
@@ -4849,17 +5109,37 @@ async function loadUOMs() {
                 
                 if (error) throw error;
                 
-                const currencySelect = document.getElementById('currency-select');
-                currencySelect.innerHTML = '<option value="">Select currency...</option>';
-                
-                (data || []).forEach(currency => {
-                    const option = document.createElement('option');
-                    option.value = currency.currency_code;
-                    option.textContent = `${currency.currency_name} (${currency.currency_symbol})`;
-                    currencySelect.appendChild(option);
-                });
+                const currencySelect = targetElement || document.getElementById('currency-select');
+                if (currencySelect) {
+                    currencySelect.innerHTML = '<option value="">Select currency...</option>';
+                    
+                    (data || []).forEach(currency => {
+                        const option = document.createElement('option');
+                        option.value = currency.currency_code;
+                        option.textContent = `${currency.currency_name} (${currency.currency_symbol})`;
+                        currencySelect.appendChild(option);
+                    });
+                }
             } catch (error) {
                 console.error('Error loading currencies:', error);
+                // Add fallback currencies if database is empty
+                const currencySelect = targetElement || document.getElementById('currency-select');
+                if (currencySelect) {
+                    currencySelect.innerHTML = '<option value="">Select currency...</option>';
+                    const fallbackCurrencies = [
+                        { currency_code: 'USD', currency_name: 'US Dollar', currency_symbol: '$' },
+                        { currency_code: 'EUR', currency_name: 'Euro', currency_symbol: '€' },
+                        { currency_code: 'SAR', currency_name: 'Saudi Riyal', currency_symbol: 'ر.س' },
+                        { currency_code: 'AED', currency_name: 'UAE Dirham', currency_symbol: 'د.إ' }
+                    ];
+                    
+                    fallbackCurrencies.forEach(currency => {
+                        const option = document.createElement('option');
+                        option.value = currency.currency_code;
+                        option.textContent = `${currency.currency_name} (${currency.currency_symbol})`;
+                        currencySelect.appendChild(option);
+                    });
+                }
             }
         }
 
@@ -5063,35 +5343,92 @@ function renderAttributes() {
                 
                 // Only proceed if we have active (non-deprecated) values
                 if (activeValues.length > 0) {
-                    activeValues.forEach((value, valueIndex) => {
-                        const radioId = `attr-${originalIndex}-val-${valueIndex}`;
+                    // Check if we're in multi-item mode for this rendering
+                    if (isMultiItemMode) {
+                        // Multi-select mode - render checkboxes
+                        html += `
+                            </div>
+                            <div class="w-full mt-2">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-gray-700">Select multiple values:</span>
+                                    <div class="text-xs text-gray-500 space-x-2">
+                                        <button type="button" onclick="selectAllValues(${attr.attribute_id})" 
+                                                class="text-blue-600 hover:text-blue-800">Select All</button>
+                                        <span>|</span>
+                                        <button type="button" onclick="clearAllValues(${attr.attribute_id})" 
+                                                class="text-red-600 hover:text-red-800">Clear All</button>
+                                    </div>
+                                </div>
+                                <div class="max-h-48 overflow-y-auto border border-gray-200 rounded p-3 space-y-1">
+                        `;
                         
-                        // Enhanced handling for units
-                        let valueName, valueUnit;
-                        if (typeof value === 'object' && value !== null) {
-                            valueName = value.name || value.value || value;
-                            valueUnit = value.unit || value.unit_code || '';
-                        } else {
-                            valueName = value;
-                            // Look for unit in separate attribute property
-                            valueUnit = attr.unit_of_measurement || attr.default_unit || '';
-                        }
-                        
-                        // If no unit found in standard value, check attribute level
-                        if (!valueUnit && attr.units && Array.isArray(attr.units) && attr.units.length > 0) {
-                            valueUnit = attr.units[0]; // Use first available unit as default
-                        }
+                        // Render checkboxes for multi-select
+                        activeValues.forEach((value, valueIndex) => {
+                            // Enhanced handling for units
+                            let valueName, valueUnit;
+                            if (typeof value === 'object' && value !== null) {
+                                valueName = value.name || value.value || value;
+                                valueUnit = value.unit || value.unit_code || '';
+                            } else {
+                                valueName = value;
+                                // Look for unit in separate attribute property
+                                valueUnit = attr.unit_of_measurement || attr.default_unit || '';
+                            }
+                            
+                            // If no unit found in standard value, check attribute level
+                            if (!valueUnit && attr.units && Array.isArray(attr.units) && attr.units.length > 0) {
+                                valueUnit = attr.units[0]; // Use first available unit as default
+                            }
+                            
+                            html += `
+                                <label class="flex items-center space-x-2 hover:bg-gray-50 p-1 rounded cursor-pointer">
+                                    <input type="checkbox" 
+                                           class="h-4 w-4 text-blue-600 rounded multi-select-checkbox"
+                                           data-attr-id="${attr.attribute_id}"
+                                           data-value="${valueName}"
+                                           data-value-index="${valueIndex}"
+                                           onchange="handleMultiAttributeSelection(${attr.attribute_id}, '${valueName}', ${valueIndex}, this.checked)">
+                                    <span class="text-sm text-gray-700">${valueName} ${valueUnit ? `(${valueUnit})` : ''}</span>
+                                </label>
+                            `;
+                        });
                         
                         html += `
-                            <label class="flex items-center">
-                                <input type="radio" id="${radioId}" name="attr-${originalIndex}" 
-                                       value="${valueName}" class="mr-1"
-                                       data-unit="${valueUnit}"
-                                       onchange="selectAttribute(${attr.attribute_id}, '${valueName}', ${valueIndex + 1}, '${valueUnit}')"
-                                <span class="text-sm">${valueName} ${valueUnit ? `(${valueUnit})` : ''}</span>
-                            </label>
+                                </div>
+                            </div>
                         `;
-                    });
+                    } else {
+                        // Single-select mode - render radio buttons (original behavior)
+                        activeValues.forEach((value, valueIndex) => {
+                            const radioId = `attr-${originalIndex}-val-${valueIndex}`;
+                            
+                            // Enhanced handling for units
+                            let valueName, valueUnit;
+                            if (typeof value === 'object' && value !== null) {
+                                valueName = value.name || value.value || value;
+                                valueUnit = value.unit || value.unit_code || '';
+                            } else {
+                                valueName = value;
+                                // Look for unit in separate attribute property
+                                valueUnit = attr.unit_of_measurement || attr.default_unit || '';
+                            }
+                            
+                            // If no unit found in standard value, check attribute level
+                            if (!valueUnit && attr.units && Array.isArray(attr.units) && attr.units.length > 0) {
+                                valueUnit = attr.units[0]; // Use first available unit as default
+                            }
+                            
+                            html += `
+                                <label class="flex items-center">
+                                    <input type="radio" id="${radioId}" name="attr-${originalIndex}" 
+                                           value="${valueName}" class="mr-1"
+                                           data-unit="${valueUnit}"
+                                           onchange="selectAttribute(${attr.attribute_id}, '${valueName}', ${valueIndex + 1}, '${valueUnit}')"
+                                    <span class="text-sm">${valueName} ${valueUnit ? `(${valueUnit})` : ''}</span>
+                                </label>
+                            `;
+                        });
+                    }
                 } else {
                     // All values are deprecated - fall through to manual entry
                     console.log(` All values deprecated for attribute "${attr.attribute_name}" - enabling manual entry`);
@@ -5156,36 +5493,7 @@ function renderAttributes() {
                     </div>
                 `;
             }
-                
-            if (!hasActiveStandardValues) {
-                html += `
-                    <div class="w-full">
-                        <div class="text-sm ${allValuesDeprecated ? 'text-orange-600' : 'text-gray-500'} italic mb-3">${messageText}</div>
-                    </div>
-                </div>
-                <div class="w-full mt-3 p-4 ${allValuesDeprecated ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 border-gray-300'} border rounded-lg">
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Value</label>
-                            <input type="text" 
-                                   id="${manualInputId}" 
-                                   placeholder="Enter custom value..." 
-                                   class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                   data-attr-id="${attr.attribute_id}"
-                                   autocomplete="off">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Unit (Optional)</label>
-                            <select id="${unitSelectId}" 
-                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    data-attr-id="${attr.attribute_id}">
-                                <option value="">Select unit...</option>
-                            </select>
-                        </div>
-                        <p class="text-xs text-gray-600">Enter a custom value for this attribute since no standard values are configured.</p>
-                    </div>
-                `;
-            }
+
 
             html += '</div>';
 
@@ -5475,7 +5783,7 @@ async function checkBlockedCombination(projectId, combinationSignature) {
     try {
         // Get the next available serial number from the database
         const correctSerial = await getNextSerialNumber();
-        console.log('🔢 Using starting serial number:', correctSerial);
+        console.log('ðŸ”¢ Using starting serial number:', correctSerial);
         
         const csiCode = currentProject.item_code.replace(/\s+/g, '');
         let baseCode = csiCode;
@@ -5483,6 +5791,11 @@ async function checkBlockedCombination(projectId, combinationSignature) {
         const hasAdditionalLevel = currentProject.additional_level_value && 
                                   currentProject.additional_level_value.trim() !== '';
         const hasModelNumber = document.getElementById('model-number').value.trim();
+        
+        console.log('🔧 ITEM CODE GENERATION DEBUG:');
+        console.log('   hasAdditionalLevel:', hasAdditionalLevel);
+        console.log('   hasModelNumber:', hasModelNumber);
+        console.log('   modelNumber value:', `"${hasModelNumber}"`);
         
         let additionalLevelOrder = null;
         
@@ -5495,29 +5808,38 @@ async function checkBlockedCombination(projectId, combinationSignature) {
                 currentProject.item_code,
                 currentProject.additional_level_value
             );
-            console.log('📋 Additional level order for', currentProject.additional_level_value, ':', additionalLevelOrder);
+            console.log('ðŸ“‹ Additional level order for', currentProject.additional_level_value, ':', additionalLevelOrder);
         }
         
         // Build the proposed code
         let proposedCode;
+        console.log('🔧 BUILDING PROPOSED CODE:');
+        console.log('   hasAdditionalLevel:', hasAdditionalLevel);
+        console.log('   hasModelNumber:', hasModelNumber);
+        console.log('   additionalLevelOrder:', additionalLevelOrder);
+        
         if (hasAdditionalLevel && hasModelNumber) {
             proposedCode = `${baseCode}-${additionalLevelOrder}-n-${String(correctSerial).padStart(5, '0')}`;
-        } else if (hasAdditionalLevel) {
+            console.log('   ✅ WITH additional level AND model: ', proposedCode);
+        } else if (hasAdditionalLevel && !hasModelNumber) {
             proposedCode = `${baseCode}-${additionalLevelOrder}-${String(correctSerial).padStart(5, '0')}`;
-        } else if (hasModelNumber) {
+            console.log('   ✅ WITH additional level, NO model: ', proposedCode);
+        } else if (hasModelNumber && !hasAdditionalLevel) {
             proposedCode = `${baseCode}-n-${String(correctSerial).padStart(5, '0')}`;
+            console.log('   ✅ WITH model, NO additional level: ', proposedCode);
         } else {
             proposedCode = `${baseCode}-${String(correctSerial).padStart(5, '0')}`;
+            console.log('   ✅ NO model, NO additional level: ', proposedCode);
         }
         
         // *** CRITICAL: GLOBAL UNIQUENESS CHECK ***
         const uniqueCode = await ensureItemCodeUniqueness(proposedCode);
         
-        console.log(`✅ Final unique item code: ${uniqueCode}`);
+        console.log(`âœ… Final unique item code: ${uniqueCode}`);
         return uniqueCode;
         
     } catch (error) {
-        console.error('🚨 Error generating item code:', error);
+        console.error('ðŸš¨ Error generating item code:', error);
         return 'Error generating code';
     }
 }
@@ -5532,6 +5854,13 @@ async function generateItemCodeWithVariations() {
         const modelNumber = document.getElementById('model-number')?.value;
         const manufacturer = document.getElementById('manufacturer-select')?.value;
         
+        console.log('🔧 generateItemCodeWithVariations DEBUG:');
+        console.log('   Reading DOM values:');
+        console.log('   - uom:', uom);
+        console.log('   - country:', country);
+        console.log('   - modelNumber:', `"${modelNumber}"`);
+        console.log('   - manufacturer:', manufacturer);
+        
         // Check if this will be a variation
         const combination = getCombinationSignature();
         const duplicateCheck = await checkCombinationExists(
@@ -5541,21 +5870,40 @@ async function generateItemCodeWithVariations() {
         if (duplicateCheck.willBeVariation) {
             // This will be a variation - use base item code + variation suffix
             const variationNumber = duplicateCheck.nextVariationNumber;
-            const proposedVariationCode = `${duplicateCheck.baseItemCode}/${variationNumber}`;
-            console.log('🔄 Creating variation:', proposedVariationCode);
             
-            // *** CRITICAL: GLOBAL UNIQUENESS CHECK FOR VARIATIONS ***
-            const uniqueVariationCode = await ensureItemCodeUniqueness(proposedVariationCode);
-            console.log('✅ Final unique variation code:', uniqueVariationCode);
-            return uniqueVariationCode;
+            // CRITICAL: Check if model number exists to determine if base should have -n- indicator
+            const hasModelForVariation = modelNumber && modelNumber.trim() !== '';
+            let baseCodeForVariation = duplicateCheck.baseItemCode;
+            
+            if (hasModelForVariation) {
+                // If model exists, the base code should include -n- indicator
+                // Extract parts and reconstruct with model indicator
+                const parts = baseCodeForVariation.split('-');
+                if (parts.length >= 3) {
+                    // Format: TT-2-00002 -> TT-2-n-00002
+                    const csiBase = parts[0]; // TT
+                    const additionalLevel = parts[1]; // 2
+                    const serial = parts[2]; // 00002
+                    baseCodeForVariation = `${csiBase}-${additionalLevel}-n-${serial}`;
+                    console.log('🔧 Model detected, updating base code for variation:', baseCodeForVariation);
+                }
+            }
+            
+            const proposedVariationCode = `${baseCodeForVariation}/${variationNumber}`;
+            console.log('ðŸ”„ Creating variation:', proposedVariationCode);
+            
+            // For variations, we trust the variation numbering logic - NO global uniqueness check
+            // The variation number is already calculated to be unique within the base item context
+            console.log('✅ Final variation code:', proposedVariationCode);
+            return proposedVariationCode;
         } else {
             // This will be a new base item - generate normally with uniqueness check
-            console.log('🆕 Creating new base item');
+            console.log('ðŸ†• Creating new base item');
             return await generateItemCode(); // This now includes global uniqueness check
         }
         
     } catch (error) {
-        console.error('🚨 Error generating item code with variations:', error);
+        console.error('ðŸš¨ Error generating item code with variations:', error);
         return await generateItemCode(); // Fallback to original function
     }
 }      
@@ -5867,8 +6215,34 @@ function generateBaseSignatureClient() {
 
 // Helper function to generate variation signature (matching database logic)
 function generateVariationSignatureClient(uom, country, modelNumber, manufacturer) {
-    const variationString = `${uom || ''}|${country || ''}|${modelNumber || ''}|${manufacturer || ''}`;
-    return md5(variationString);
+    // Convert null/undefined to 'NULL' string, keep empty strings as ''
+    const normalizeValue = (value) => {
+        if (value === null || value === undefined) return 'NULL';
+        if (value === '') return '';  // Keep empty strings as empty strings
+        return String(value);  // Convert to string
+    };
+    
+    const normalizedUom = normalizeValue(uom);
+    const normalizedCountry = normalizeValue(country);
+    const normalizedModel = normalizeValue(modelNumber);
+    const normalizedManufacturer = normalizeValue(manufacturer);
+    
+    const variationString = `${normalizedUom}|${normalizedCountry}|${normalizedModel}|${normalizedManufacturer}`;
+    
+    console.log('🔍 generateVariationSignatureClient DEBUG:', {
+        uom: uom,
+        country: country,
+        modelNumber: modelNumber,
+        manufacturer: manufacturer,
+        normalizedUom: normalizedUom,
+        normalizedCountry: normalizedCountry,
+        normalizedModel: normalizedModel,
+        normalizedManufacturer: normalizedManufacturer,
+        variationString: variationString
+    });
+    const signature = md5(variationString);
+    console.log('🔍 Generated variation signature:', signature);
+    return signature;
 }
 
 // New function that includes the new fields in hash generation
@@ -6179,6 +6553,13 @@ function getFormattedCombination() {
     console.log('=== SUBMIT START ===');
     console.log('User role:', currentUser.role);
     console.log('Current project ID:', currentProject.id);
+    console.log('Multi-item mode:', isMultiItemMode);
+
+    // Check if we're in multi-item mode
+    if (isMultiItemMode) {
+        console.log('🚀 Redirecting to multi-item submission...');
+        return submitMultipleItemCodes();
+    }
 
     // CRITICAL: Prevent double submissions
     const generateBtn = document.getElementById('generate-btn');
@@ -6188,7 +6569,7 @@ function getFormattedCombination() {
         return;
     }
 
-    console.log(' Starting new submission process');
+    console.log(' Starting new single-item submission process');
 
     // Disable button and mark as submitting
     generateBtn.disabled = true;
@@ -6638,7 +7019,7 @@ function getFormattedCombination() {
                         base_combination_signature: getBaseCombinationSignature(),
                         variation_fields_signature: getVariationFieldsSignature(),
                         variation_suffix: itemCode.includes('/') ? '/' + itemCode.split('/')[1] : '',
-                        variation_number: itemCode.includes('/') ? parseInt(itemCode.split('/')[1]) : 0,
+                        variation_number: itemCode.includes('/') ? Math.max(1, parseInt(itemCode.split('/')[1]) || 1) : 0,
                         is_variation: itemCode.includes('/')
                     })
                     .select();
@@ -6722,7 +7103,7 @@ function getFormattedCombination() {
                         base_combination_signature: getBaseCombinationSignature(),
                         variation_fields_signature: getVariationFieldsSignature(),
                         variation_suffix: itemCode.includes('/') ? '/' + itemCode.split('/')[1] : '',
-                        variation_number: itemCode.includes('/') ? parseInt(itemCode.split('/')[1]) : 0,
+                        variation_number: itemCode.includes('/') ? Math.max(1, parseInt(itemCode.split('/')[1]) || 1) : 0,
                         is_variation: itemCode.includes('/')
                     })
                     .select();
@@ -19387,23 +19768,23 @@ function exportCurrentResults(format) {
     
     // Function to validate current project state
     function validateCurrentProject(functionName) {
-        console.log(`ðŸ” [${functionName}] Validating current project...`);
+        console.log(`Ã°Å¸â€Â [${functionName}] Validating current project...`);
         
         if (!currentProject) {
-            console.error(`âŒ [${functionName}] currentProject is null/undefined`);
+            console.error(`Ã¢ÂÅ’ [${functionName}] currentProject is null/undefined`);
             console.error('Project loading state may be incomplete');
             return false;
         }
         
-        console.log(`ðŸ” [${functionName}] currentProject object properties:`, Object.keys(currentProject));
-        console.log(`ðŸ” [${functionName}] Full currentProject object:`, currentProject);
+        console.log(`Ã°Å¸â€Â [${functionName}] currentProject object properties:`, Object.keys(currentProject));
+        console.log(`Ã°Å¸â€Â [${functionName}] Full currentProject object:`, currentProject);
         
         if (!currentProject.id) {
-            console.error(`âŒ [${functionName}] currentProject.id is undefined`);
+            console.error(`Ã¢ÂÅ’ [${functionName}] currentProject.id is undefined`);
             console.error('Checking for alternative ID properties...');
             if (currentProject.project_id) {
-                console.log(`ðŸ”„ [${functionName}] Found project_id instead:`, currentProject.project_id);
-                console.log(`ðŸ”„ [${functionName}] Attempting to fix by setting id = project_id`);
+                console.log(`Ã°Å¸â€â€ž [${functionName}] Found project_id instead:`, currentProject.project_id);
+                console.log(`Ã°Å¸â€â€ž [${functionName}] Attempting to fix by setting id = project_id`);
                 currentProject.id = currentProject.project_id;
             } else {
                 console.error('Current project object:', currentProject);
@@ -19411,7 +19792,7 @@ function exportCurrentResults(format) {
             }
         }
         
-        console.log(`âœ… [${functionName}] Project validation passed:`, {
+        console.log(`Ã¢Å“â€¦ [${functionName}] Project validation passed:`, {
             id: currentProject.id,
             project_id: currentProject.project_id,
             division_code: currentProject.division_code,
@@ -19425,11 +19806,11 @@ function exportCurrentResults(format) {
 
     // Debug the serial number detection comprehensively
     async function debugSerialNumberDetection() {
-        console.log('ðŸ” DEBUGGING SERIAL NUMBER DETECTION');
+        console.log('Ã°Å¸â€Â DEBUGGING SERIAL NUMBER DETECTION');
         console.log('=' .repeat(60));
         
         if (!validateCurrentProject('debugSerialNumberDetection')) {
-            console.log('âŒ Cannot proceed with debugging - no valid current project');
+            console.log('Ã¢ÂÅ’ Cannot proceed with debugging - no valid current project');
             return;
         }
         
@@ -19437,10 +19818,10 @@ function exportCurrentResults(format) {
         
         // Test 1: Check what CSI base code we're constructing
         const csiBaseCode = `${currentProject.division_code}-${currentProject.section_code}-${currentProject.detailed_section_code}-${currentProject.item_code}`;
-        console.log('ðŸ—ï¸ Constructed CSI Base Code:', csiBaseCode);
+        console.log('Ã°Å¸Ââ€”Ã¯Â¸Â Constructed CSI Base Code:', csiBaseCode);
         
         // Test 2: Query workflow table
-        console.log('\nðŸ“Š TESTING WORKFLOW TABLE QUERY:');
+        console.log('\nÃ°Å¸â€œÅ  TESTING WORKFLOW TABLE QUERY:');
         try {
             const { data: workflowCodes, error: workflowError } = await supabase
                 .from('item_code_workflow')
@@ -19449,20 +19830,20 @@ function exportCurrentResults(format) {
                 .order('serial_number', { ascending: false });
             
             if (workflowError) {
-                console.error('âŒ Workflow query error:', workflowError);
+                console.error('Ã¢ÂÅ’ Workflow query error:', workflowError);
             } else {
-                console.log('âœ… Workflow codes found:', workflowCodes?.length || 0);
+                console.log('Ã¢Å“â€¦ Workflow codes found:', workflowCodes?.length || 0);
                 if (workflowCodes && workflowCodes.length > 0) {
-                    console.log('ðŸ“ˆ Highest workflow serial:', workflowCodes[0].serial_number);
-                    console.log('ðŸ”¢ All workflow serials:', workflowCodes.map(c => c.serial_number).filter(s => s !== null));
+                    console.log('Ã°Å¸â€œË† Highest workflow serial:', workflowCodes[0].serial_number);
+                    console.log('Ã°Å¸â€Â¢ All workflow serials:', workflowCodes.map(c => c.serial_number).filter(s => s !== null));
                 }
             }
         } catch (error) {
-            console.error('ðŸ’¥ Workflow query exception:', error);
+            console.error('Ã°Å¸â€™Â¥ Workflow query exception:', error);
         }
         
         // Test 3: Query disabled table by project_id (old way)
-        console.log('\nðŸš« TESTING DISABLED TABLE BY PROJECT_ID (OLD WAY):');
+        console.log('\nÃ°Å¸Å¡Â« TESTING DISABLED TABLE BY PROJECT_ID (OLD WAY):');
         try {
             const { data: disabledByProject, error: disabledProjectError } = await supabase
                 .from('disabled_item_codes')
@@ -19471,19 +19852,19 @@ function exportCurrentResults(format) {
                 .order('serial_number', { ascending: false });
             
             if (disabledProjectError) {
-                console.error('âŒ Disabled by project query error:', disabledProjectError);
+                console.error('Ã¢ÂÅ’ Disabled by project query error:', disabledProjectError);
             } else {
-                console.log('âœ… Disabled codes by project_id found:', disabledByProject?.length || 0);
+                console.log('Ã¢Å“â€¦ Disabled codes by project_id found:', disabledByProject?.length || 0);
                 if (disabledByProject && disabledByProject.length > 0) {
-                    console.log('ðŸ“ˆ Highest disabled serial (by project_id):', disabledByProject[0].serial_number);
+                    console.log('Ã°Å¸â€œË† Highest disabled serial (by project_id):', disabledByProject[0].serial_number);
                 }
             }
         } catch (error) {
-            console.error('ðŸ’¥ Disabled by project query exception:', error);
+            console.error('Ã°Å¸â€™Â¥ Disabled by project query exception:', error);
         }
         
         // Test 4: Query disabled table by CSI base code (new way)
-        console.log('\nðŸš« TESTING DISABLED TABLE BY CSI BASE CODE (NEW WAY):');
+        console.log('\nÃ°Å¸Å¡Â« TESTING DISABLED TABLE BY CSI BASE CODE (NEW WAY):');
         try {
             const { data: disabledByCsi, error: disabledCsiError } = await supabase
                 .from('disabled_item_codes')
@@ -19492,20 +19873,20 @@ function exportCurrentResults(format) {
                 .order('serial_number', { ascending: false });
             
             if (disabledCsiError) {
-                console.error('âŒ Disabled by CSI query error:', disabledCsiError);
+                console.error('Ã¢ÂÅ’ Disabled by CSI query error:', disabledCsiError);
             } else {
-                console.log('âœ… Disabled codes by CSI base code found:', disabledByCsi?.length || 0);
+                console.log('Ã¢Å“â€¦ Disabled codes by CSI base code found:', disabledByCsi?.length || 0);
                 if (disabledByCsi && disabledByCsi.length > 0) {
-                    console.log('ðŸ“ˆ Highest disabled serial (by CSI):', disabledByCsi[0].serial_number);
-                    console.log('ðŸ” Sample disabled codes:', disabledByCsi.slice(0, 3));
+                    console.log('Ã°Å¸â€œË† Highest disabled serial (by CSI):', disabledByCsi[0].serial_number);
+                    console.log('Ã°Å¸â€Â Sample disabled codes:', disabledByCsi.slice(0, 3));
                 }
             }
         } catch (error) {
-            console.error('ðŸ’¥ Disabled by CSI query exception:', error);
+            console.error('Ã°Å¸â€™Â¥ Disabled by CSI query exception:', error);
         }
         
         // Test 5: Query ALL disabled codes to see what CSI base codes exist
-        console.log('\nðŸ” SAMPLING ALL DISABLED CODES:');
+        console.log('\nÃ°Å¸â€Â SAMPLING ALL DISABLED CODES:');
         try {
             const { data: allDisabled, error: allDisabledError } = await supabase
                 .from('disabled_item_codes')
@@ -19515,23 +19896,23 @@ function exportCurrentResults(format) {
                 .limit(10);
             
             if (allDisabledError) {
-                console.error('âŒ All disabled query error:', allDisabledError);
+                console.error('Ã¢ÂÅ’ All disabled query error:', allDisabledError);
             } else {
-                console.log('âœ… Sample of all disabled codes:', allDisabled?.length || 0);
+                console.log('Ã¢Å“â€¦ Sample of all disabled codes:', allDisabled?.length || 0);
                 if (allDisabled && allDisabled.length > 0) {
-                    console.log('ðŸ” Sample CSI base codes in disabled table:');
+                    console.log('Ã°Å¸â€Â Sample CSI base codes in disabled table:');
                     const uniqueCsi = [...new Set(allDisabled.map(d => d.csi_base_code))];
                     uniqueCsi.forEach(csi => console.log(`   - ${csi}`));
-                    console.log('ðŸ” Our CSI base code:', csiBaseCode);
-                    console.log('ðŸ” Matches found:', uniqueCsi.includes(csiBaseCode) ? 'âœ… YES' : 'âŒ NO');
+                    console.log('Ã°Å¸â€Â Our CSI base code:', csiBaseCode);
+                    console.log('Ã°Å¸â€Â Matches found:', uniqueCsi.includes(csiBaseCode) ? 'Ã¢Å“â€¦ YES' : 'Ã¢ÂÅ’ NO');
                 }
             }
         } catch (error) {
-            console.error('ðŸ’¥ All disabled query exception:', error);
+            console.error('Ã°Å¸â€™Â¥ All disabled query exception:', error);
         }
         
         // Test 6: Test RPC function call
-        console.log('\nðŸ”§ TESTING RPC FUNCTION CALL:');
+        console.log('\nÃ°Å¸â€Â§ TESTING RPC FUNCTION CALL:');
         try {
             const { data: rpcResult, error: rpcError } = await supabase.rpc('test_serial_detection_comprehensive', {
                 project_id_param: currentProject.id,
@@ -19539,38 +19920,38 @@ function exportCurrentResults(format) {
             });
             
             if (rpcError) {
-                console.error('âŒ RPC function error:', rpcError);
+                console.error('Ã¢ÂÅ’ RPC function error:', rpcError);
             } else {
-                console.log('âœ… RPC function result:', rpcResult);
+                console.log('Ã¢Å“â€¦ RPC function result:', rpcResult);
             }
         } catch (error) {
-            console.error('ðŸ’¥ RPC function exception:', error);
+            console.error('Ã°Å¸â€™Â¥ RPC function exception:', error);
         }
         
         console.log('\n' + '=' .repeat(60));
-        console.log('ðŸ” DEBUG COMPLETE - Check the logs above for issues');
+        console.log('Ã°Å¸â€Â DEBUG COMPLETE - Check the logs above for issues');
     }
 
     // Test the current serial function
     async function testCurrentSerialFunction() {
-        console.log('ðŸ§ª TESTING CURRENT getNextSerialNumber() FUNCTION');
+        console.log('Ã°Å¸Â§Âª TESTING CURRENT getNextSerialNumber() FUNCTION');
         
         if (!validateCurrentProject('testCurrentSerialFunction')) {
-            console.log('âŒ Cannot test serial function - no valid current project');
+            console.log('Ã¢ÂÅ’ Cannot test serial function - no valid current project');
             return;
         }
         
         try {
             const result = await getNextSerialNumber();
-            console.log('âœ… Current function returned:', result);
+            console.log('Ã¢Å“â€¦ Current function returned:', result);
             
             // Also test the comprehensive version if it exists
             if (typeof getNextSerialNumberWithoutReuse === 'function') {
                 const comprehensiveResult = await getNextSerialNumberWithoutReuse();
-                console.log('âœ… Comprehensive function returned:', comprehensiveResult);
+                console.log('Ã¢Å“â€¦ Comprehensive function returned:', comprehensiveResult);
             }
         } catch (error) {
-            console.error('âŒ Serial function error:', error);
+            console.error('Ã¢ÂÅ’ Serial function error:', error);
         }
     }
 
@@ -19586,11 +19967,11 @@ function exportCurrentResults(format) {
             projectId = currentProject.id;
         }
         if (!projectId) {
-            console.log('âŒ No project ID provided and no current project');
+            console.log('Ã¢ÂÅ’ No project ID provided and no current project');
             return;
         }
         
-        console.log('ðŸ” QUICK DEBUG for project:', projectId);
+        console.log('Ã°Å¸â€Â QUICK DEBUG for project:', projectId);
         
         try {
             const { data: rpcResult, error: rpcError } = await supabase.rpc('test_serial_detection_comprehensive', {
@@ -19599,16 +19980,16 @@ function exportCurrentResults(format) {
             });
             
             if (rpcError) {
-                console.error('âŒ RPC function error:', rpcError);
+                console.error('Ã¢ÂÅ’ RPC function error:', rpcError);
             } else {
-                console.log('âœ… COMPREHENSIVE SERIAL DEBUG RESULT:');
-                console.log('ðŸ“Š Workflow Analysis:', rpcResult.workflow_table_analysis);
-                console.log('ðŸš« Disabled Analysis:', rpcResult.disabled_table_analysis);
-                console.log('ðŸŽ¯ Final Calculation:', rpcResult.serial_calculation);
-                console.log('ðŸ” Queries Used:', rpcResult.queries_used);
+                console.log('Ã¢Å“â€¦ COMPREHENSIVE SERIAL DEBUG RESULT:');
+                console.log('Ã°Å¸â€œÅ  Workflow Analysis:', rpcResult.workflow_table_analysis);
+                console.log('Ã°Å¸Å¡Â« Disabled Analysis:', rpcResult.disabled_table_analysis);
+                console.log('Ã°Å¸Å½Â¯ Final Calculation:', rpcResult.serial_calculation);
+                console.log('Ã°Å¸â€Â Queries Used:', rpcResult.queries_used);
             }
         } catch (error) {
-            console.error('ðŸ’¥ RPC debug exception:', error);
+            console.error('Ã°Å¸â€™Â¥ RPC debug exception:', error);
         }
     };
 
@@ -19631,6 +20012,1060 @@ function exportCurrentResults(format) {
     });
 
     // ===== END BULK SELECTION FUNCTIONALITY =====
+
+    // ===== MULTI-ITEM GENERATION SYSTEM =====
+
+    // Initialize multi-item mode functionality
+    function initializeMultiItemMode() {
+        console.log('🚀 Initializing Multi-Item Generation Mode...');
+        
+        // Multi-item mode toggle
+        const multiItemModeCheckbox = document.getElementById('multi-item-mode');
+        if (multiItemModeCheckbox) {
+            multiItemModeCheckbox.addEventListener('change', toggleMultiItemMode);
+        }
+        
+        // Preview combinations button
+        const previewBtn = document.getElementById('preview-combinations-btn');
+        if (previewBtn) {
+            previewBtn.addEventListener('click', previewCombinations);
+        }
+        
+        // Unified settings change listeners
+        const unifiedInputs = [
+            'unified-uom-select', 'unified-country-select', 'unified-manufacturer-select',
+            'unified-model-input', 'unified-price-input', 'unified-currency-select'
+        ];
+        
+        unifiedInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.addEventListener('change', validateAndUpdateSubmitButton);
+                input.addEventListener('input', validateAndUpdateSubmitButton);
+            }
+        });
+        
+        // Initialize combination counter
+        updateCombinationCounter();
+        
+        console.log('✅ Multi-Item Mode initialized successfully');
+    }
+
+    // Load manufacturers for unified dropdown
+    async function loadManufacturersForUnified() {
+        try {
+            if (!currentProject?.project_id) {
+                console.log('No current project, cannot load manufacturers');
+                return;
+            }
+
+            const { data: manufacturers, error } = await supabase
+                .from('project_manufacturers')
+                .select('manufacturer_name')
+                .eq('project_id', currentProject.project_id)
+                .order('manufacturer_name', { ascending: true });
+
+            if (error) {
+                console.error('Error loading manufacturers:', error);
+                return;
+            }
+
+            const unifiedManufacturerSelect = document.getElementById('unified-manufacturer-select');
+            if (unifiedManufacturerSelect) {
+                unifiedManufacturerSelect.innerHTML = '<option value="">Select manufacturer...</option>';
+                if (manufacturers && manufacturers.length > 0) {
+                    manufacturers.forEach(manufacturer => {
+                        const option = document.createElement('option');
+                        option.value = manufacturer.manufacturer_name;
+                        option.textContent = manufacturer.manufacturer_name;
+                        unifiedManufacturerSelect.appendChild(option);
+                    });
+                    console.log(`✅ Loaded ${manufacturers.length} manufacturers for project ${currentProject.project_id}`);
+                } else {
+                    console.log('No manufacturers found for this project');
+                }
+            }
+        } catch (error) {
+            console.error('Error in loadManufacturersForUnified:', error);
+        }
+    }
+
+    // Add new manufacturer to unified dropdown
+    async function addNewManufacturerToUnified(manufacturerName) {
+        try {
+            if (!currentProject?.project_id) {
+                alert('No current project selected');
+                return;
+            }
+
+            const { data, error } = await supabase.rpc('add_manufacturer_to_project', {
+                project_id_param: currentProject.project_id,
+                manufacturer_name_param: manufacturerName,
+                created_by_param: currentUser.id
+            });
+
+            if (error) {
+                console.error('Error adding manufacturer:', error);
+                alert('Error adding manufacturer. Please try again.');
+                return;
+            }
+
+            console.log(`✅ Added new manufacturer: ${manufacturerName}`);
+            
+            // Reload the dropdown and select the new manufacturer
+            await loadManufacturersForUnified();
+            const unifiedManufacturerSelect = document.getElementById('unified-manufacturer-select');
+            if (unifiedManufacturerSelect) {
+                unifiedManufacturerSelect.value = manufacturerName;
+                validateAndUpdateSubmitButton(); // Update validation
+            }
+
+        } catch (error) {
+            console.error('Error in addNewManufacturerToUnified:', error);
+            alert('Error adding manufacturer. Please try again.');
+        }
+    }
+
+    // Toggle multi-item mode
+    function toggleMultiItemMode() {
+        const checkbox = document.getElementById('multi-item-mode');
+        isMultiItemMode = checkbox?.checked || false;
+        
+        console.log('Multi-item mode:', isMultiItemMode ? 'ENABLED' : 'DISABLED');
+        
+        // Show/hide UI elements
+        const combinationCounter = document.getElementById('combination-counter');
+        const multiItemInfo = document.getElementById('multi-item-info');
+        const unifiedSettings = document.getElementById('unified-settings');
+        const standardSettings = document.getElementById('standard-settings');
+        const generateBtnText = document.getElementById('generate-btn-text');
+        const multiGenerateBtnText = document.getElementById('multi-generate-btn-text');
+        
+        if (isMultiItemMode) {
+            combinationCounter?.classList.remove('hidden');
+            multiItemInfo?.classList.remove('hidden');
+            unifiedSettings?.classList.remove('hidden');
+            standardSettings?.classList.add('hidden');
+            generateBtnText?.classList.add('hidden');
+            multiGenerateBtnText?.classList.remove('hidden');
+            
+            // Copy existing values to unified settings
+            copyToUnifiedSettings();
+            
+            // Re-render attributes in multi-select mode
+            if (currentProject?.attributes) {
+                renderAttributes();
+            }
+            
+            // Populate unified dropdowns
+            populateUnifiedDropdowns();
+            
+        } else {
+            combinationCounter?.classList.add('hidden');
+            multiItemInfo?.classList.add('hidden');
+            unifiedSettings?.classList.add('hidden');
+            standardSettings?.classList.remove('hidden');
+            generateBtnText?.classList.remove('hidden');
+            multiGenerateBtnText?.classList.add('hidden');
+            
+            // Clear multi-selections and revert to single mode
+            multiAttributeSelections = {};
+            
+            // Re-render attributes in single-select mode
+            if (currentProject?.attributes) {
+                renderAttributes();
+            }
+        }
+        
+        updateCombinationCounter();
+        validateAndUpdateSubmitButton();
+    }
+
+    // Copy existing single-item settings to unified settings
+    function copyToUnifiedSettings() {
+        const mappings = [
+            ['uom-select', 'unified-uom-select'],
+            ['country-select', 'unified-country-select'],
+            ['model-number', 'unified-model-input'],
+            ['unit-price', 'unified-price-input'],
+            ['currency-select', 'unified-currency-select']
+        ];
+        
+        mappings.forEach(([sourceId, targetId]) => {
+            const source = document.getElementById(sourceId);
+            const target = document.getElementById(targetId);
+            if (source?.value && target) {
+                target.value = source.value;
+            }
+        });
+        
+        // Handle manufacturer (dropdown to dropdown)
+        const manufacturerSelect = document.getElementById('manufacturer-select');
+        const unifiedManufacturer = document.getElementById('unified-manufacturer-select');
+        if (manufacturerSelect?.value && unifiedManufacturer) {
+            unifiedManufacturer.value = manufacturerSelect.value;
+        }
+    }
+
+    // Populate unified dropdowns
+    function populateUnifiedDropdowns() {
+        // UOM dropdown
+        const unifiedUomSelect = document.getElementById('unified-uom-select');
+        if (unifiedUomSelect && uomList.length > 0) {
+            unifiedUomSelect.innerHTML = '<option value="">Select UoM...</option>';
+            uomList.forEach(uom => {
+                const option = document.createElement('option');
+                option.value = uom.uom_symbol || uom.uom_name;
+                option.textContent = `${uom.uom_name} (${uom.uom_symbol || uom.uom_name})`;
+                unifiedUomSelect.appendChild(option);
+            });
+        }
+        
+        // Country dropdown - ensure data is available
+        const unifiedCountrySelect = document.getElementById('unified-country-select');
+        if (unifiedCountrySelect) {
+            if (countriesList && countriesList.length > 0) {
+                unifiedCountrySelect.innerHTML = '<option value="">Select country...</option>';
+                countriesList.forEach(country => {
+                    const option = document.createElement('option');
+                    option.value = country.country_code;
+                    option.textContent = country.country_name;
+                    unifiedCountrySelect.appendChild(option);
+                });
+            } else {
+                // If no countries loaded, reload them
+                loadCountries().then(() => {
+                    if (countriesList && countriesList.length > 0) {
+                        unifiedCountrySelect.innerHTML = '<option value="">Select country...</option>';
+                        countriesList.forEach(country => {
+                            const option = document.createElement('option');
+                            option.value = country.country_code;
+                            option.textContent = country.country_name;
+                            unifiedCountrySelect.appendChild(option);
+                        });
+                    }
+                });
+            }
+        }
+        
+        // Manufacturer dropdown - populate from existing manufacturers
+        const unifiedManufacturerSelect = document.getElementById('unified-manufacturer-select');
+        if (unifiedManufacturerSelect) {
+            loadManufacturersForUnified();
+        }
+        
+        // Currency dropdown - load directly
+        const unifiedCurrencySelect = document.getElementById('unified-currency-select');
+        if (unifiedCurrencySelect) {
+            loadCurrencies(unifiedCurrencySelect);
+        }
+        
+        // Add manufacturer button functionality
+        const addManufacturerBtn = document.getElementById('add-unified-manufacturer-btn');
+        if (addManufacturerBtn) {
+            addManufacturerBtn.addEventListener('click', () => {
+                const manufacturerName = prompt('Enter new manufacturer name:');
+                if (manufacturerName && manufacturerName.trim()) {
+                    addNewManufacturerToUnified(manufacturerName.trim());
+                }
+            });
+        }
+    }
+
+    // Handle multi-attribute selection
+    function handleMultiAttributeSelection(attributeId, value, index, isSelected) {
+        console.log(`Multi-select: ${attributeId} - ${value} (${isSelected ? 'SELECTED' : 'DESELECTED'})`);
+        
+        if (!multiAttributeSelections[attributeId]) {
+            multiAttributeSelections[attributeId] = [];
+        }
+        
+        if (isSelected) {
+            // Add selection if not already present
+            const exists = multiAttributeSelections[attributeId].some(sel => sel.value === value);
+            if (!exists) {
+                multiAttributeSelections[attributeId].push({
+                    value: value,
+                    index: index
+                });
+            }
+        } else {
+            // Remove selection
+            multiAttributeSelections[attributeId] = multiAttributeSelections[attributeId]
+                .filter(selection => selection.value !== value);
+        }
+        
+        // Remove empty arrays
+        if (multiAttributeSelections[attributeId].length === 0) {
+            delete multiAttributeSelections[attributeId];
+        }
+        
+        updateCombinationCounter();
+        validateAndUpdateSubmitButton();
+    }
+
+    // Select all values for an attribute
+    function selectAllValues(attributeId) {
+        const checkboxes = document.querySelectorAll(`input[data-attr-id="${attributeId}"]`);
+        checkboxes.forEach(checkbox => {
+            if (!checkbox.checked) {
+                checkbox.checked = true;
+                handleMultiAttributeSelection(
+                    attributeId, 
+                    checkbox.dataset.value, 
+                    parseInt(checkbox.dataset.valueIndex), 
+                    true
+                );
+            }
+        });
+    }
+
+    // Clear all values for an attribute
+    function clearAllValues(attributeId) {
+        const checkboxes = document.querySelectorAll(`input[data-attr-id="${attributeId}"]`);
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                checkbox.checked = false;
+                handleMultiAttributeSelection(
+                    attributeId, 
+                    checkbox.dataset.value, 
+                    parseInt(checkbox.dataset.valueIndex), 
+                    false
+                );
+            }
+        });
+    }
+
+    // Update combination counter and limit checking
+    function updateCombinationCounter() {
+        if (!isMultiItemMode) return;
+        
+        const count = calculateCombinationCount();
+        combinationCount = count;
+        
+        // Update UI elements
+        const combinationCountElement = document.getElementById('combination-count');
+        const combinationProgressBar = document.getElementById('combination-progress');
+        const combinationWarning = document.getElementById('combination-warning');
+        const btnCountElement = document.getElementById('btn-combination-count');
+        
+        if (combinationCountElement) combinationCountElement.textContent = count;
+        if (btnCountElement) btnCountElement.textContent = count;
+        
+        // Update progress bar
+        const percentage = Math.min((count / maxCombinations) * 100, 100);
+        if (combinationProgressBar) {
+            combinationProgressBar.style.width = `${percentage}%`;
+            
+            // Color coding
+            if (percentage <= 50) {
+                combinationProgressBar.className = 'bg-green-500 h-2 rounded-full transition-all duration-300';
+            } else if (percentage <= 80) {
+                combinationProgressBar.className = 'bg-yellow-500 h-2 rounded-full transition-all duration-300';
+            } else {
+                combinationProgressBar.className = 'bg-red-500 h-2 rounded-full transition-all duration-300';
+            }
+        }
+        
+        // Show/hide warning
+        if (count > maxCombinations) {
+            combinationWarning?.classList.remove('hidden');
+        } else {
+            combinationWarning?.classList.add('hidden');
+        }
+        
+        console.log(`Combination count updated: ${count}/${maxCombinations}`);
+    }
+
+    // Calculate total number of combinations
+    function calculateCombinationCount() {
+        if (!isMultiItemMode) return 0;
+        
+        const attributeIds = Object.keys(multiAttributeSelections);
+        if (attributeIds.length === 0) return 0;
+        
+        let totalCombinations = 1;
+        attributeIds.forEach(attributeId => {
+            const selectionCount = multiAttributeSelections[attributeId].length;
+            if (selectionCount > 0) {
+                totalCombinations *= selectionCount;
+            }
+        });
+        
+        return totalCombinations;
+    }
+
+    // Generate simple item code for multi-item mode (no variation logic)
+    async function generateSimpleItemCode() {
+        if (!currentProject) return 'No project selected';
+        
+        try {
+            // Get next serial number for this project
+            const nextSerial = await getNextSerialNumberWithoutReuse();
+            
+            // Build the basic item code structure
+            const baseCode = `${currentProject.division_code}-${currentProject.section_code}-${currentProject.detailed_section_code}-${currentProject.item_code}`;
+            
+            // Check if has additional level
+            const hasAdditionalLevel = currentProject.additional_level_value && currentProject.additional_level_value.trim();
+            
+            let itemCode;
+            if (hasAdditionalLevel) {
+                // Get additional level order for proper sequencing
+                const levelOrder = await getAdditionalLevelOrder(
+                    currentProject.division_code,
+                    currentProject.section_code, 
+                    currentProject.detailed_section_code,
+                    currentProject.item_code,
+                    currentProject.additional_level_value
+                );
+                
+                // Build: base-additional-serial
+                itemCode = `${baseCode}-${currentProject.additional_level_value}-${nextSerial.toString().padStart(5, '0')}`;
+            } else {
+                // Build: base-serial  
+                itemCode = `${baseCode}-${nextSerial.toString().padStart(5, '0')}`;
+            }
+            
+            console.log(`✅ Generated simple item code: ${itemCode}`);
+            return itemCode;
+            
+        } catch (error) {
+            console.error('❌ Error generating simple item code:', error);
+            // Fallback to basic format
+            return `${currentProject.division_code}-${currentProject.section_code}-${currentProject.detailed_section_code}-${currentProject.item_code}-00001`;
+        }
+    }
+
+    // Generate Description2 for a specific combination
+    function generateDescription2ForCombination(combination) {
+        const parts = [];
+        
+        if (!currentProject || !currentProject.attributes) {
+            return '';
+        }
+        
+        // Use the combination data directly instead of global attributeSelections
+        attributeOrder.forEach(originalIndex => {
+            const attr = currentProject.attributes[originalIndex];
+            const selection = combination[attr.attribute_id];
+            
+            if (selection && selection.value) {
+                // Check per-attribute display setting
+                const includeAttributeName = attributeDisplaySettings[attr.attribute_id] !== false; // Default to true
+                
+                if (includeAttributeName) {
+                    // Format: "Attribute Name: Value"
+                    parts.push(`${attr.attribute_name}: ${selection.value}`);
+                } else {
+                    // Format: just "Value"
+                    parts.push(selection.value);
+                }
+            }
+        });
+
+        // Add unified model number if provided
+        const unifiedModelNumber = document.getElementById('unified-model-input')?.value?.trim();
+        if (unifiedModelNumber) {
+            parts.push(`Model: ${unifiedModelNumber}`);
+        }
+
+        return parts.join(', ');
+    }
+
+    // Generate all combinations (Cartesian product)
+    function generateAllCombinations() {
+        const attributes = Object.keys(multiAttributeSelections);
+        if (attributes.length === 0) return [];
+        
+        function cartesianProduct(arrays) {
+            if (arrays.length === 0) return [[]];
+            if (arrays.length === 1) return arrays[0].map(item => [item]);
+            
+            const result = [];
+            const firstArray = arrays[0];
+            const remainingArrays = arrays.slice(1);
+            const remainingCombinations = cartesianProduct(remainingArrays);
+            
+            firstArray.forEach(firstItem => {
+                remainingCombinations.forEach(remainingCombination => {
+                    result.push([firstItem, ...remainingCombination]);
+                });
+            });
+            
+            return result;
+        }
+        
+        const attributeArrays = attributes.map(attrId => 
+            multiAttributeSelections[attrId].map(selection => ({
+                attributeId: attrId,
+                ...selection
+            }))
+        );
+        
+        const combinations = cartesianProduct(attributeArrays);
+        
+        return combinations.map(combination => {
+            const combinationObj = {};
+            combination.forEach(item => {
+                combinationObj[item.attributeId] = {
+                    value: item.value,
+                    index: item.index
+                };
+            });
+            return combinationObj;
+        });
+    }
+
+    // Validate unified settings and update submit button
+    function validateAndUpdateSubmitButton() {
+        const generateBtn = document.getElementById('generate-btn');
+        if (!generateBtn) return;
+        
+        if (isMultiItemMode) {
+            const unifiedValid = validateUnifiedSettings();
+            const hasSelections = Object.keys(multiAttributeSelections).length > 0;
+            const withinLimit = combinationCount <= maxCombinations;
+            const canSubmit = unifiedValid && hasSelections && withinLimit && combinationCount > 0;
+            
+            generateBtn.disabled = !canSubmit;
+            if (canSubmit) {
+                generateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                generateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        } else {
+            // Single mode validation (existing logic)
+            // This will be handled by existing validateSubmission function
+        }
+    }
+
+    // Validate unified settings
+    function validateUnifiedSettings() {
+        if (!isMultiItemMode) return true;
+        
+        const unifiedUom = document.getElementById('unified-uom-select')?.value;
+        const unifiedCountry = document.getElementById('unified-country-select')?.value;
+        const unifiedPrice = document.getElementById('unified-price-input')?.value;
+        const unifiedCurrency = document.getElementById('unified-currency-select')?.value;
+        // Manufacturer is optional, so we don't validate it
+        
+        return unifiedUom && unifiedCountry && unifiedPrice && unifiedCurrency;
+    }
+
+    // Get unified settings values
+    function getUnifiedSettings() {
+        if (!isMultiItemMode) return null;
+        
+        return {
+            uom: document.getElementById('unified-uom-select')?.value,
+            country: document.getElementById('unified-country-select')?.value,
+            modelNumber: document.getElementById('unified-model-input')?.value?.trim() || '',
+            unitPrice: parseFloat(document.getElementById('unified-price-input')?.value) || 0,
+            currency: document.getElementById('unified-currency-select')?.value,
+            manufacturer: document.getElementById('unified-manufacturer-select')?.value?.trim()
+        };
+    }
+
+    // Preview combinations modal
+    function previewCombinations() {
+        const combinations = generateAllCombinations();
+        const modal = document.getElementById('combination-preview-modal');
+        const countElement = document.getElementById('preview-combination-count');
+        const listElement = document.getElementById('combinations-preview-list');
+        
+        if (!modal || combinations.length === 0) {
+            alert('No combinations to preview. Please select attributes first.');
+            return;
+        }
+        
+        countElement.textContent = combinations.length;
+        
+        // Render combination list (limit to first 50 for performance)
+        const previewCombinations = combinations.slice(0, 50);
+        listElement.innerHTML = previewCombinations.map((combination, index) => {
+            const formattedCombination = formatCombinationDisplay(combination);
+            return `
+                <div class="p-3 bg-gray-50 border rounded-lg">
+                    <div class="text-sm font-medium text-gray-700 mb-1">Combination ${index + 1}:</div>
+                    <div class="text-xs font-mono text-blue-600">${formattedCombination}</div>
+                </div>
+            `;
+        }).join('');
+        
+        if (combinations.length > 50) {
+            listElement.innerHTML += `
+                <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
+                    <div class="text-sm text-yellow-800">
+                        ... and ${combinations.length - 50} more combinations
+                    </div>
+                </div>
+            `;
+        }
+        
+        modal.classList.remove('hidden');
+    }
+
+    // Format combination for display
+    function formatCombinationDisplay(combination) {
+        const parts = [];
+        Object.keys(combination).forEach(attributeId => {
+            const attr = currentProject.attributes.find(a => a.attribute_id == attributeId);
+            const selection = combination[attributeId];
+            parts.push(`${attr?.attribute_name || attributeId}: ${selection.value}`);
+        });
+        return parts.join(' | ');
+    }
+
+    // Close combination preview modal
+    function closeCombinationPreview() {
+        const modal = document.getElementById('combination-preview-modal');
+        modal?.classList.add('hidden');
+    }
+
+    // Proceed with multi-submission
+    function proceedWithMultiSubmission() {
+        closeCombinationPreview();
+        submitMultipleItemCodes();
+    }
+
+    // Submit multiple item codes
+    async function submitMultipleItemCodes() {
+        console.log('🚀 Starting Multi-Item Code Generation...');
+        
+        const combinations = generateAllCombinations();
+        const unifiedSettings = getUnifiedSettings();
+        
+        if (!combinations.length || !unifiedSettings) {
+            alert('Invalid configuration for multi-item generation');
+            return;
+        }
+        
+        // Show progress modal
+        showProgressModal(combinations.length);
+        
+        let successCount = 0;
+        let duplicateCount = 0;
+        let failureCount = 0;
+        const results = [];
+        
+        isMultiSubmissionCanceled = false;
+        
+        try {
+            for (const [index, combination] of combinations.entries()) {
+                if (isMultiSubmissionCanceled) {
+                    console.log('Multi-submission canceled by user');
+                    break;
+                }
+                
+                // Update progress display
+                updateProgressDisplay(index + 1, combination);
+                
+                try {
+                    // Check for duplicates first
+                    const duplicateCheck = await supabase.rpc('enhanced_duplicate_check', {
+                        project_id_param: currentProject.id,
+                        attribute_selections_param: combination,
+                        uom_param: unifiedSettings.uom,
+                        country_of_origin_param: unifiedSettings.country,
+                        model_number_param: unifiedSettings.modelNumber,
+                        manufacturer_param: unifiedSettings.manufacturer
+                    });
+                    
+                    if (duplicateCheck.data?.exists) {
+                        duplicateCount++;
+                        results.push({
+                            combination: combination,
+                            status: 'duplicate',
+                            message: `Duplicate: ${duplicateCheck.data.item_code}`,
+                            itemCode: duplicateCheck.data.item_code
+                        });
+                        addToProgressLog(`⚠️ Skipped duplicate: ${duplicateCheck.data.item_code}`);
+                        continue;
+                    }
+                    
+                    // Submit the item code
+                    const submissionResult = await submitSingleCombination(combination, unifiedSettings);
+                    
+                    if (submissionResult.success) {
+                        successCount++;
+                        results.push({
+                            combination: combination,
+                            status: 'success',
+                            itemCode: submissionResult.itemCode,
+                            message: submissionResult.message
+                        });
+                        addToProgressLog(`✅ Generated: ${submissionResult.itemCode}`);
+                    } else if (submissionResult.isDuplicate) {
+                        duplicateCount++;
+                        results.push({
+                            combination: combination,
+                            status: 'duplicate',
+                            itemCode: submissionResult.itemCode,
+                            message: submissionResult.message
+                        });
+                        addToProgressLog(`⚠️ Skipped duplicate: ${submissionResult.itemCode}`);
+                    } else {
+                        throw new Error(submissionResult.message);
+                    }
+                    
+                } catch (error) {
+                    failureCount++;
+                    results.push({
+                        combination: combination,
+                        status: 'error',
+                        message: error.message
+                    });
+                    addToProgressLog(`❌ Failed: ${error.message}`);
+                }
+                
+                // Update counters
+                updateProgressCounters(successCount, duplicateCount, failureCount);
+                
+                // Small delay to prevent overwhelming the system
+                if (index < combinations.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+            }
+            
+            // Show completion
+            showMultiSubmissionComplete(successCount, duplicateCount, failureCount);
+            
+            // Show batch approval notice if items were created
+            if (successCount > 0) {
+                setTimeout(() => showBatchApprovalNotice(), 2000);
+            }
+            
+        } catch (error) {
+            console.error('Multi-submission failed:', error);
+            alert('Multi-submission failed: ' + error.message);
+            closeProgressModal();
+        }
+    }
+
+    // Submit single combination
+    async function submitSingleCombination(combination, unifiedSettings) {
+        // CRITICAL: Set global attributeSelections to this combination for proper variation logic
+        const originalAttributeSelections = { ...attributeSelections };
+        attributeSelections = combination;
+        
+        // CRITICAL: Also update DOM elements that generateItemCodeWithVariations reads from
+        const originalDOMValues = {
+            uom: document.getElementById('uom-select')?.value,
+            country: document.getElementById('country-select')?.value,
+            modelNumber: document.getElementById('model-number')?.value,
+            manufacturer: document.getElementById('manufacturer-select')?.value
+        };
+        
+        // Set DOM elements to unified settings for this combination
+        if (document.getElementById('uom-select')) {
+            document.getElementById('uom-select').value = unifiedSettings.uom;
+        }
+        if (document.getElementById('country-select')) {
+            document.getElementById('country-select').value = unifiedSettings.country;
+        }
+        if (document.getElementById('model-number')) {
+            document.getElementById('model-number').value = unifiedSettings.modelNumber || '';
+            console.log('🔧 SET DOM model-number to:', unifiedSettings.modelNumber || '');
+        }
+        // CRITICAL FIX: For multi-item mode, ensure manufacturer DOM element has the unified value
+        if (document.getElementById('manufacturer-select')) {
+            document.getElementById('manufacturer-select').value = unifiedSettings.manufacturer || '';
+            console.log('🔧 SET DOM manufacturer-select to:', unifiedSettings.manufacturer || '');
+        }
+        
+        try {
+            // Generate combination signature for submission
+            const combinationSignature = generateCombinationSignatureForSelection(combination);
+            
+            console.log('🔍 MULTI-ITEM DEBUG - Combination:', {
+                attributeSelections: combination,
+                unifiedSettings: unifiedSettings,
+                combinationSignature: combinationSignature,
+                domUOM: document.getElementById('uom-select')?.value,
+                domManufacturer: document.getElementById('manufacturer-select')?.value,
+                unifiedManufacturer: unifiedSettings.manufacturer,
+                unifiedManufacturerDropdown: document.getElementById('unified-manufacturer-select')?.value
+            });
+            
+            console.log('🔍 Calling generateItemCodeWithVariations...');
+            const itemCode = await generateItemCodeWithVariations();
+            console.log('🔍 Generated item code:', itemCode);
+            
+            // Extra debug: Check DOM values after generateItemCodeWithVariations
+            console.log('🔍 DOM values after generation:', {
+                domUOM: document.getElementById('uom-select')?.value,
+                domManufacturer: document.getElementById('manufacturer-select')?.value,
+                domCountry: document.getElementById('country-select')?.value,
+                domModel: document.getElementById('model-number')?.value
+            });
+            
+            // CRITICAL DEBUG: Test variation signature function directly
+            const testUom = document.getElementById('uom-select')?.value;
+            const testCountry = document.getElementById('country-select')?.value;
+            const testModel = document.getElementById('model-number')?.value;
+            const testManufacturer = document.getElementById('manufacturer-select')?.value;
+            
+            console.log('🧪 DIRECT VARIATION SIGNATURE TEST:');
+            console.log('🧪 Raw DOM Values:', {
+                testUom: testUom,
+                testCountry: testCountry,
+                testModel: testModel,
+                testManufacturer: testManufacturer
+            });
+            const testSignature = generateVariationSignatureClient(testUom, testCountry, testModel, testManufacturer);
+            console.log('🧪 Test signature result:', testSignature);
+            
+            // CRITICAL: Check if the generated item code already exists using direct item_code check
+            const { data: existingByCode, error: codeCheckError } = await supabase
+                .from('item_code_workflow')
+                .select('item_code, status')
+                .eq('project_id', currentProject.id)
+                .eq('item_code', itemCode)
+                .limit(1);
+            
+            if (!codeCheckError && existingByCode && existingByCode.length > 0) {
+                const existingItem = existingByCode[0];
+                console.log(`⚠️ DUPLICATE DETECTED by item_code: ${existingItem.item_code} (${existingItem.status})`);
+                return {
+                    success: false,
+                    isDuplicate: true,
+                    itemCode: existingItem.item_code,
+                    message: `Duplicate: ${existingItem.item_code} already exists with status ${existingItem.status}`
+                };
+            }
+            
+            const description1 = generateDescription1();
+            
+            // Generate Description2 using the combination data directly
+            const description2 = generateDescription2ForCombination(combination);
+            
+            // Get next serial number
+            const nextSerial = await getNextSerialNumber();
+            
+            // Construct proper CSI base code
+            const csiBaseCode = `${currentProject.division_code}-${currentProject.section_code}-${currentProject.detailed_section_code}-${currentProject.item_code}`;
+            
+            // Generate signatures
+            const baseSignature = generateBaseSignatureClient();
+            const variationSignature = generateVariationSignatureClient(
+                unifiedSettings.uom,
+                unifiedSettings.country,
+                unifiedSettings.modelNumber,
+                unifiedSettings.manufacturer
+            );
+            
+            console.log('Submitting item with data:', {
+                project_id: currentProject.id,
+                item_code: itemCode,
+                csi_base_code: csiBaseCode,
+                combination_signature: combinationSignature,
+                uom: unifiedSettings.uom,
+                manufacturer: unifiedSettings.manufacturer,
+                baseSignature: baseSignature,
+                variationSignature: variationSignature
+            });
+            
+            // Direct database insert instead of RPC call
+            const { data, error } = await supabase
+                .from('item_code_workflow')
+                .insert({
+                    project_id: currentProject.id,
+                    item_code: itemCode,
+                    csi_base_code: csiBaseCode,
+                    csi_description: currentProject.division_description || `${currentProject.project_name} - ${csiBaseCode}`,
+                    additional_level: currentProject.additional_level_value || '',
+                    description1: description1,
+                    description2: description2,
+                    entry_description: 'Generated via multi-item mode',
+                    combination_signature: combinationSignature,
+                    attribute_selections: combination,
+                    attribute_order: attributeOrder,
+                    include_headers_config: includeHeaders || {},
+                    uom: unifiedSettings.uom,
+                    country_of_origin: unifiedSettings.country,
+                    model_number: unifiedSettings.modelNumber || null,
+                    unit_price: unifiedSettings.unitPrice,
+                    currency_code: unifiedSettings.currency,
+                    manufacturer: unifiedSettings.manufacturer || null,
+                    item_group: currentProject.division_code,
+                    base_combination_signature: baseSignature,
+                    variation_fields_signature: variationSignature,
+                    created_by: currentUser.id,
+                    status: 'pending', // Will go through approval workflow
+                    serial_number: nextSerial,
+                    created_at: new Date().toISOString()
+                })
+                .select();
+            
+            if (error) {
+                console.error('Database insert error:', error);
+                console.error('Full error details:', JSON.stringify(error, null, 2));
+                
+                // If it's a duplicate key error, treat as duplicate
+                if (error.code === '23505' && error.message.includes('item_code_workflow_item_code_unique')) {
+                    const duplicateItemCode = error.details.match(/Key \(item_code\)=\(([^)]+)\)/)?.[1];
+                    console.log(`⚠️ DUPLICATE DETECTED from constraint error: ${duplicateItemCode}`);
+                    return {
+                        success: false,
+                        isDuplicate: true,
+                        itemCode: duplicateItemCode || itemCode,
+                        message: `Duplicate: ${duplicateItemCode || itemCode} already exists`
+                    };
+                }
+                
+                throw error;
+            }
+            
+            console.log('✅ Item submitted successfully:', data);
+            
+            return {
+                success: true,
+                itemCode: itemCode,
+                message: 'Item submitted successfully'
+            };
+        } finally {
+            // Restore original attributeSelections
+            attributeSelections = originalAttributeSelections;
+            
+            // Restore original DOM values
+            if (document.getElementById('uom-select')) {
+                document.getElementById('uom-select').value = originalDOMValues.uom || '';
+            }
+            if (document.getElementById('country-select')) {
+                document.getElementById('country-select').value = originalDOMValues.country || '';
+            }
+            if (document.getElementById('model-number')) {
+                document.getElementById('model-number').value = originalDOMValues.modelNumber || '';
+            }
+            if (document.getElementById('manufacturer-select')) {
+                document.getElementById('manufacturer-select').value = originalDOMValues.manufacturer || '';
+            }
+        }
+    }
+
+    // Generate combination signature for selection
+    function generateCombinationSignatureForSelection(combination) {
+        const parts = [];
+        attributeOrder.forEach(originalIndex => {
+            const attr = currentProject.attributes[originalIndex];
+            const selection = combination[attr.attribute_id];
+            
+            if (selection && selection.value) {
+                parts.push(`${attr.attribute_name}: ${selection.value}`);
+            } else {
+                parts.push(`${attr.attribute_name}: Not Selected`);
+            }
+        });
+        return parts.join(' | ');
+    }
+
+    // Progress modal functions
+    function showProgressModal(totalCount) {
+        const modal = document.getElementById('multi-item-progress-modal');
+        const totalElement = document.getElementById('progress-total');
+        
+        if (modal) {
+            totalElement.textContent = totalCount;
+            modal.classList.remove('hidden');
+            
+            // Reset progress
+            updateProgressCounters(0, 0, 0);
+            document.getElementById('progress-current').textContent = '0';
+            document.getElementById('progress-bar').style.width = '0%';
+            document.getElementById('current-item-display').textContent = 'Initializing...';
+            document.getElementById('progress-log').innerHTML = 'Starting batch generation...';
+            
+            // Show/hide buttons
+            document.getElementById('close-progress-btn').classList.add('hidden');
+            document.getElementById('cancel-progress-btn').classList.remove('hidden');
+        }
+    }
+
+    function updateProgressDisplay(current, combination) {
+        document.getElementById('progress-current').textContent = current;
+        const total = parseInt(document.getElementById('progress-total').textContent);
+        const percentage = (current / total) * 100;
+        document.getElementById('progress-bar').style.width = `${percentage}%`;
+        
+        const formattedCombination = formatCombinationDisplay(combination);
+        document.getElementById('current-item-display').textContent = formattedCombination;
+    }
+
+    function updateProgressCounters(success, duplicate, failure) {
+        document.getElementById('success-count').textContent = success;
+        document.getElementById('duplicate-count').textContent = duplicate;
+        document.getElementById('failure-count').textContent = failure;
+    }
+
+    function addToProgressLog(message) {
+        const log = document.getElementById('progress-log');
+        if (log) {
+            log.innerHTML += '\n' + message;
+            log.scrollTop = log.scrollHeight;
+        }
+    }
+
+    function showMultiSubmissionComplete(success, duplicate, failure) {
+        document.getElementById('cancel-progress-btn').classList.add('hidden');
+        document.getElementById('close-progress-btn').classList.remove('hidden');
+        
+        addToProgressLog('\n🎉 Multi-item generation completed!');
+        addToProgressLog(`✅ ${success} successful, ⚠️ ${duplicate} duplicates, ❌ ${failure} failed`);
+    }
+
+    function cancelMultiSubmission() {
+        isMultiSubmissionCanceled = true;
+        addToProgressLog('\n🛑 Canceling multi-submission...');
+        document.getElementById('cancel-progress-btn').textContent = 'Canceling...';
+        document.getElementById('cancel-progress-btn').disabled = true;
+    }
+
+    function closeProgressModal() {
+        const modal = document.getElementById('multi-item-progress-modal');
+        modal?.classList.add('hidden');
+        
+        // Refresh data
+        if (typeof loadUserRequests === 'function') {
+            loadUserRequests();
+        }
+    }
+
+    function showBatchApprovalNotice() {
+        const notice = document.getElementById('batch-approval-notice');
+        if (notice) {
+            notice.classList.remove('hidden');
+            setTimeout(() => {
+                notice.classList.add('hidden');
+            }, 10000); // Hide after 10 seconds
+        }
+    }
+
+    function hideBatchApprovalNotice() {
+        const notice = document.getElementById('batch-approval-notice');
+        notice?.classList.add('hidden');
+    }
+
+    // Make functions globally available
+    window.handleMultiAttributeSelection = handleMultiAttributeSelection;
+    window.selectAllValues = selectAllValues;
+    window.clearAllValues = clearAllValues;
+    window.previewCombinations = previewCombinations;
+    window.closeCombinationPreview = closeCombinationPreview;
+    window.proceedWithMultiSubmission = proceedWithMultiSubmission;
+    window.cancelMultiSubmission = cancelMultiSubmission;
+    window.closeProgressModal = closeProgressModal;
+    window.hideBatchApprovalNotice = hideBatchApprovalNotice;
+
+    // Initialize multi-item mode when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            initializeMultiItemMode();
+            console.log('Multi-item mode initialized');
+        }, 1500);
+    });
+
+    // ===== END MULTI-ITEM GENERATION SYSTEM =====
 
     </script>
 </body>
