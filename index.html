@@ -230,6 +230,36 @@
             </div>
         </div>
 
+        <!-- Project Classification Filter -->
+        <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-6">
+                    <label class="block text-sm font-medium text-blue-800">Filter Projects by Type:</label>
+                    <div class="flex items-center space-x-4">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="project-filter" value="all" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                            <span class="ml-2 text-sm text-gray-700">All Available</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="project-filter" value="permanent" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                            <span class="ml-2 text-sm text-gray-700">Permanent Only</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="project-filter" value="non-permanent" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                            <span class="ml-2 text-sm text-gray-700">Non-Permanent Only</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="project-filter" value="multiple" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                            <span class="ml-2 text-sm text-gray-700">Multiple Access Only</span>
+                        </label>
+                    </div>
+                </div>
+                <div id="filter-info" class="text-xs text-blue-600 font-medium">
+                    <!-- Will show count of filtered projects -->
+                </div>
+            </div>
+        </div>
+
         <!-- Tabs -->
         <div class="mb-6 border-b">
             <nav class="flex space-x-8">
@@ -2623,18 +2653,30 @@ async function checkCombinationExists(combination, uom, country, modelNumber, un
         }
         
         if (existingCodes && existingCodes.length > 0) {
+            console.log(`🔍 Found ${existingCodes.length} existing codes to check for duplicates`);
+            console.log(`🔍 CURRENT SIGNATURES: base=${baseSignature}, variation=${variationSignature}`);
+            
+            // Show actual signatures from database
+            existingCodes.slice(0, 5).forEach(code => {
+                console.log(`🔍 DB ITEM ${code.item_code}: base_sig="${code.base_combination_signature}", var_sig="${code.variation_fields_signature}"`);
+            });
+            
             // Check for exact duplicate (same base + same variation)
             const exactMatch = existingCodes.find(code => {
                 // For existing codes without variation fields, fall back to field comparison
                 if (code.base_combination_signature) {
-                    return code.base_combination_signature === baseSignature && 
-                           code.variation_fields_signature === variationSignature;
+                    const signatureMatch = code.base_combination_signature === baseSignature && 
+                                         code.variation_fields_signature === variationSignature;
+                    console.log(`🔍 Checking ${code.item_code}: base=${code.base_combination_signature === baseSignature}, variation=${code.variation_fields_signature === variationSignature}`);
+                    return signatureMatch;
                 } else {
                     // Legacy comparison for existing data
-                    return code.uom === uom && 
+                    const legacyMatch = code.uom === uom && 
                            code.country_of_origin === country && 
                            (code.model_number || '') === (modelNumber || '') &&
                            (code.manufacturer || '') === (manufacturer || '');
+                    console.log(`🔍 Legacy check ${code.item_code}: UOM=${code.uom === uom}, Country=${code.country_of_origin === country}, Model=${(code.model_number || '') === (modelNumber || '')}, Mfg=${(code.manufacturer || '') === (manufacturer || '')}`);
+                    return legacyMatch;
                 }
             });
             
@@ -3103,7 +3145,10 @@ if (currentUser.role === 'admin' || currentUser.role === 'erp_data_entry') {
         // Load approved projects and setup cascading dropdowns
 async function loadApprovedProjects() {
     try {
-        const { data, error } = await supabase.rpc('get_all_approved_projects');
+        // Use new access-controlled RPC function instead of get_all_approved_projects
+        const { data, error } = await supabase.rpc('get_user_accessible_projects', {
+            p_user_id: currentUser.id
+        });
         
         if (error) {
             console.error('Projects error:', error);
@@ -3111,19 +3156,15 @@ async function loadApprovedProjects() {
         }
 
         allProjects = data || [];
-        console.log('RAW PROJECT DATA:', allProjects);
+        console.log('FILTERED PROJECT DATA (based on creator category):', allProjects);
+        console.log(`User can access ${allProjects.length} projects based on category: ${data[0]?.creator_category || 'unknown'}`);
 
         // Check what's actually in the first project
         if (allProjects.length > 0) {
-            console.log('First project structure:', allProjects[0]);
-            console.log('First project attributes:', allProjects[0].attributes);
-            console.log('=== ALL FIELD NAMES IN FIRST PROJECT ===');
-            console.log('Available fields:', Object.keys(allProjects[0]));
-            console.log('Division field value:', allProjects[0].division_code);
-            console.log('Section field value:', allProjects[0].section_code);
-            console.log('Detailed section field value:', allProjects[0].detailed_section_code);
-            console.log('Item field value:', allProjects[0].item_code);
-            console.log('=== END FIELD DEBUG ===');
+            console.log('First accessible project:', allProjects[0]);
+            console.log('Access reason:', allProjects[0].access_reason);
+            console.log('Project classification:', allProjects[0].project_classification);
+            console.log('Creator category:', allProjects[0].creator_category);
         }
         
         // Fix missing item_description for each project
@@ -3151,11 +3192,112 @@ async function loadApprovedProjects() {
         setupCascadingDropdowns();
         setupAdvancedProjectSearch();
         setupSearchCodesTab();
+        setupProjectClassificationFilter(); // Add this new function
     } catch (error) {
         console.error('Error loading projects:', error);
         alert('Failed to load projects. Please check console for details.');
     }
 }
+
+// NEW FUNCTION: Setup project classification filtering
+let originalAllProjects = []; // Store original unfiltered data
+let currentProjectFilter = 'all';
+
+function setupProjectClassificationFilter() {
+    // Store the original projects data
+    originalAllProjects = [...allProjects];
+    
+    // Setup radio button event listeners
+    const filterRadios = document.querySelectorAll('input[name="project-filter"]');
+    filterRadios.forEach(radio => {
+        radio.addEventListener('change', handleProjectFilterChange);
+    });
+    
+    // Update initial filter info
+    updateFilterInfo();
+}
+
+function handleProjectFilterChange(event) {
+    currentProjectFilter = event.target.value;
+    
+    // Filter projects based on selection
+    if (currentProjectFilter === 'all') {
+        allProjects = [...originalAllProjects];
+    } else {
+        allProjects = originalAllProjects.filter(project => {
+            // Check if project has the classification we're filtering for
+            return project.project_classification === currentProjectFilter ||
+                   project.creator_category === currentProjectFilter;
+        });
+    }
+    
+    console.log(`🔍 Filtered to ${currentProjectFilter}: ${allProjects.length} projects`);
+    
+    // Update the UI
+    updateFilterInfo();
+    
+    // Reset and rebuild dropdowns with filtered data
+    resetCascadingDropdowns();
+    loadDivisions();
+    
+    // Clear any current project selection
+    clearProjectSelection();
+    
+    // Update advanced search if visible
+    if (typeof setupAdvancedProjectSearch === 'function') {
+        setupAdvancedProjectSearch();
+    }
+}
+
+function updateFilterInfo() {
+    const filterInfo = document.getElementById('filter-info');
+    if (filterInfo && allProjects) {
+        const totalOriginal = originalAllProjects.length || 0;
+        const currentFiltered = allProjects.length || 0;
+        
+        if (currentProjectFilter === 'all') {
+            filterInfo.textContent = `Showing all ${totalOriginal} accessible projects`;
+        } else {
+            filterInfo.textContent = `Showing ${currentFiltered} of ${totalOriginal} projects (${currentProjectFilter})`;
+        }
+    }
+}
+
+function resetCascadingDropdowns() {
+    // Reset all dropdown selections
+    const dropdowns = [
+        'division-select', 'section-select', 'detailed-section-select', 
+        'item-code-select', 'additional-level-select'
+    ];
+    
+    dropdowns.forEach(id => {
+        const select = document.getElementById(id);
+        if (select) {
+            select.innerHTML = `<option value="">Choose ${id.replace('-select', '').replace('-', ' ')}...</option>`;
+            if (id !== 'division-select') {
+                select.disabled = true;
+            }
+        }
+    });
+}
+
+function clearProjectSelection() {
+    // Clear any currently selected project
+    window.currentProject = null;
+    
+    // Clear project details if displayed
+    const projectDetailsElements = [
+        'selected-project-name', 'project-details', 'attribute-container'
+    ];
+    
+    projectDetailsElements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.innerHTML = '';
+        }
+    });
+}
+
        // Setup cascading dropdowns
 function setupCascadingDropdowns() {
     // Initialize dropdown elements
