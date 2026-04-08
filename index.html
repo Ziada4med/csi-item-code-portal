@@ -1211,6 +1211,7 @@
                     <tr>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Item Code</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Project</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Tags</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Description</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Size</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Unit Price</th>
@@ -8747,10 +8748,15 @@ function setupSearchCodesTab() {
 
 // Setup project search (Phase 1)
 function setupProjectSearch() {
+    console.log('🚀 setupProjectSearch CALLED!'); // DEBUG
+    
     const projectSearchInput = document.getElementById('project-search-input');
     const projectSearchDropdown = document.getElementById('project-search-dropdown');
     const clearProjectSearchBtn = document.getElementById('clear-project-search-btn');
     const changeProjectBtn = document.getElementById('change-project-btn');
+    
+    console.log('🚀 Project search input found:', !!projectSearchInput); // DEBUG
+    console.log('🚀 Project search dropdown found:', !!projectSearchDropdown); // DEBUG
     
     if (!projectSearchInput) {
         console.error('Project search input not found');
@@ -8758,12 +8764,17 @@ function setupProjectSearch() {
     }
     
     // Project search input event listeners
+    console.log('🚀 Attaching input event listener...'); // DEBUG
     projectSearchInput.addEventListener('input', debounce(performProjectSearch, 300));
+    console.log('🚀 Input event listener attached!'); // DEBUG
+    
     projectSearchInput.addEventListener('focus', () => {
+        console.log('🚀 Input focused!'); // DEBUG
         if (projectSearchInput.value.length > 0) {
             performProjectSearch();
         }
     });
+    console.log('🚀 Focus event listener attached!'); // DEBUG
     
     // Clear project search
     if (clearProjectSearchBtn) {
@@ -8857,8 +8868,14 @@ function setupSearchExportFunctionality() {
 
 // Perform project search
 function performProjectSearch() {
+    console.log('🔍 performProjectSearch CALLED!'); // DEBUG
+    
     const searchInput = document.getElementById('project-search-input');
     const dropdown = document.getElementById('project-search-dropdown');
+    
+    console.log('🔍 Search input element:', searchInput); // DEBUG
+    console.log('🔍 Search input value:', searchInput?.value); // DEBUG
+    console.log('🔍 Dropdown element:', dropdown); // DEBUG
     
     if (!searchInput || !dropdown) {
         console.error('Project search elements not found');
@@ -8867,8 +8884,11 @@ function performProjectSearch() {
     
     const searchTerm = searchInput.value.trim();
     
+    console.log('🔍 Search term after trim:', searchTerm); // DEBUG
+    
     if (searchTerm.length < 2) {
         dropdown.classList.add('hidden');
+        console.log('🔍 Search term too short, hiding dropdown'); // DEBUG
         return;
     }
     
@@ -8886,6 +8906,8 @@ function performProjectSearch() {
             dropdown.classList.remove('hidden');
             return;
         }
+        
+        console.log('🔍 Total projects available:', allProjects.length); // DEBUG
         
         // Filter projects based on search term
         const searchLower = searchTerm.toLowerCase();
@@ -8923,6 +8945,7 @@ function performProjectSearch() {
         }).slice(0, 10); // Limit to 10 results
         
         console.log('Filtered projects:', filteredProjects.length);
+        console.log('🔍 Filtered results:', filteredProjects); // DEBUG
         
         projectSearchResults = filteredProjects;
         displayProjectSearchResults(projectSearchResults);
@@ -10042,9 +10065,26 @@ function performCodeSearch() {
             matches = false;
         }
         
-        // Project name search
-        if (criteria.projectName && !code.classification_projects?.project_name?.toLowerCase().includes(criteria.projectName)) {
-            matches = false;
+        // Project name search - also searches tags
+        if (criteria.projectName) {
+            const searchTerm = criteria.projectName.toLowerCase();
+            const projectName = code.classification_projects?.project_name?.toLowerCase() || '';
+            const tags = code.classification_projects?.tags || [];
+            
+            // Check if search term matches project name OR any tag
+            let tagMatch = false;
+            if (Array.isArray(tags)) {
+                tagMatch = tags.some(tag => {
+                    if (typeof tag === 'string') {
+                        return tag.toLowerCase().includes(searchTerm);
+                    }
+                    return false;
+                });
+            }
+            
+            if (!projectName.includes(searchTerm) && !tagMatch) {
+                matches = false;
+            }
         }
         
         // CSI path search
@@ -13381,6 +13421,20 @@ function renderSearchResults(results) {
                         <div>
                             <h4 class="text-lg font-semibold text-gray-900">${item.item_code}</h4>
                             <p class="text-sm text-gray-600">${item.classification_projects?.project_name || 'No Project'}</p>
+                            ${item.classification_projects?.tags && Array.isArray(item.classification_projects.tags) && item.classification_projects.tags.length > 0 ? `
+                                <div class="flex flex-wrap gap-1 mt-2">
+                                    ${item.classification_projects.tags.slice(0, 5).map(tag => `
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                            ${tag}
+                                        </span>
+                                    `).join('')}
+                                    ${item.classification_projects.tags.length > 5 ? `
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                                            +${item.classification_projects.tags.length - 5} more
+                                        </span>
+                                    ` : ''}
+                                </div>
+                            ` : ''}
                         </div>
                         <span class="px-3 py-1 text-xs rounded-full ${getStatusColor(item.status || 'pending')}">
                             ${item.status || 'pending'}
@@ -14722,7 +14776,7 @@ function populateTableBody(tableBody, codes) {
     const dataToDisplay = codes || allApprovedCodes || [];
     
     if (dataToDisplay.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="12" class="px-4 py-8 text-center text-gray-500">No item codes found</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="13" class="px-4 py-8 text-center text-gray-500">No item codes found</td></tr>';
         return;
     }
     
@@ -14737,6 +14791,11 @@ function populateTableBody(tableBody, codes) {
         <tr class="hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}">
             <td class="px-4 py-3 whitespace-nowrap text-sm font-mono font-semibold text-blue-600 border-b">${item.item_code || 'N/A'}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-b">${(item.classification_projects?.project_name || 'Unknown').substring(0, 30)}${(item.classification_projects?.project_name || '').length > 30 ? '...' : ''}</td>
+            <td class="px-4 py-3 text-sm border-b">
+                ${item.classification_projects?.tags && Array.isArray(item.classification_projects.tags) && item.classification_projects.tags.length > 0 
+                    ? item.classification_projects.tags.slice(0, 3).map(tag => `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-100 text-blue-800 mr-1 mb-1">${tag}</span>`).join('') + (item.classification_projects.tags.length > 3 ? `<span class="text-xs text-gray-500">+${item.classification_projects.tags.length - 3}</span>` : '')
+                    : '<span class="text-gray-400 text-xs">-</span>'}
+            </td>
             <td class="px-4 py-3 text-sm text-gray-900 border-b max-w-xs" title="${item.description1 || ''}">${(item.description1 || 'N/A').substring(0, 40)}${(item.description1 || '').length > 40 ? '...' : ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 border-b">${item.size_value || 'N/A'}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-green-700 border-b">${item.unit_price ? `${item.unit_price} ${item.currency_code || ''}` : 'Not specified'}</td>
