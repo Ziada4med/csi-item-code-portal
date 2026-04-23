@@ -2442,7 +2442,13 @@ async function getNextVariationNumber(projectId, baseSignature) {
 // Function to get next serial number by checking existing codes
 async function getNextSerialNumber() {
     try {
-        console.log(' Getting next serial for project:', currentProject.id);
+        const projectId = currentProject ? (currentProject.project_id || currentProject.id) : null;
+        console.log(' Getting next serial for project:', projectId);
+        
+        if (!projectId) {
+            console.error(' No valid project id for serial generation');
+            return 1;
+        }
         
         // Get highest serial from all codes (active and disabled) to prevent reuse
         let highestSerial = 0;
@@ -2455,7 +2461,7 @@ async function getNextSerialNumber() {
         const { data: allWorkflowCodes, error: workflowError } = await supabase
             .from('item_code_workflow')
             .select('serial_number, status')
-            .eq('project_id', currentProject.id)
+            .eq('project_id', projectId)
             .order('serial_number', { ascending: false })
             .limit(1);
         
@@ -2476,7 +2482,7 @@ async function getNextSerialNumber() {
         const { data: disabledCodes, error: disabledError } = await supabase
             .from('disabled_item_codes')
             .select('serial_number')
-            .eq('project_id', currentProject.id)
+            .eq('project_id', projectId)
             .order('serial_number', { ascending: false })
             .limit(1);
             
@@ -2496,7 +2502,7 @@ async function getNextSerialNumber() {
         const { data: statusBreakdown } = await supabase
             .from('item_code_workflow')
             .select('serial_number, item_code, status')
-            .eq('project_id', currentProject.id)
+            .eq('project_id', projectId)
             .order('serial_number', { ascending: false })
             .limit(10);
         
@@ -2530,7 +2536,13 @@ async function getNextSerialNumberWithoutReuse() {
             return 1;
         }
         
-        console.log('Getting next sequential serial for project:', currentProject.id);
+        const projectId = currentProject.project_id || currentProject.id;
+        if (!projectId) {
+            console.error('Error: currentProject has no id or project_id field');
+            return 1;
+        }
+        
+        console.log('Getting next sequential serial for project:', projectId);
         console.log('NOTE: Serial numbers are never reused - combinations are freed for new serials');
         
         let highestSerial = 0;
@@ -2539,7 +2551,7 @@ async function getNextSerialNumberWithoutReuse() {
         const { data: highestActive, error: activeError } = await supabase
             .from('item_code_workflow')
             .select('serial_number')
-            .eq('project_id', currentProject.id)
+            .eq('project_id', projectId)
             .not('serial_number', 'is', null)
             .order('serial_number', { ascending: false })
             .limit(1);
@@ -2558,7 +2570,7 @@ async function getNextSerialNumberWithoutReuse() {
         const { data: highestDisabled, error: disabledError } = await supabase
             .from('disabled_item_codes')
             .select('serial_number')
-            .eq('project_id', currentProject.id)
+            .eq('project_id', projectId)
             .not('serial_number', 'is', null)
             .order('serial_number', { ascending: false })
             .limit(1);
@@ -4311,7 +4323,11 @@ function selectProjectFromData(project) {
         return;
     }
     
+    // Normalize: ensure currentProject.id is always set (RPC returns project_id, not id)
     currentProject = project;
+    if (!currentProject.id && currentProject.project_id) {
+        currentProject.id = currentProject.project_id;
+    }
 
 // Load the correct next serial number for this project
 getNextSerialNumber().then(serial => {
@@ -7748,6 +7764,87 @@ window.exportAllRequests = exportAllRequests;        // PDF Export
                         alert('Standard value request submitted successfully and assigned to reviewer!');
                         document.getElementById('add-value-modal').classList.add('hidden');
                         document.getElementById('add-value-form').reset();
+
+                        // Notify reviewer via email (queue + Edge Function, same as Approval Portal)
+                        try {
+                            const requestRecord = data[0];
+                            const { data: reviewerData, error: reviewerError } = await supabase
+                                .from('users')
+                                .select('id, username, email')
+                                .eq('id', parseInt(reviewerId))
+                                .eq('status', 'active')
+                                .single();
+
+                            if (!reviewerError && reviewerData && reviewerData.email) {
+                                const projectName = currentProject?.project_name || 'N/A';
+                                const creatorName = currentUser.username || 'User';
+                                const emailSubject = `[PRISM] Standard Value Request Pending Review - ${attributeName}`;
+                                const emailBody = [
+                                    '<div style="font-family:Inter,Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">',
+                                    '<div style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:32px;text-align:center;border-radius:8px 8px 0 0;">',
+                                    '<h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:700;">PRISM</h1>',
+                                    '<p style="color:rgba(255,255,255,0.85);margin:8px 0 0 0;font-size:14px;">Procurement Resource &amp; Item Specification Management</p>',
+                                    '</div>',
+                                    '<div style="padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">',
+                                    '<h2 style="color:#d97706;font-size:20px;margin:0 0 16px 0;">&#x23F3; Standard Value Request Pending Your Review</h2>',
+                                    '<p style="color:#4b5563;font-size:16px;line-height:24px;margin:0 0 24px 0;">Hello <strong>' + reviewerData.username + '</strong>,</p>',
+                                    '<p style="color:#4b5563;font-size:16px;line-height:24px;margin:0 0 24px 0;">A new standard value request has been submitted and assigned to you for review.</p>',
+                                    '<table style="width:100%;border-collapse:collapse;margin:24px 0;">',
+                                    '<tr><td style="padding:12px;background-color:#f9fafb;border:1px solid #e5e7eb;font-weight:600;color:#374151;">Attribute:</td><td style="padding:12px;background-color:#ffffff;border:1px solid #e5e7eb;color:#1f2937;font-weight:600;">' + attributeName + '</td></tr>',
+                                    '<tr><td style="padding:12px;background-color:#f9fafb;border:1px solid #e5e7eb;font-weight:600;color:#374151;">Requested Value:</td><td style="padding:12px;background-color:#fef3c7;border:1px solid #fcd34d;color:#92400e;font-weight:600;">' + valueWithUnit + '</td></tr>',
+                                    '<tr><td style="padding:12px;background-color:#f9fafb;border:1px solid #e5e7eb;font-weight:600;color:#374151;">Project:</td><td style="padding:12px;background-color:#ffffff;border:1px solid #e5e7eb;color:#1f2937;">' + projectName + '</td></tr>',
+                                    '<tr><td style="padding:12px;background-color:#f9fafb;border:1px solid #e5e7eb;font-weight:600;color:#374151;">Submitted By:</td><td style="padding:12px;background-color:#ffffff;border:1px solid #e5e7eb;color:#1f2937;">' + creatorName + '</td></tr>',
+                                    '<tr><td style="padding:12px;background-color:#f9fafb;border:1px solid #e5e7eb;font-weight:600;color:#374151;">Status:</td><td style="padding:12px;background-color:#fef3c7;border:1px solid #fcd34d;color:#92400e;font-weight:600;">Pending Your Review</td></tr>',
+                                    '</table>',
+                                    '<div style="background-color:#fef3c7;border-left:4px solid #f59e0b;padding:16px;margin:24px 0;border-radius:4px;">',
+                                    '<p style="margin:0;color:#92400e;font-weight:600;">&#x26A0; Action Required</p>',
+                                    '<p style="margin:8px 0 0 0;color:#78350f;">Please review and approve or reject this standard value request in the Approval Portal.</p>',
+                                    '</div>',
+                                    '<div style="text-align:center;margin:32px 0 0 0;">',
+                                    '<a href="https://curious-madeleine-dc7e72.netlify.app/APPROVAL_PORTAL_V34.html" style="display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px;">Review Now</a>',
+                                    '</div></div></div>'
+                                ].join('');
+
+                                // Step 1: Queue the notification (same as Approval Portal)
+                                const { data: notifId, error: queueError } = await supabase.rpc('queue_email_notification', {
+                                    p_to_email: reviewerData.email,
+                                    p_subject: emailSubject,
+                                    p_body: emailBody,
+                                    p_notification_type: 'standard_value_submitted_for_review',
+                                    p_recipient_user_id: reviewerData.id,
+                                    p_request_type: 'standard_value',
+                                    p_request_id: requestRecord.id
+                                });
+
+                                if (queueError) {
+                                    console.error('Failed to queue standard value reviewer notification:', queueError);
+                                } else {
+                                    // Step 2: Call Edge Function to actually send (same as Approval Portal)
+                                    console.log('Standard value reviewer notification queued, ID:', notifId);
+                                    fetch('https://mvftaaxgdygeyzcvzqfr.supabase.co/functions/v1/send-gmail-notification', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            notificationId: notifId,
+                                            to: reviewerData.email,
+                                            subject: emailSubject,
+                                            htmlBody: emailBody
+                                        })
+                                    }).then(r => r.json()).then(result => {
+                                        if (result.success) {
+                                            console.log('Reviewer notification email sent successfully');
+                                        } else {
+                                            console.error('Edge Function failed to send reviewer notification:', result.error);
+                                        }
+                                    }).catch(err => {
+                                        console.error('Edge Function call error for reviewer notification:', err);
+                                    });
+                                }
+                            }
+                        } catch (notifError) {
+                            console.error('Failed to send reviewer notification for standard value:', notifError);
+                            // Do not block the user flow if notification fails
+                        }
                     } else {
                         alert('Failed to submit standard value request');
                     }
