@@ -1363,29 +1363,63 @@
                 <div class="px-4 py-3 bg-gray-50 border-b">
                     <h3 class="text-lg font-medium text-gray-900">Approved Item Codes for ERP Integration</h3>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
+                <!-- TOP Pagination Controls -->
+                <div id="erp-pagination-top" class="px-4 py-3 border-b bg-gray-50 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 text-sm text-gray-600">
+                        <span id="erp-pagination-info-top">Showing 0 items</span>
+                        <select id="erp-page-size-top" class="border border-gray-300 rounded px-2 py-1 text-sm" onchange="erpChangePageSize(this.value)">
+                            <option value="50">50 per page</option>
+                            <option value="100" selected>100 per page</option>
+                            <option value="200">200 per page</option>
+                            <option value="500">500 per page</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-1" id="erp-page-buttons-top">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+                <!-- Top mirror scrollbar -->
+                <div id="erp-scroll-top" style="overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;">
+                    <div id="erp-scroll-top-inner" style="height:1px;min-width:1400px;"></div>
+                </div>
+                <div id="erp-scroll-main" class="overflow-x-auto" style="max-width:100%;-webkit-overflow-scrolling:touch;">
+                    <table class="divide-y divide-gray-200" style="min-width:1400px;width:100%;">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Code</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Group</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description 1</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description 2</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manufacturer</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Country of Origin</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Type</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approved Date</th>
-                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ERP Status</th>
-                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Item Code</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Item Group</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Description 1</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Description 2</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Size</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Price</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Manufacturer</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Model</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Country of Origin</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Item Type</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Approved Date</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">ERP Status</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Action</th>
                             </tr>
                         </thead>
                         <tbody id="erp-items-table-body" class="bg-white divide-y divide-gray-200">
                             <!-- Will be populated by JavaScript -->
                         </tbody>
                     </table>
+                </div>
+                <!-- BOTTOM Pagination Controls -->
+                <div id="erp-pagination" class="px-4 py-3 border-t bg-gray-50 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 text-sm text-gray-600">
+                        <span id="erp-pagination-info">Showing 0 items</span>
+                        <select id="erp-page-size" class="border border-gray-300 rounded px-2 py-1 text-sm" onchange="erpChangePageSize(this.value)">
+                            <option value="50">50 per page</option>
+                            <option value="100" selected>100 per page</option>
+                            <option value="200">200 per page</option>
+                            <option value="500">500 per page</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-1" id="erp-page-buttons">
+                        <!-- Rendered by JS -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -15240,141 +15274,184 @@ function updateERPStats(items) {
     console.log('ERP stats updated successfully');
 }
 
-// Populate ERP table
+// ERP Pagination state
+let erpCurrentPage = 1;
+let erpPageSize = 100;
+let erpFilteredItems = [];
+
+// Populate ERP table (with pagination)
 function populateERPTable(items) {
     console.log(' populateERPTable called with items:', items?.length || 0);
-    
+
     const tableBody = document.getElementById('erp-items-table-body');
-    if (!tableBody) {
-        console.error('ERP table body not found');
-        return;
-    }
+    if (!tableBody) { console.error('ERP table body not found'); return; }
 
     if (!items || items.length === 0) {
-        console.log('No items to display in ERP table');
         tableBody.innerHTML = '<tr><td colspan="13" class="px-4 py-8 text-center text-gray-500">No approved items found</td></tr>';
+        erpRenderPagination(0);
         return;
     }
-
-    console.log(' First item structure:', items[0]);
 
     // Apply filters
     const statusFilter = document.getElementById('erp-status-filter')?.value || '';
     const searchText = document.getElementById('erp-search-input')?.value?.toLowerCase() || '';
 
-    let filteredItems = items;
-
-    // Filter by status
-    if (statusFilter === 'integrated') {
-        filteredItems = filteredItems.filter(item => item.erp_integrated);
-    } else if (statusFilter === 'pending') {
-        filteredItems = filteredItems.filter(item => !item.erp_integrated);
-    }
-
-    // Filter by search text
+    let filtered = items;
+    if (statusFilter === 'integrated') filtered = filtered.filter(i => i.erp_integrated);
+    else if (statusFilter === 'pending')   filtered = filtered.filter(i => !i.erp_integrated);
     if (searchText) {
-        filteredItems = filteredItems.filter(item => 
-            (item.item_code || '').toLowerCase().includes(searchText) ||
-            (item.description1 || '').toLowerCase().includes(searchText) ||
-            (item.description2 || '').toLowerCase().includes(searchText) ||
-            (item.classification_projects?.division_code || '').toLowerCase().includes(searchText)
+        filtered = filtered.filter(i =>
+            (i.item_code || '').toLowerCase().includes(searchText) ||
+            (i.description1 || '').toLowerCase().includes(searchText) ||
+            (i.description2 || '').toLowerCase().includes(searchText) ||
+            (i.classification_projects?.division_code || '').toLowerCase().includes(searchText)
         );
     }
 
-    console.log('Filtered items count:', filteredItems.length);
+    erpFilteredItems = filtered;
+    console.log('Filtered items count:', filtered.length);
 
-    if (filteredItems.length === 0) {
+    if (filtered.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="13" class="px-4 py-8 text-center text-gray-500">No items found with current filters</td></tr>';
+        erpRenderPagination(0);
         return;
     }
 
-    const canModify = currentUser && (currentUser.role === 'erp_data_entry' || currentUser.role === 'admin');
-    console.log('User can modify ERP status:', canModify, 'Role:', currentUser?.role);
+    // Clamp current page
+    const totalPages = Math.ceil(filtered.length / erpPageSize);
+    if (erpCurrentPage > totalPages) erpCurrentPage = 1;
 
-    console.log('About to render table with', filteredItems.length, 'items...');
-    
+    const start = (erpCurrentPage - 1) * erpPageSize;
+    const pageItems = filtered.slice(start, start + erpPageSize);
+
+    const canModify = currentUser && (currentUser.role === 'erp_data_entry' || currentUser.role === 'admin');
+
     try {
-        const tableHTML = filteredItems.map((item, index) => {
-            console.log(`Rendering row ${index + 1}:`, item.item_code);
-            return `
-                <tr class="hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}">
-                    <td class="px-4 py-3 whitespace-nowrap text-sm font-mono font-semibold text-blue-600">
-                        ${item.item_code || 'N/A'}
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-purple-700 font-semibold">
-                        ${item.classification_projects?.division_code || 'N/A'}
-                    </td>
-                    <td class="px-4 py-3 text-sm text-gray-900 max-w-xs" title="${item.description1 || ''}">
-                        ${(item.description1 || 'N/A').substring(0, 40)}${(item.description1 || '').length > 40 ? '...' : ''}
-                    </td>
-                    <td class="px-4 py-3 text-sm text-gray-900 max-w-xs" title="${item.description2 || ''}">
-                        ${(item.description2 || 'N/A').substring(0, 40)}${(item.description2 || '').length > 40 ? '...' : ''}
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                        ${item.size_value || 'N/A'}
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-green-700">
-                        ${item.unit_price ? `${item.unit_price} ${item.currency_code || ''}` : 'Not specified'}
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                        ${(item.manufacturer || 'Not specified').substring(0, 20)}${(item.manufacturer || '').length > 20 ? '...' : ''}
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700" title="${item.model_number || 'N/A'}">
-                        ${(item.model_number || 'N/A').substring(0, 20)}${(item.model_number || '').length > 20 ? '...' : ''}
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900" title="${item.country_of_origin || 'N/A'}">
-                        ${(item.country_of_origin || 'N/A').substring(0, 15)}${(item.country_of_origin || '').length > 15 ? '...' : ''}
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
-                        ${(item.classification_projects?.project_type || '').toLowerCase() === 'cost'
-                            ? '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Cost</span>'
-                            : (item.classification_projects?.project_type || '').toLowerCase() === 'purchase'
-                                ? '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">Purchase</span>'
-                                : '<span class="text-gray-400 text-xs">N/A</span>'
-                        }
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                        ${item.approved_at ? new Date(item.approved_at).toLocaleDateString() : 'N/A'}
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-center">
-                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.erp_integrated ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}">
-                            ${item.erp_integrated ? 'INTEGRATED' : 'PENDING'}
-                        </span>
-                        ${item.erp_integrated && item.erp_integrated_at ? `<div class="text-xs text-gray-500 mt-1">${new Date(item.erp_integrated_at).toLocaleDateString()}</div>` : ''}
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-center">
-                        ${canModify ? `
-                            <label class="flex items-center justify-center cursor-pointer">
-                                <input type="checkbox" 
-                                       class="erp-checkbox w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                                       ${item.erp_integrated ? 'checked' : ''} 
-                                       data-item-id="${item.id}"
-                                       data-item-code="${item.item_code}"
-                                       onchange="handleERPToggleFromERPTab(this, ${item.id})">
-                                <span class="ml-2 text-xs font-medium text-gray-700">
-                                    ${item.erp_integrated ? 'Unmark' : 'Mark'}
-                                </span>
-                            </label>
-                        ` : `
-                            <span class="text-xs text-gray-500">No Action</span>
-                        `}
-                    </td>
-                </tr>
-            `;
-        }).join('');
-        
-        console.log('Generated table HTML length:', tableHTML.length);
-        console.log('About to set innerHTML...');
-        
-        tableBody.innerHTML = tableHTML;
-        
-        console.log('Table HTML set successfully!');
-        console.log(' Table body now has', tableBody.children.length, 'rows');
-        
+        tableBody.innerHTML = pageItems.map((item, index) => `
+            <tr class="hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}">
+                <td class="px-4 py-3 whitespace-nowrap text-sm font-mono font-semibold text-blue-600">${item.item_code || 'N/A'}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-purple-700 font-semibold">${item.classification_projects?.division_code || 'N/A'}</td>
+                <td class="px-4 py-3 text-sm text-gray-900" title="${item.description1 || ''}">${(item.description1 || 'N/A').substring(0,40)}${(item.description1||'').length>40?'...':''}</td>
+                <td class="px-4 py-3 text-sm text-gray-900" title="${item.description2 || ''}">${(item.description2 || 'N/A').substring(0,40)}${(item.description2||'').length>40?'...':''}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${item.size_value || 'N/A'}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-green-700">${item.unit_price ? item.unit_price+' '+(item.currency_code||'') : 'Not specified'}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${(item.manufacturer||'Not specified').substring(0,20)}${(item.manufacturer||'').length>20?'...':''}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700" title="${item.model_number||'N/A'}">${(item.model_number||'N/A').substring(0,20)}${(item.model_number||'').length>20?'...':''}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900" title="${item.country_of_origin||'N/A'}">${(item.country_of_origin||'N/A').substring(0,15)}${(item.country_of_origin||'').length>15?'...':''}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
+                    ${(item.classification_projects?.project_type||'').toLowerCase()==='cost'
+                        ? '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Cost</span>'
+                        : (item.classification_projects?.project_type||'').toLowerCase()==='purchase'
+                            ? '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">Purchase</span>'
+                            : '<span class="text-gray-400 text-xs">N/A</span>'}
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${item.approved_at ? new Date(item.approved_at).toLocaleDateString() : 'N/A'}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-center">
+                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.erp_integrated ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}">
+                        ${item.erp_integrated ? 'INTEGRATED' : 'PENDING'}
+                    </span>
+                    ${item.erp_integrated && item.erp_integrated_at ? `<div class="text-xs text-gray-500 mt-1">${new Date(item.erp_integrated_at).toLocaleDateString()}</div>` : ''}
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap text-center">
+                    ${canModify ? `
+                        <label class="flex items-center justify-center cursor-pointer">
+                            <input type="checkbox" class="erp-checkbox w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                   ${item.erp_integrated ? 'checked' : ''}
+                                   data-item-id="${item.id}" data-item-code="${item.item_code}"
+                                   onchange="handleERPToggleFromERPTab(this, ${item.id})">
+                            <span class="ml-2 text-xs font-medium text-gray-700">${item.erp_integrated ? 'Unmark' : 'Mark'}</span>
+                        </label>` : `<span class="text-xs text-gray-500">No Action</span>`}
+                </td>
+            </tr>`).join('');
+
+        erpRenderPagination(filtered.length);
     } catch (error) {
         console.error('Error rendering table:', error);
         tableBody.innerHTML = '<tr><td colspan="13" class="px-4 py-8 text-center text-red-500">Error rendering table: ' + error.message + '</td></tr>';
     }
+}
+
+// Render pagination controls (top and bottom)
+function erpRenderPagination(totalItems) {
+    const infoBottom = document.getElementById('erp-pagination-info');
+    const btnsBottom = document.getElementById('erp-page-buttons');
+    const infoTop = document.getElementById('erp-pagination-info-top');
+    const btnsTop = document.getElementById('erp-page-buttons-top');
+
+    // Sync page-size selectors
+    ['erp-page-size', 'erp-page-size-top'].forEach(id => {
+        const sel = document.getElementById(id);
+        if (sel) sel.value = String(erpPageSize);
+    });
+
+    if (totalItems === 0) {
+        [infoBottom, infoTop].forEach(el => { if (el) el.textContent = 'No items'; });
+        [btnsBottom, btnsTop].forEach(el => { if (el) el.innerHTML = ''; });
+        return;
+    }
+
+    const totalPages = Math.ceil(totalItems / erpPageSize);
+    const start = (erpCurrentPage - 1) * erpPageSize + 1;
+    const end = Math.min(erpCurrentPage * erpPageSize, totalItems);
+    const infoText = `Showing ${start}–${end} of ${totalItems.toLocaleString()} items`;
+    [infoBottom, infoTop].forEach(el => { if (el) el.textContent = infoText; });
+
+    const btnClass = 'px-3 py-1 text-sm rounded border';
+    const activeClass = 'bg-blue-600 text-white border-blue-600 font-semibold';
+    const inactiveClass = 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50';
+    const disabledClass = 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed';
+
+    function buildButtons() {
+        let html = '';
+        html += `<button class="${btnClass} ${erpCurrentPage===1?disabledClass:inactiveClass}" ${erpCurrentPage===1?'disabled':''} onclick="erpGoToPage(${erpCurrentPage-1})">&#8249;</button>`;
+
+        const delta = 2;
+        const pages = new Set([1, totalPages]);
+        for (let p = Math.max(1, erpCurrentPage-delta); p <= Math.min(totalPages, erpCurrentPage+delta); p++) pages.add(p);
+        const pageArr = [...pages].sort((a,b)=>a-b);
+
+        let prev = 0;
+        for (const p of pageArr) {
+            if (prev && p - prev > 1) html += `<span class="px-2 py-1 text-sm text-gray-400">…</span>`;
+            html += `<button class="${btnClass} ${p===erpCurrentPage?activeClass:inactiveClass}" onclick="erpGoToPage(${p})">${p}</button>`;
+            prev = p;
+        }
+
+        html += `<button class="${btnClass} ${erpCurrentPage===totalPages?disabledClass:inactiveClass}" ${erpCurrentPage===totalPages?'disabled':''} onclick="erpGoToPage(${erpCurrentPage+1})">&#8250;</button>`;
+        return html;
+    }
+
+    const buttonsHTML = buildButtons();
+    [btnsBottom, btnsTop].forEach(el => { if (el) el.innerHTML = buttonsHTML; });
+
+    // Wire up scroll sync (safe to call multiple times — listeners are idempotent via flag)
+    erpInitScrollSync();
+}
+
+// Sync top mirror scrollbar with main table scroll
+function erpInitScrollSync() {
+    const main = document.getElementById('erp-scroll-main');
+    const top = document.getElementById('erp-scroll-top');
+    if (!main || !top || main._erpSyncDone) return;
+    main._erpSyncDone = true;
+    main.addEventListener('scroll', () => { top.scrollLeft = main.scrollLeft; });
+    top.addEventListener('scroll', () => { main.scrollLeft = top.scrollLeft; });
+}
+
+// Go to a specific page
+function erpGoToPage(page) {
+    const totalPages = Math.ceil(erpFilteredItems.length / erpPageSize);
+    if (page < 1 || page > totalPages) return;
+    erpCurrentPage = page;
+    populateERPTable(window.erpItems);
+    document.getElementById('erp-pagination-top')?.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// Change page size
+function erpChangePageSize(size) {
+    erpPageSize = parseInt(size);
+    erpCurrentPage = 1;
+    populateERPTable(window.erpItems);
 }
 
 // Handle ERP toggle from ERP tab
@@ -15456,12 +15533,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (statusFilter) {
             statusFilter.addEventListener('change', () => {
+                erpCurrentPage = 1;
                 if (window.erpItems) populateERPTable(window.erpItems);
             });
         }
         
         if (searchInput) {
             searchInput.addEventListener('input', () => {
+                erpCurrentPage = 1;
                 if (window.erpItems) populateERPTable(window.erpItems);
             });
         }
