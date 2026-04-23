@@ -1334,7 +1334,7 @@
                             Refresh
                         </button>
                         <div class="relative">
-                            <button id="erp-export-btn" onclick="toggleERPExportDropdown()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2">
+                            <button id="erp-export-btn" onclick="toggleERPExportDropdown(event)" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2">
                                 Export
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -1376,6 +1376,7 @@
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manufacturer</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Country of Origin</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Type</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approved Date</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ERP Status</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
@@ -15116,6 +15117,7 @@ async function loadERPDashboard() {
                     erp_integrated,
                     erp_integrated_at,
                     erp_integrated_by,
+                    size_value,
                     created_by_user:users!item_code_workflow_created_by_fkey(username, email),
                     approved_by_user:users!item_code_workflow_approved_by_fkey(username, email),
                     classification_projects!inner (
@@ -15130,7 +15132,8 @@ async function loadERPDashboard() {
                         item_code,
                         item_description,
                         additional_level_name,
-                        additional_level_value
+                        additional_level_value,
+                        project_type
                     )
                 `)
                 .eq('status', 'admin_approved')  // CRITICAL: Only items with final admin approval in workflow
@@ -15249,7 +15252,7 @@ function populateERPTable(items) {
 
     if (!items || items.length === 0) {
         console.log('No items to display in ERP table');
-        tableBody.innerHTML = '<tr><td colspan="12" class="px-4 py-8 text-center text-gray-500">No approved items found</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="13" class="px-4 py-8 text-center text-gray-500">No approved items found</td></tr>';
         return;
     }
 
@@ -15281,7 +15284,7 @@ function populateERPTable(items) {
     console.log('Filtered items count:', filteredItems.length);
 
     if (filteredItems.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="12" class="px-4 py-8 text-center text-gray-500">No items found with current filters</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="13" class="px-4 py-8 text-center text-gray-500">No items found with current filters</td></tr>';
         return;
     }
 
@@ -15321,6 +15324,14 @@ function populateERPTable(items) {
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900" title="${item.country_of_origin || 'N/A'}">
                         ${(item.country_of_origin || 'N/A').substring(0, 15)}${(item.country_of_origin || '').length > 15 ? '...' : ''}
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
+                        ${(item.classification_projects?.project_type || '').toLowerCase() === 'cost'
+                            ? '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Cost</span>'
+                            : (item.classification_projects?.project_type || '').toLowerCase() === 'purchase'
+                                ? '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">Purchase</span>'
+                                : '<span class="text-gray-400 text-xs">N/A</span>'
+                        }
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                         ${item.approved_at ? new Date(item.approved_at).toLocaleDateString() : 'N/A'}
@@ -15362,7 +15373,7 @@ function populateERPTable(items) {
         
     } catch (error) {
         console.error('Error rendering table:', error);
-        tableBody.innerHTML = '<tr><td colspan="12" class="px-4 py-8 text-center text-red-500">Error rendering table: ' + error.message + '</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="13" class="px-4 py-8 text-center text-red-500">Error rendering table: ' + error.message + '</td></tr>';
     }
 }
 
@@ -15460,7 +15471,8 @@ document.addEventListener('DOMContentLoaded', function() {
 // ===== ERP EXPORT FUNCTIONALITY =====
 
 // Toggle export dropdown
-function toggleERPExportDropdown() {
+function toggleERPExportDropdown(event) {
+    if (event) event.stopPropagation();
     const dropdown = document.getElementById('erp-export-dropdown');
     if (dropdown) {
         dropdown.classList.toggle('hidden');
@@ -15482,8 +15494,13 @@ function exportERPData(type) {
     console.log(' Exporting ERP data:', type);
     
     if (!window.erpItems || window.erpItems.length === 0) {
-        alert('No data available to export. Please load the ERP dashboard first.');
-        return;
+        // Fallback: use allApprovedCodes if ERP dashboard not yet loaded
+        if (window.allApprovedCodes && window.allApprovedCodes.length > 0) {
+            window.erpItems = window.allApprovedCodes.filter(item => !item.is_disabled);
+        } else {
+            alert('No data available to export. Please load the ERP dashboard first.');
+            return;
+        }
     }
     
     // Close dropdown
@@ -15518,19 +15535,20 @@ function exportERPData(type) {
     console.log(` Exporting ${dataToExport.length} items for type: ${type}`);
     
     try {
-        // Prepare data for Excel - updated to match new table structure
+        // Prepare data for Excel - all columns matching the ERP table
         const excelData = dataToExport.map(item => ({
             'Item Code': item.item_code || 'N/A',
             'Item Group': item.classification_projects?.division_code || 'N/A',
             'Description 1': item.description1 || 'N/A',
             'Description 2': item.description2 || 'N/A',
+            'Size': item.size_value || 'N/A',
             'Price': item.unit_price ? `${item.unit_price} ${item.currency_code || ''}` : 'Not specified',
             'Manufacturer': item.manufacturer || 'Not specified',
             'Model': item.model_number || 'N/A',
             'Country of Origin': item.country_of_origin || 'N/A',
+            'Item Type': (item.classification_projects?.project_type || '').toLowerCase() === 'cost' ? 'Cost' : (item.classification_projects?.project_type || '').toLowerCase() === 'purchase' ? 'Purchase' : 'N/A',
             'Approved Date': item.approved_at ? new Date(item.approved_at).toLocaleDateString() : 'N/A',
-            'ERP Status': item.erp_integrated ? 'INTEGRATED' : 'PENDING',
-            'Action': 'N/A' // This column represents the toggle controls in the table
+            'ERP Status': item.erp_integrated ? 'INTEGRATED' : 'PENDING'
         }));
         
         // Create workbook and worksheet
@@ -15567,11 +15585,17 @@ function exportERPData(type) {
                 case 'Description 2':
                     width = Math.max(width, 30);
                     break;
+                case 'Size':
+                    width = Math.max(width, 12);
+                    break;
                 case 'Model':
                     width = Math.max(width, 18);
                     break;
                 case 'Country of Origin':
                     width = Math.max(width, 18);
+                    break;
+                case 'Item Type':
+                    width = Math.max(width, 12);
                     break;
                 case 'Price':
                     width = Math.max(width, 15);
@@ -15584,9 +15608,6 @@ function exportERPData(type) {
                     break;
                 case 'ERP Status':
                     width = Math.max(width, 12);
-                    break;
-                case 'Action':
-                    width = 10;
                     break;
             }
             
@@ -18511,22 +18532,7 @@ function exportCurrentResults(format) {
             };
             
             // Override exportERPData function with smart data detection
-            window.exportERPData = function(filename = 'erp_data') {
-                console.log(' Starting ERP data export');
-                
-                // Try multiple data sources
-                let data = window.allApprovedCodes || window.historyData || getAvailableExportData();
-                
-                if (!data || data.length === 0) {
-                    alert('No data available for export. Please navigate to a tab with data or try refreshing the page.');
-                    return;
-                }
-                
-                console.log(' Found data for export:', data.length, 'records');
-                
-                // Use simple export for reliability
-                window.simpleExcelExport(data, filename);
-            };
+            // window.exportERPData override removed — using correct exportERPData function defined in ERP section
             
             // Override export filtered functions with smart data detection
             window.exportFilteredToExcel = function(filterType) {
@@ -18549,12 +18555,55 @@ function exportCurrentResults(format) {
                 console.log(' Filtered data for export:', data.length, 'records');
                 
                 const filterNames = {
-                    'all': 'All_Data',
-                    'erp_integrated': 'ERP_Integrated',
-                    'erp_pending': 'Pending_ERP'
+                    'all': 'All_Approved_Items',
+                    'erp_integrated': 'ERP_Integrated_Items',
+                    'erp_pending': 'Pending_ERP_Integration'
                 };
-                
-                window.simpleExcelExport(data, `${filterNames[filterType] || 'Export'}`);
+
+                try {
+                    const excelData = data.map(item => ({
+                        'Item Code': item.item_code || '',
+                        'Item Group': item.classification_projects?.division_code || '',
+                        'Project Name': item.classification_projects?.project_name || item.project?.project_name || '',
+                        'Description 1': item.description1 || '',
+                        'Description 2': item.description2 || '',
+                        'Size': item.size_value || '',
+                        'UOM': item.uom || '',
+                        'Unit Price': item.unit_price || '',
+                        'Currency': item.currency_code || '',
+                        'Manufacturer': item.manufacturer || '',
+                        'Model Number': item.model_number || '',
+                        'Country of Origin': item.country_of_origin || '',
+                        'Item Type': (item.classification_projects?.project_type || '').toLowerCase() === 'cost' ? 'Cost' : (item.classification_projects?.project_type || '').toLowerCase() === 'purchase' ? 'Purchase' : '',
+                        'ERP Status': item.erp_integrated ? 'INTEGRATED' : 'PENDING',
+                        'ERP Integration Date': item.erp_integrated_at ? new Date(item.erp_integrated_at).toLocaleDateString() : '',
+                        'Approved Date': item.approved_at ? new Date(item.approved_at).toLocaleDateString() : '',
+                        'Created Date': item.created_at ? new Date(item.created_at).toLocaleDateString() : ''
+                    }));
+
+                    const wb = XLSX.utils.book_new();
+                    const ws = XLSX.utils.json_to_sheet(excelData);
+
+                    // Auto-size columns
+                    const maxWidths = {};
+                    excelData.forEach(row => {
+                        Object.keys(row).forEach(key => {
+                            maxWidths[key] = Math.max(maxWidths[key] || 0, String(row[key] || '').length, key.length);
+                        });
+                    });
+                    ws['!cols'] = Object.keys(maxWidths).map(k => ({ wch: Math.min(maxWidths[k] + 2, 50) }));
+
+                    const sheetName = filterNames[filterType] || 'Item_Codes';
+                    XLSX.utils.book_append_sheet(wb, ws, sheetName.substring(0, 31));
+
+                    const timestamp = new Date().toISOString().slice(0, 10);
+                    XLSX.writeFile(wb, `${sheetName}_${timestamp}.xlsx`);
+
+                    console.log(' Filtered Excel export completed!');
+                } catch (error) {
+                    console.error(' Filtered Excel export failed:', error);
+                    alert('Export failed: ' + error.message);
+                }
             };
             
             // Override test export function with enhanced diagnostics
@@ -18675,16 +18724,24 @@ function exportCurrentResults(format) {
                     
                     console.log(' Processing', data.length, 'records for export...');
                     
-                    // Simple data transformation
+                    // Full data transformation with all ERP columns
                     const exportData = data.map(item => ({
                         'Item Code': item.item_code || '',
+                        'Item Group': item.classification_projects?.division_code || '',
+                        'Project Name': item.classification_projects?.project_name || item.project?.project_name || '',
                         'Description 1': item.description1 || '',
-                        'Description 2': item.description2 || '', 
-                        'Project': item.classification_projects?.project_name || item.project?.project_name || '',
-                        'Status': item.status || '',
+                        'Description 2': item.description2 || '',
+                        'Size': item.size_value || '',
                         'UOM': item.uom || '',
-                        'Country': item.country || item.country_of_origin || '',
+                        'Unit Price': item.unit_price || '',
+                        'Currency': item.currency_code || '',
                         'Manufacturer': item.manufacturer || '',
+                        'Model Number': item.model_number || '',
+                        'Country of Origin': item.country_of_origin || '',
+                        'Item Type': (item.classification_projects?.project_type || '').toLowerCase() === 'cost' ? 'Cost' : (item.classification_projects?.project_type || '').toLowerCase() === 'purchase' ? 'Purchase' : '',
+                        'ERP Status': item.erp_integrated ? 'INTEGRATED' : 'PENDING',
+                        'ERP Integration Date': item.erp_integrated_at ? new Date(item.erp_integrated_at).toLocaleDateString() : '',
+                        'Approved Date': item.approved_at ? new Date(item.approved_at).toLocaleDateString() : '',
                         'Created Date': item.created_at ? new Date(item.created_at).toLocaleDateString() : ''
                     }));
                     
@@ -19412,46 +19469,51 @@ function exportCurrentResults(format) {
         }
 
         try {
-            // Check if XLSX is available
             if (typeof XLSX === 'undefined') {
                 alert('Excel export library not loaded. Please refresh the page and try again.');
                 return;
             }
 
-            console.log('Starting simple Excel export with', data.length, 'records');
+            console.log('Starting Excel export with', data.length, 'records');
 
-            // Convert data to simple format
             const excelData = data.map(item => ({
                 'Item Code': item.item_code || '',
-                'Status': item.status || '',
-                'CSI Code': item.csi_base_code || '',
+                'Item Group': item.classification_projects?.division_code || '',
+                'Project Name': item.classification_projects?.project_name || item.project?.project_name || '',
                 'Description 1': item.description1 || '',
                 'Description 2': item.description2 || '',
                 'Size': item.size_value || '',
                 'UOM': item.uom || '',
-                'Country': item.country_of_origin || '',
-                'Model Number': item.model_number || '',
-                'Manufacturer': item.manufacturer || '',
                 'Unit Price': item.unit_price || '',
                 'Currency': item.currency_code || '',
-                'Created Date': item.created_at ? new Date(item.created_at).toLocaleDateString() : '',
-                'Created By': item.created_by_user?.username || '',
-                'Approved By': item.approved_by_user?.username || '',
-                'Serial Number': item.serial_number || ''
+                'Manufacturer': item.manufacturer || '',
+                'Model Number': item.model_number || '',
+                'Country of Origin': item.country_of_origin || '',
+                'Item Type': (item.classification_projects?.project_type || '').toLowerCase() === 'cost' ? 'Cost' : (item.classification_projects?.project_type || '').toLowerCase() === 'purchase' ? 'Purchase' : '',
+                'ERP Status': item.erp_integrated ? 'INTEGRATED' : 'PENDING',
+                'ERP Integration Date': item.erp_integrated_at ? new Date(item.erp_integrated_at).toLocaleDateString() : '',
+                'Approved Date': item.approved_at ? new Date(item.approved_at).toLocaleDateString() : '',
+                'Created Date': item.created_at ? new Date(item.created_at).toLocaleDateString() : ''
             }));
 
-            // Create workbook
+            // Auto-size columns
+            const maxWidths = {};
+            excelData.forEach(row => {
+                Object.keys(row).forEach(key => {
+                    maxWidths[key] = Math.max(maxWidths[key] || 0, String(row[key] || '').length, key.length);
+                });
+            });
+
             const workbook = XLSX.utils.book_new();
             const worksheet = XLSX.utils.json_to_sheet(excelData);
-            
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'Item Codes');
+            worksheet['!cols'] = Object.keys(maxWidths).map(k => ({ wch: Math.min(maxWidths[k] + 2, 50) }));
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'ERP Data');
 
-            // Download
             const finalFilename = filename.endsWith('.xlsx') ? filename : `${filename}.xlsx`;
             XLSX.writeFile(workbook, finalFilename);
-            
+
             console.log('Excel export completed successfully');
-            
+
         } catch (error) {
             console.error('Excel export error:', error);
             alert('Excel export failed: ' + error.message);
