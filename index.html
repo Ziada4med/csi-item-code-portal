@@ -15600,7 +15600,99 @@ async function handleERPToggleFromERPTab(checkbox, itemId) {
             `${itemCode} ${isIntegrated ? 'marked as integrated' : 'unmarked from integration'}`,
             'success'
         );
-        
+
+        // Send email to creator when marked as integrated
+        if (isIntegrated) {
+            try {
+                const creatorEmail = item?.created_by_user?.email;
+                const creatorName  = item?.created_by_user?.username || 'User';
+
+                if (creatorEmail) {
+                    const projectName   = item.classification_projects?.project_name || item.project?.project_name || 'N/A';
+                    const integratedAt  = new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+                    const detailRows = [
+                        ['Item Code',          `<span style="font-family:monospace;font-size:18px;font-weight:700;color:#1e40af;">${item.item_code}</span>`],
+                        ['Project',            projectName],
+                        ['Description',        item.description1 || item.description2 || 'N/A'],
+                        item.uom                ? ['Unit of Measure',    item.uom]               : null,
+                        item.size_value         ? ['Size',               item.size_value]         : null,
+                        item.country_of_origin  ? ['Country of Origin',  item.country_of_origin]  : null,
+                        item.manufacturer       ? ['Manufacturer',        item.manufacturer]       : null,
+                        item.model_number       ? ['Model Number',        item.model_number]       : null,
+                        (item.unit_price != null) ? ['Unit Price',        `${item.currency_code || ''} ${item.unit_price}`] : null,
+                        ['Integrated By',      currentUser.username || 'ERP Team'],
+                        ['Integration Date',   integratedAt],
+                        ['Status',             '<span style="color:#065f46;font-weight:700;">&#10003; ERP INTEGRATED</span>']
+                    ].filter(Boolean);
+
+                    const tableRows = detailRows.map(([label, value]) =>
+                        `<tr><td style="padding:10px 14px;background:#f9fafb;border:1px solid #e5e7eb;font-weight:600;color:#374151;white-space:nowrap;">${label}</td><td style="padding:10px 14px;background:#ffffff;border:1px solid #e5e7eb;color:#1f2937;">${value}</td></tr>`
+                    ).join('');
+
+                    const emailSubject = `[PRISM] Item Code ERP Integration Complete - ${item.item_code}`;
+                    const emailBody = `
+<div style="font-family:'Inter',Arial,sans-serif;max-width:680px;margin:0 auto;background:#ffffff;">
+  <div style="background:linear-gradient(135deg,#059669 0%,#047857 100%);padding:32px 40px;border-radius:12px 12px 0 0;">
+    <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:700;letter-spacing:-0.5px;">PRISM</h1>
+    <p style="color:#a7f3d0;margin:4px 0 0 0;font-size:14px;">Procurement Resource &amp; Item Specification Management</p>
+  </div>
+  <div style="padding:40px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;">
+    <h2 style="color:#059669;font-size:20px;margin:0 0 16px 0;">&#10003; Item Code Successfully Integrated into ERP</h2>
+    <p style="color:#4b5563;font-size:16px;line-height:24px;margin:0 0 24px 0;">Hello <strong>${creatorName}</strong>,</p>
+    <p style="color:#4b5563;font-size:16px;line-height:24px;margin:0 0 24px 0;">Your item code has been successfully integrated into the ERP system and is now active for procurement operations.</p>
+    <table style="width:100%;border-collapse:collapse;margin:24px 0;">${tableRows}</table>
+    <div style="background:#d1fae5;border-left:4px solid #059669;padding:16px;margin:24px 0;border-radius:4px;">
+      <p style="margin:0;color:#065f46;font-weight:600;">&#10003; Integration Complete</p>
+      <p style="margin:8px 0 0 0;color:#047857;">This item code is now active in the ERP system and can be used for procurement operations.</p>
+    </div>
+    <p style="color:#6b7280;font-size:13px;margin:32px 0 0 0;border-top:1px solid #e5e7eb;padding-top:16px;">This is an automated notification from the PRISM system. Please do not reply to this email.</p>
+  </div>
+</div>`;
+
+                    // Queue the notification
+                    const { data: notifId, error: queueError } = await supabase.rpc('queue_email_notification', {
+                        p_to_email:           creatorEmail,
+                        p_subject:            emailSubject,
+                        p_body:               emailBody,
+                        p_notification_type:  'erp_integrated',
+                        p_recipient_user_id:  item.created_by || null,
+                        p_request_type:       'item_code',
+                        p_request_id:         itemId
+                    });
+
+                    if (queueError) {
+                        console.error('Failed to queue ERP integration email:', queueError);
+                    } else {
+                        console.log('ERP integration email queued, ID:', notifId);
+                        fetch('https://mvftaaxgdygeyzcvzqfr.supabase.co/functions/v1/send-gmail-notification', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                notificationId: notifId,
+                                to:             creatorEmail,
+                                subject:        emailSubject,
+                                htmlBody:       emailBody
+                            })
+                        }).then(r => r.json()).then(result => {
+                            if (result.success) {
+                                console.log('ERP integration email sent to creator successfully');
+                            } else {
+                                console.error('Edge Function failed to send ERP integration email:', result.error);
+                            }
+                        }).catch(err => {
+                            console.error('Edge Function call error for ERP integration email:', err);
+                        });
+                    }
+                } else {
+                    console.warn('Creator email not found for item', itemId, '— skipping notification');
+                }
+            } catch (emailErr) {
+                console.error('Failed to send ERP integration email notification:', emailErr);
+                // Non-blocking — do not interrupt user flow
+            }
+        }
+
         // Refresh dashboard
         updateERPStats(window.erpItems);
         populateERPTable(window.erpItems);
