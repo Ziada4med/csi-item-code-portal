@@ -3029,6 +3029,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (data && data.success) {
                         currentUser = data.user;
                         console.log(' Login successful for:', currentUser.username);
+
+                        // Block store_supervisor from this portal
+                        if (currentUser.role === 'store_supervisor') {
+                            document.getElementById('login-error').textContent = 'Access Denied: Store Supervisors are not permitted to access the Code Generation Portal.';
+                            document.getElementById('login-error').classList.remove('hidden');
+                            return;
+                        }
                         
                         // Store user in localStorage for session persistence
                         localStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -3058,6 +3065,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     currentUser = JSON.parse(storedUser);
                     console.log(' Found stored user session:', currentUser.username);
+
+                    // Block store_supervisor from this portal
+                    if (currentUser.role === 'store_supervisor') {
+                        localStorage.removeItem('currentUser');
+                        document.getElementById('login-error').textContent = 'Access Denied: Store Supervisors are not permitted to access the Code Generation Portal.';
+                        document.getElementById('login-error').classList.remove('hidden');
+                        return false;
+                    }
+
                     console.log(' Auto-logging in user...');
                     
                     // Hide login modal and show main container
