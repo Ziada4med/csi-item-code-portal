@@ -4739,7 +4739,31 @@ async function loadUOMs() {
                 alert('Failed to update size attribute: ' + error.message);
             }
         }
-        
+
+        // Toggle reference attribute (admin only)
+        // Reference attributes are stored and shown normally but excluded from
+        // base_combination_signature so they don't influence duplicate/variation detection.
+        async function toggleReferenceAttribute(attributeId, currentValue) {
+            if (!currentUser || currentUser.role !== 'admin') {
+                alert('Only admins can modify reference attribute settings');
+                return;
+            }
+            const newValue = !currentValue;
+            try {
+                const { error } = await supabase
+                    .from('project_attributes')
+                    .update({ is_reference_attribute: newValue })
+                    .eq('id', attributeId);
+                if (error) throw error;
+                const attr = currentProject.attributes.find(a => a.attribute_id === attributeId);
+                if (attr) attr.is_reference_attribute = newValue;
+                renderAttributes();
+            } catch (error) {
+                console.error('Error toggling reference attribute:', error);
+                alert('Failed to update reference attribute: ' + error.message);
+            }
+        }
+
         // Check reorderability
         async function checkReorderability() {
     console.log('=== CHECKING REORDERABILITY ===');
@@ -4849,11 +4873,17 @@ function renderAttributes() {
                     ${attr.is_mandatory ? '<span class="ml-2 text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Required</span>' : ''}
                     ${attr.is_manual_entry ? '<span class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Manual Entry</span>' : ''}
                     ${attr.is_size_attribute ? '<span class="ml-2 text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">📏 Size</span>' : ''}
+                    ${attr.is_reference_attribute ? '<span class="ml-2 text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">🔗 Ref</span>' : ''}
                     ${currentUser && currentUser.role === 'admin' ? `
                         <button onclick="toggleSizeAttribute(${attr.attribute_id}, ${attr.is_size_attribute || false})" 
                                 class="ml-2 text-xs px-2 py-1 rounded ${attr.is_size_attribute ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}"
                                 title="${attr.is_size_attribute ? 'Remove from size calculation' : 'Mark as size attribute'}">
                             ${attr.is_size_attribute ? '✓ Size' : '+ Size'}
+                        </button>
+                        <button onclick="toggleReferenceAttribute(${attr.attribute_id}, ${attr.is_reference_attribute || false})"
+                                class="ml-2 text-xs px-2 py-1 rounded ${attr.is_reference_attribute ? 'bg-orange-600 text-white hover:bg-orange-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}"
+                                title="${attr.is_reference_attribute ? 'Remove reference flag (attribute will affect duplicate detection)' : 'Mark as reference attribute (excluded from duplicate detection)'}">
+                            ${attr.is_reference_attribute ? '✓ Ref' : '+ Ref'}
                         </button>
                     ` : ''}
                 </div>
@@ -5708,6 +5738,12 @@ function generateBaseSignatureClient() {
         Object.keys(attributeSelections).sort().forEach(key => {
             const selection = attributeSelections[key];
             if (selection && selection.value) {
+                // Skip reference attributes (e.g. OEM Part Number) — excluded from
+                // duplicate detection so different OEM refs don't produce separate base codes
+                const attrDef = currentProject && currentProject.attributes
+                    ? currentProject.attributes.find(a => String(a.attribute_id) === String(key))
+                    : null;
+                if (attrDef && attrDef.is_reference_attribute) return;
                 attrString += `${key}:${selection.value}|`;
             }
         });
