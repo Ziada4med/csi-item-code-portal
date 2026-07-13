@@ -7970,9 +7970,14 @@ window.exportAllRequests = exportAllRequests;        // PDF Export
                 loadAdminPanel();
             } else if (tabName === 'search') {
                 console.log('Search tab clicked, allApprovedCodes.length:', allApprovedCodes.length);
-                // Always refresh search data when switching to search tab to ensure latest data
-                console.log('Refreshing search codes data for latest changes...');
-                refreshSearchCodesData();
+                if (allApprovedCodes.length === 0) {
+                    // Only hit the database when we don't have cached data yet.
+                    // Use the Refresh button to force a reload of the latest data.
+                    console.log('No cached search data yet, loading...');
+                    refreshSearchCodesData();
+                } else {
+                    console.log('Using cached search data (use the Refresh button for the latest changes).');
+                }
             } else if (tabName === 'erp') {
                 console.log(' ERP tab clicked, loading dashboard...');
                 loadERPDashboard();
