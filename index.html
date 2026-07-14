@@ -9132,7 +9132,13 @@ function setupAttributeSearch() {
     }
     
     if (toggleTableViewBtn) {
-        toggleTableViewBtn.addEventListener('click', toggleSearchTableView);
+        // Single idempotent binding: this button was previously wired in three places,
+        // causing one click to toggle the view state multiple times.
+        toggleTableViewBtn.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleSearchTableView();
+        };
     }
     
     // Refresh button
@@ -15387,10 +15393,9 @@ async function disableItemCodeFromSearch(itemId, itemCode) {
 
 // Setup table view event listeners
 function setupTableView() {
-    const toggleTableBtn = document.getElementById('toggle-table-view-btn');
-    if (toggleTableBtn) {
-        toggleTableBtn.addEventListener('click', toggleSearchTableView);
-    }
+    // Do not add another click listener here. The Search Codes controls use an
+    // idempotent `onclick` binding so repeated setup calls cannot multiply toggles.
+    setupSearchResultsControls();
 }
 
 // Initialize table view when app starts
