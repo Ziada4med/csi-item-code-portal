@@ -295,7 +295,14 @@
         <!-- Division Selection -->
         <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">1. Select Division</label>
-            <select id="division-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
+            <div class="relative">
+                <input type="text" id="division-combo-input" placeholder="Choose division..." autocomplete="off"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                       onclick="openCsiComboDropdown('division')"
+                       oninput="filterCsiComboDropdown('division')">
+                <div id="division-combo-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"></div>
+            </div>
+            <select id="division-select" class="hidden">
                 <option value="">Choose division...</option>
             </select>
         </div>
@@ -303,7 +310,14 @@
         <!-- Section Selection -->
         <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">2. Select Section</label>
-            <select id="section-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500" disabled>
+            <div class="relative">
+                <input type="text" id="section-combo-input" placeholder="Choose section..." autocomplete="off" disabled
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                       onclick="openCsiComboDropdown('section')"
+                       oninput="filterCsiComboDropdown('section')">
+                <div id="section-combo-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"></div>
+            </div>
+            <select id="section-select" class="hidden" disabled>
                 <option value="">Choose section...</option>
             </select>
         </div>
@@ -311,7 +325,14 @@
         <!-- Detailed Section Selection -->
         <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">3. Select Detailed Section</label>
-            <select id="detailed-section-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500" disabled>
+            <div class="relative">
+                <input type="text" id="detailed-section-combo-input" placeholder="Choose detailed section..." autocomplete="off" disabled
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                       onclick="openCsiComboDropdown('detailed-section')"
+                       oninput="filterCsiComboDropdown('detailed-section')">
+                <div id="detailed-section-combo-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"></div>
+            </div>
+            <select id="detailed-section-select" class="hidden" disabled>
                 <option value="">Choose detailed section...</option>
             </select>
         </div>
@@ -319,7 +340,14 @@
         <!-- Item Code Selection -->
         <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">4. Select Item Code</label>
-            <select id="item-code-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500" disabled>
+            <div class="relative">
+                <input type="text" id="item-code-combo-input" placeholder="Choose item code..." autocomplete="off" disabled
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                       onclick="openCsiComboDropdown('item-code')"
+                       oninput="filterCsiComboDropdown('item-code')">
+                <div id="item-code-combo-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"></div>
+            </div>
+            <select id="item-code-select" class="hidden" disabled>
                 <option value="">Choose item code...</option>
             </select>
         </div>
@@ -327,7 +355,14 @@
         <!-- Additional Level Value Selection -->
         <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">5. Select Additional Level</label>
-            <select id="additional-level-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500" disabled>
+            <div class="relative">
+                <input type="text" id="additional-level-combo-input" placeholder="Choose additional level..." autocomplete="off" disabled
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                       onclick="openCsiComboDropdown('additional-level')"
+                       oninput="filterCsiComboDropdown('additional-level')">
+                <div id="additional-level-combo-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"></div>
+            </div>
+            <select id="additional-level-select" class="hidden" disabled>
                 <option value="">Choose additional level...</option>
             </select>
         </div>
@@ -420,13 +455,27 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700">Unit of Measurement *</label>
-                <select id="uom-select" class="mt-1 w-full rounded-md border-gray-300">
+                <div class="relative">
+                    <input type="text" id="uom-combo-input" placeholder="Select UoM..." autocomplete="off"
+                           class="mt-1 w-full rounded-md border-gray-300"
+                           onclick="openCsiComboDropdown('uom')"
+                           oninput="filterCsiComboDropdown('uom')">
+                    <div id="uom-combo-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"></div>
+                </div>
+                <select id="uom-select" class="hidden">
                     <option value="">Select UoM...</option>
                 </select>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700">Country of Origin *</label>
-                <select id="country-select" class="mt-1 w-full rounded-md border-gray-300">
+                <div class="relative">
+                    <input type="text" id="country-combo-input" placeholder="Select country..." autocomplete="off"
+                           class="mt-1 w-full rounded-md border-gray-300"
+                           onclick="openCsiComboDropdown('country')"
+                           oninput="filterCsiComboDropdown('country')">
+                    <div id="country-combo-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"></div>
+                </div>
+                <select id="country-select" class="hidden">
                     <option value="">Select country...</option>
                 </select>
             </div>
@@ -469,7 +518,14 @@
                     Manufacturer <span id="manufacturer-requirement-label" class="text-gray-500">(Optional)</span>
                 </label>
                 <div class="flex gap-2">
-                    <select id="manufacturer-select" class="mt-1 flex-1 rounded-md border-gray-300">
+                    <div class="relative flex-1">
+                        <input type="text" id="manufacturer-combo-input" placeholder="Select manufacturer..." autocomplete="off"
+                               class="mt-1 w-full rounded-md border-gray-300"
+                               onclick="openCsiComboDropdown('manufacturer')"
+                               oninput="filterCsiComboDropdown('manufacturer')">
+                        <div id="manufacturer-combo-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"></div>
+                    </div>
+                    <select id="manufacturer-select" class="hidden">
                         <option value="">Select manufacturer...</option>
                     </select>
                     <button type="button" 
@@ -3277,6 +3333,112 @@ function setupCascadingDropdowns() {
     loadDivisions();
 }
 
+// ===== EMBEDDED SEARCHABLE COMBOBOX FOR CSI LEVEL DROPDOWNS =====
+// Each CSI level (division/section/detailed-section/item-code/additional-level) is backed by
+// a hidden native <select> (so all existing cascading logic/event listeners keep working
+// untouched) plus a visible text input that IS the dropdown control itself - clicking it opens
+// a filtered options list directly below it, built live from the select's current options.
+
+// Covers the 5 cascading CSI level dropdowns plus the standalone UOM/Country/Manufacturer
+// dropdowns in the generation form - all use the same embedded searchable combobox pattern.
+const CSI_COMBO_FIELDS = ['division', 'section', 'detailed-section', 'item-code', 'additional-level', 'uom', 'country', 'manufacturer'];
+
+function csiComboRefs(field) {
+    return {
+        input: document.getElementById(`${field}-combo-input`),
+        dropdown: document.getElementById(`${field}-combo-dropdown`),
+        select: document.getElementById(`${field}-select`)
+    };
+}
+
+function closeAllCsiComboDropdowns(exceptField) {
+    CSI_COMBO_FIELDS.forEach(field => {
+        if (field !== exceptField) {
+            const dropdown = document.getElementById(`${field}-combo-dropdown`);
+            if (dropdown) dropdown.classList.add('hidden');
+        }
+    });
+}
+
+function openCsiComboDropdown(field) {
+    const { input, dropdown, select } = csiComboRefs(field);
+    if (!input || !dropdown || !select || select.disabled) return;
+    closeAllCsiComboDropdowns(field);
+    renderCsiComboOptions(field, '');
+    dropdown.classList.remove('hidden');
+}
+
+function renderCsiComboOptions(field, query) {
+    const { dropdown, select } = csiComboRefs(field);
+    if (!dropdown || !select) return;
+    const q = query.trim().toLowerCase();
+    let html = '';
+    Array.from(select.options).forEach(option => {
+        if (option.value === '') return; // skip the placeholder in the list itself
+        if (q !== '' && !option.textContent.toLowerCase().includes(q)) return;
+        const safeValue = option.value.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        html += `<div class="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm" onclick="selectCsiComboOption('${field}', '${safeValue}')">${option.textContent}</div>`;
+    });
+    dropdown.innerHTML = html || `<div class="px-3 py-2 text-sm text-gray-400 italic">No matches found</div>`;
+}
+
+function filterCsiComboDropdown(field) {
+    const { input, dropdown } = csiComboRefs(field);
+    if (!input || !dropdown) return;
+    if (dropdown.classList.contains('hidden')) {
+        closeAllCsiComboDropdowns(field);
+        dropdown.classList.remove('hidden');
+    }
+    renderCsiComboOptions(field, input.value);
+}
+
+function selectCsiComboOption(field, value) {
+    const { input, dropdown, select } = csiComboRefs(field);
+    if (!input || !dropdown || !select) return;
+    select.value = value;
+    syncCsiComboDisplay(field);
+    dropdown.classList.add('hidden');
+    // Fire the existing change handler so all cascading logic runs exactly as before
+    select.dispatchEvent(new Event('change'));
+}
+
+// Keeps a combo input's displayed text in sync with its underlying select's current value.
+// Used after any programmatic select.value assignment (e.g. restoring a project from search).
+function syncCsiComboDisplay(field) {
+    const { input, select } = csiComboRefs(field);
+    if (!input || !select) return;
+    const selectedOption = select.options[select.selectedIndex];
+    input.value = (selectedOption && selectedOption.value !== '') ? selectedOption.textContent : '';
+}
+
+// Enables/disables a combo input to match its underlying select's disabled state
+function setCsiComboEnabled(field, enabled) {
+    const { input } = csiComboRefs(field);
+    if (input) input.disabled = !enabled;
+}
+
+// Close any open combo dropdown when clicking outside of it
+document.addEventListener('click', function(event) {
+    CSI_COMBO_FIELDS.forEach(field => {
+        const { input, dropdown } = csiComboRefs(field);
+        if (input && dropdown && !input.contains(event.target) && !dropdown.contains(event.target)) {
+            dropdown.classList.add('hidden');
+        }
+    });
+});
+
+// Live-filters the standard-value radio options for a given attribute, based on
+// the values already rendered in that attribute's dropdown - no new data is fetched.
+function filterAttributeValueOptions(attributeId, query) {
+    const container = document.getElementById(`attr-values-container-${attributeId}`);
+    if (!container) return;
+    const q = query.trim().toLowerCase();
+    Array.from(container.querySelectorAll('label')).forEach(label => {
+        const text = label.textContent.toLowerCase();
+        label.style.display = (q === '' || text.includes(q)) ? '' : 'none';
+    });
+}
+
 // Load divisions that have approved projects
 async function loadDivisions() {
     try {
@@ -3699,6 +3861,7 @@ function handleAdditionalLevelChange(e) {
             manufacturerReqLabel.classList.remove('text-red-500');
             manufacturerReqLabel.classList.add('text-gray-500');
         }
+        setAddManufacturerButtonEnabled(true);
     }
 }
 
@@ -3708,6 +3871,17 @@ function resetDropdown(elementId, defaultText) {
     if (dropdown) {
         dropdown.innerHTML = `<option value="">${defaultText}</option>`;
     }
+    // Clear/reset the associated combo input, if this dropdown has one
+    if (elementId.endsWith('-select')) {
+        const field = elementId.replace('-select', '');
+        const comboInput = document.getElementById(`${field}-combo-input`);
+        if (comboInput) {
+            comboInput.value = '';
+            comboInput.placeholder = defaultText;
+        }
+        const comboDropdown = document.getElementById(`${field}-combo-dropdown`);
+        if (comboDropdown) comboDropdown.classList.add('hidden');
+    }
 }
 
 function enableDropdown(elementId) {
@@ -3715,12 +3889,20 @@ function enableDropdown(elementId) {
     if (dropdown) {
         dropdown.disabled = false;
     }
+    if (elementId.endsWith('-select')) {
+        const comboInput = document.getElementById(`${elementId.replace('-select', '')}-combo-input`);
+        if (comboInput) comboInput.disabled = false;
+    }
 }
 
 function disableDropdown(elementId) {
     const dropdown = document.getElementById(elementId);
     if (dropdown) {
         dropdown.disabled = true;
+    }
+    if (elementId.endsWith('-select')) {
+        const comboInput = document.getElementById(`${elementId.replace('-select', '')}-combo-input`);
+        if (comboInput) comboInput.disabled = true;
     }
 }
 
@@ -3755,6 +3937,7 @@ async function updateCascadingDropdownsForProject(project) {
         const divisionSelect = document.getElementById('division-select');
         if (divisionSelect) {
             divisionSelect.value = project.division_code;
+            syncCsiComboDisplay('division');
             console.log('Set division to:', project.division_code);
             
             // Load sections and set section
@@ -3769,6 +3952,7 @@ async function updateCascadingDropdownsForProject(project) {
                 const sectionOption = Array.from(sectionSelect.options).find(opt => opt.value === project.section_code);
                 if (sectionOption) {
                     sectionSelect.value = project.section_code;
+                    syncCsiComboDisplay('section');
                     console.log('Set section to:', project.section_code);
                     
                     // Load detailed sections and set detailed section
@@ -3783,6 +3967,7 @@ async function updateCascadingDropdownsForProject(project) {
                         const detailedSectionOption = Array.from(detailedSectionSelect.options).find(opt => opt.value === project.detailed_section_code);
                         if (detailedSectionOption) {
                             detailedSectionSelect.value = project.detailed_section_code;
+                            syncCsiComboDisplay('detailed-section');
                             console.log('Set detailed section to:', project.detailed_section_code);
                             
                             // Load item codes and set item code
@@ -3797,6 +3982,7 @@ async function updateCascadingDropdownsForProject(project) {
                                 const itemCodeOption = Array.from(itemCodeSelect.options).find(opt => opt.value === project.item_code);
                                 if (itemCodeOption) {
                                     itemCodeSelect.value = project.item_code;
+                                    syncCsiComboDisplay('item-code');
                                     console.log('Set item code to:', project.item_code);
                                     
                                     // Load additional levels and set final project
@@ -3811,6 +3997,7 @@ async function updateCascadingDropdownsForProject(project) {
                                         const projectOption = Array.from(additionalLevelSelect.options).find(opt => opt.value === project.project_id);
                                         if (projectOption) {
                                             additionalLevelSelect.value = project.project_id;
+                                            syncCsiComboDisplay('additional-level');
                                             console.log('Set additional level to project:', project.project_id);
                                         } else {
                                             console.warn('Project option not found in additional level dropdown');
@@ -4238,8 +4425,8 @@ function selectProjectFromData(project) {
 
     // PMV projects require a manufacturer - update the label to reflect this
     const manufacturerReqLabel = document.getElementById('manufacturer-requirement-label');
+    const isPmvProject = (currentProject.item_code || '').toUpperCase().startsWith('XX PMV');
     if (manufacturerReqLabel) {
-        const isPmvProject = (currentProject.item_code || '').toUpperCase().startsWith('XX PMV');
         if (isPmvProject) {
             manufacturerReqLabel.textContent = '(Required)';
             manufacturerReqLabel.classList.remove('text-gray-500');
@@ -4250,6 +4437,8 @@ function selectProjectFromData(project) {
             manufacturerReqLabel.classList.add('text-gray-500');
         }
     }
+    // PMV projects: manufacturers must be chosen from the existing list only - no adding new ones
+    setAddManufacturerButtonEnabled(!isPmvProject);
 
 // Load the correct next serial number for this project
 getNextSerialNumber().then(serial => {
@@ -4608,6 +4797,10 @@ async function loadUOMs() {
                     option.textContent = manufacturer.manufacturer_name;
                     manufacturerSelect.appendChild(option);
                 });
+                
+                // Reset the combo input display since the underlying list just changed
+                const manufacturerComboInput = document.getElementById('manufacturer-combo-input');
+                if (manufacturerComboInput) manufacturerComboInput.value = '';
             } catch (error) {
                 console.error('Error loading manufacturers:', error);
             }
@@ -4797,7 +4990,20 @@ function renderAttributes() {
 
         // Header checkbox functionality removed - now controlled by global user preference
 
-        html += '<div class="flex flex-wrap gap-3 mb-2">';;
+        // Show a live search box above the values list when there are enough values to warrant one
+        const showValueSearch = attr.is_manual_entry !== true && attr.standard_values &&
+            Array.isArray(attr.standard_values) && attr.standard_values.length > 0;
+        if (showValueSearch) {
+            html += `
+                <div class="w-full mb-2">
+                    <input type="text" id="attr-value-search-${attr.attribute_id}" placeholder="Search values..." autocomplete="off"
+                           class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                           oninput="filterAttributeValueOptions(${attr.attribute_id}, this.value)">
+                </div>
+            `;
+        }
+
+        html += `<div class="flex flex-wrap gap-3 mb-2" id="attr-values-container-${attr.attribute_id}">`;
 
         // Handle manual entry vs standard values
         if (attr.is_manual_entry === true) {
@@ -4950,36 +5156,6 @@ function renderAttributes() {
                 }
                 
                 html += `
-                    </div>
-                `;
-            }
-                
-            if (!hasActiveStandardValues) {
-                html += `
-                    <div class="w-full">
-                        <div class="text-sm ${allValuesDeprecated ? 'text-orange-600' : 'text-gray-500'} italic mb-3">${messageText}</div>
-                    </div>
-                </div>
-                <div class="w-full mt-3 p-4 ${allValuesDeprecated ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 border-gray-300'} border rounded-lg">
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Value</label>
-                            <input type="text" 
-                                   id="${manualInputId}" 
-                                   placeholder="Enter custom value..." 
-                                   class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                   data-attr-id="${attr.attribute_id}"
-                                   autocomplete="off">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Unit (Optional)</label>
-                            <select id="${unitSelectId}" 
-                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    data-attr-id="${attr.attribute_id}">
-                                <option value="">Select unit...</option>
-                            </select>
-                        </div>
-                        <p class="text-xs text-gray-600">Enter a custom value for this attribute since no standard values are configured.</p>
                     </div>
                 `;
             }
@@ -6649,9 +6825,30 @@ async function submitBlockRequest() {
             clearDuplicationStatus();
         }
 // Show add manufacturer modal
+        // Enables/disables the "+ Add" manufacturer button (e.g. disabled for PMV projects,
+        // which must only use manufacturers already on the approved PMV list)
+        function setAddManufacturerButtonEnabled(enabled) {
+            const btn = document.getElementById('add-manufacturer-btn');
+            if (!btn) return;
+            btn.disabled = !enabled;
+            if (enabled) {
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.title = '';
+            } else {
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.title = 'Adding new manufacturers is not allowed for PMV projects';
+            }
+        }
+
         function showAddManufacturerModal() {
             if (!currentProject) {
                 alert('Please select a project first');
+                return;
+            }
+            
+            const isPmvProject = (currentProject.item_code || '').toUpperCase().startsWith('XX PMV');
+            if (isPmvProject) {
+                alert('Adding new manufacturers is not allowed for PMV projects. Please select from the existing PMV manufacturer list.');
                 return;
             }
             
