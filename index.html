@@ -3198,14 +3198,19 @@ async function loadApprovedProjects() {
             
             return project;
         });
-        
+    } catch (error) {
+        console.error('Error loading projects:', error);
+        alert('Failed to load projects. Please check console for details, or try refreshing the page.');
+    } finally {
+        // Wire up UI controls (buttons, dropdowns, tabs) regardless of whether the project
+        // data itself loaded successfully - these are independent of allProjects, and if this
+        // step is skipped whenever the RPC above fails/times out, buttons across the Generate
+        // and Search Codes tabs (e.g. Switch to Card View) silently never get their click
+        // listeners attached for the rest of the session.
         setupCascadingDropdowns();
         setupAdvancedProjectSearch();
         setupSearchCodesTab();
-        setupProjectClassificationFilter(); // Add this new function
-    } catch (error) {
-        console.error('Error loading projects:', error);
-        alert('Failed to load projects. Please check console for details.');
+        setupProjectClassificationFilter();
     }
 }
 
@@ -8082,15 +8087,7 @@ window.exportAllRequests = exportAllRequests;        // PDF Export
             } else if (tabName === 'admin') {
                 loadAdminPanel();
             } else if (tabName === 'search') {
-                console.log('Search tab clicked, allApprovedCodes.length:', allApprovedCodes.length);
-                if (allApprovedCodes.length === 0) {
-                    // Only hit the database when we don't have cached data yet.
-                    // Use the Refresh button to force a reload of the latest data.
-                    console.log('No cached search data yet, loading...');
-                    refreshSearchCodesData();
-                } else {
-                    console.log('Using cached search data (use the Refresh button for the latest changes).');
-                }
+                console.log('Search tab clicked - codes now load per-project on selection, no upfront fetch needed');
             } else if (tabName === 'erp') {
                 console.log(' ERP tab clicked, loading dashboard...');
                 loadERPDashboard();
@@ -8898,8 +8895,15 @@ function refreshSearchCodesData() {
     const loadingState = document.getElementById('search-loading');
     if (loadingState) loadingState.classList.remove('hidden');
     
-    // Reload from database
-    loadAllApprovedCodes();
+    // Refresh only reloads the currently selected project's codes now (not the whole database) -
+    // if no project is selected yet, there's nothing project-scoped to refresh.
+    if (selectedSearchProject && (selectedSearchProject.id || selectedSearchProject.project_id)) {
+        loadProjectScopedApprovedCodes(selectedSearchProject.id || selectedSearchProject.project_id)
+            .then(() => performAttributeBasedSearch());
+    } else {
+        if (loadingState) loadingState.classList.add('hidden');
+        alert('Please select a project first, then use Refresh to reload its codes.');
+    }
 }
 
 let allApprovedCodes = [];
@@ -8910,9 +8914,12 @@ let isSearchTableView = true; // Default to table view
 
 
 
-// Load all approved item codes
-async function loadAllApprovedCodes() {
-    console.log(" Loading all approved codes (including disabled with indicators)...");
+// Load approved (and disabled) item codes scoped to a single project - uses the
+// search_all_item_codes_with_status RPC's existing project_id filter instead of
+// dumping every code in the system, which is what made this expensive and prone
+// to timeouts. A typical project has a handful to a few hundred codes, not 8,000+.
+async function loadProjectScopedApprovedCodes(projectId) {
+    console.log(` Loading approved codes scoped to project ${projectId} (including disabled)...`);
     isLoadingApprovedCodes = true;
     
     try {
@@ -8927,11 +8934,13 @@ async function loadAllApprovedCodes() {
         if (hierarchyView) hierarchyView.classList.add("hidden");
         if (listView) listView.classList.add("hidden");
         
-        // Use enhanced function that includes disabled codes
-        const { data, error } = await supabase.rpc("get_all_approved_codes_with_disabled");
+        const { data, error } = await supabase.rpc("search_all_item_codes_with_status", {
+            search_filters_param: { project_id: projectId },
+            include_disabled_param: true
+        });
         
         if (error) {
-            console.error("Error loading codes:", error);
+            console.error("Error loading project-scoped codes:", error);
             throw error;
         }
         
@@ -8940,27 +8949,20 @@ async function loadAllApprovedCodes() {
         }
         
         allApprovedCodes = data.item_codes || [];
-        console.log(` Loaded ${data.total_count} codes: ${data.active_count} active, ${data.disabled_count} disabled`);
+        console.log(` Loaded ${data.total_count} codes for project ${projectId}: ${data.active_count} active, ${data.disabled_count} disabled`);
         
         // Hide loading state
         if (loadingState) loadingState.classList.add("hidden");
         
-        // Show appropriate state
-        if (allApprovedCodes.length === 0) {
-            showEmptyStateApproved();
-        } else {
-            displaySearchResults(allApprovedCodes);
-        }
-        
-        // Load search dropdown data with disabled indicators
-        console.log(" Loading search dropdown data with", allApprovedCodes.length, "codes (including disabled)");
+        // Load search dropdown data (manufacturer/UOM/country/model filters) scoped to this project's codes
+        console.log(" Loading search dropdown data with", allApprovedCodes.length, "project-scoped codes");
         await loadSearchDropdownData();
         
         isLoadingApprovedCodes = false;
         return allApprovedCodes;
         
     } catch (error) {
-        console.error("Failed to load approved codes:", error);
+        console.error("Failed to load project-scoped approved codes:", error);
         
         // Hide loading state on error
         const loadingState = document.getElementById("search-loading");
@@ -9350,7 +9352,8 @@ function selectSearchProject(project) {
     }
     
     // Perform initial search to show all project items in table view
-    setTimeout(() => {
+    setTimeout(async () => {
+        await loadProjectScopedApprovedCodes(project.id || project.project_id);
         performAttributeBasedSearch();
     }, 100);
 }
@@ -9743,6 +9746,7 @@ function clearProjectSearch() {
     
     selectedSearchProject = null;
     projectSearchResults = [];
+    allApprovedCodes = [];
     
     // Clear search results
     clearSearchResults();
@@ -9809,13 +9813,7 @@ function performAttributeBasedSearch() {
     console.log(' EXECUTION TRACE: Final criteria count:', Object.keys(attributeCriteria).length);
     console.log(' EXECUTION TRACE: Attribute criteria:', attributeCriteria);
     
-    // Use already loaded approved codes data
-    if (!allApprovedCodes || allApprovedCodes.length === 0) {
-        console.log(' EXECUTION TRACE: No approved codes available');
-        alert('No approved item codes available. Please refresh the page.');
-        return;
-    }
-    
+    // Use already loaded approved codes data (scoped to the selected project)
     console.log(' EXECUTION TRACE: Total approved codes available:', allApprovedCodes.length);
     
     // Filter by selected project first
@@ -10209,8 +10207,8 @@ function clearSearchResults() {
     }
     
     // Reset view state flags
-    window.isSearchTableView = true; // Default to table view
-    window.searchHierarchyView = true;
+    isSearchTableView = true; // Default to table view
+    searchHierarchyView = true;
     
     // Clear any stored filtered results
     window.lastFilteredResults = null;
@@ -10661,10 +10659,10 @@ function displaySearchResults(codes) {
         console.log(' DISPLAY TRACE: showResultsViewInfo failed:', error);
     }
     
-    // ALWAYS TRY TABLE VIEW FIRST for search results
-    if (tableView) {
+    // Respect the user's current view toggle instead of forcing table view every time -
+    // forcing it here was silently undoing "Switch to Card View" on every subsequent search.
+    if (tableView && isSearchTableView) {
         console.log(' DISPLAY TRACE: Table view container found, setting up TABLE view...');
-        isSearchTableView = true; // Force table view for search results
         
         tableView.classList.remove('hidden');
         console.log(' DISPLAY TRACE: Table view made visible');
@@ -10719,7 +10717,7 @@ function displaySearchResults(codes) {
                 }
             }, 100);
         }
-    } else {
+    } else if (!tableView) {
         console.log(' DISPLAY TRACE: Table view container NOT FOUND');
         console.log(' DISPLAY TRACE: Using fallback list view...');
         
@@ -10734,6 +10732,24 @@ function displaySearchResults(codes) {
             }
         } else {
             console.log(' DISPLAY TRACE: No view containers found at all!');
+        }
+    } else {
+        // Card view is active (user toggled to it) - show hierarchy or flat list per that toggle
+        console.log(' DISPLAY TRACE: Card view active, rendering', searchHierarchyView ? 'hierarchy' : 'list', 'view...');
+        tableView.classList.add('hidden');
+        try {
+            if (searchHierarchyView) {
+                if (hierarchyView) hierarchyView.classList.remove('hidden');
+                if (listView) listView.classList.add('hidden');
+                displayHierarchyView(codes);
+            } else {
+                if (hierarchyView) hierarchyView.classList.add('hidden');
+                if (listView) listView.classList.remove('hidden');
+                displayListView(codes);
+            }
+            console.log(' DISPLAY TRACE: Card view rendered successfully');
+        } catch (error) {
+            console.log(' DISPLAY TRACE: Card view rendering failed:', error);
         }
     }
     
@@ -18616,7 +18632,7 @@ function updateSearchControlsVisibility(searchMethod) {
 }
 
 // Direct item code search functionality
-function performDirectItemCodeSearch() {
+async function performDirectItemCodeSearch() {
     const searchInput = document.getElementById('direct-item-code-search');
     const resultsInfo = document.getElementById('itemcode-search-info');
     const resultsText = document.getElementById('itemcode-results-text');
@@ -18628,40 +18644,69 @@ function performDirectItemCodeSearch() {
     
     const searchTerms = searchInput.value
         .split(',')
-        .map(term => term.trim().toLowerCase())
+        .map(term => term.trim())
         .filter(term => term.length > 0);
     
     console.log(' Direct item code search:', searchTerms);
     
-    if (!allApprovedCodes || allApprovedCodes.length === 0) {
-        alert('No approved item codes available. Please refresh the page.');
-        return;
-    }
-    
     // Ensure controls are set for item code search context
     updateSearchControlsVisibility('itemcode');
     
-    // Filter items by item code matching
-    const matchedItems = allApprovedCodes.filter(item => {
-        const itemCode = String(item.item_code || '').toLowerCase();
-        return searchTerms.some(term => itemCode.includes(term));
-    });
+    // This search spans ALL projects by design, so it queries the database directly
+    // rather than relying on the (now project-scoped) allApprovedCodes cache.
+    const loadingState = document.getElementById('search-loading');
+    if (loadingState) loadingState.classList.remove('hidden');
     
-    console.log(` Found ${matchedItems.length} items matching search terms`);
-    
-    // Update results info
-    if (resultsInfo && resultsText) {
-        resultsText.textContent = `Found ${matchedItems.length} item code(s) matching your search`;
-        resultsInfo.classList.remove('hidden');
+    try {
+        const resultsById = new Map();
         
-        // Hide after 3 seconds
-        setTimeout(() => {
-            resultsInfo.classList.add('hidden');
-        }, 3000);
+        for (const term of searchTerms) {
+            const { data, error } = await supabase.rpc('search_all_item_codes_with_status', {
+                search_filters_param: { item_code: term },
+                include_disabled_param: true
+            });
+            
+            if (error) {
+                console.error(`Error searching for item code "${term}":`, error);
+                continue;
+            }
+            
+            if (data && data.success && Array.isArray(data.item_codes)) {
+                data.item_codes.forEach(item => {
+                    // Active and disabled codes come from separate tables and can share numeric ids,
+                    // so dedupe on a composite key rather than id alone.
+                    const key = `${item.is_disabled ? 'd' : 'a'}-${item.id}`;
+                    resultsById.set(key, item);
+                });
+            }
+        }
+        
+        const matchedItems = Array.from(resultsById.values());
+        console.log(` Found ${matchedItems.length} items matching search terms`);
+        
+        // Update results info
+        if (resultsInfo && resultsText) {
+            resultsText.textContent = `Found ${matchedItems.length} item code(s) matching your search`;
+            resultsInfo.classList.remove('hidden');
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                resultsInfo.classList.add('hidden');
+            }, 3000);
+        }
+        
+        // Keep this cross-project result set available for the current view/toggle logic
+        allApprovedCodes = matchedItems;
+        
+        // Display results (this will show the controls section)
+        displaySearchResults(matchedItems);
+        
+    } catch (error) {
+        console.error('Direct item code search failed:', error);
+        alert('Search failed. Please try again.');
+    } finally {
+        if (loadingState) loadingState.classList.add('hidden');
     }
-    
-    // Display results (this will show the controls section)
-    displaySearchResults(matchedItems);
 }
 
 // Clear direct item code search
@@ -18688,7 +18733,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set initial context to project search (default active tab)
     updateSearchControlsVisibility('project');
     
-    // Note: loadSearchDropdownData() is now called from loadAllApprovedCodes()
+    // Note: loadSearchDropdownData() is now called from loadProjectScopedApprovedCodes()
     // when the approved codes data is actually available
     
     // Add event listeners for direct item code search
