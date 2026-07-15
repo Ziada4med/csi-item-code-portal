@@ -7875,32 +7875,24 @@ window.exportAllRequests = exportAllRequests;        // PDF Export
             try {
                 // ADMIN BYPASS: Admins add values directly without approval
                 if (currentUser.role === 'admin') {
-                    // Get current attribute
-                    const { data: attrData, error: attrError } = await supabase
-                        .from('project_attributes')
-                        .select('standard_values')
-                        .eq('id', attributeId)
-                        .single();
+                    // Add value via synced RPC: checks duplicates and mirrors OEM PART NO.
+                    // values between paired OEM/Aftermarket projects automatically.
+                    const { data: syncResult, error: syncError } = await supabase
+                        .rpc('add_standard_value_synced', {
+                            p_attribute_id: attributeId,
+                            p_new_value: newValue.trim(),
+                            p_unit: unit || ''
+                        });
 
-                    if (attrError) throw attrError;
+                    if (syncError) throw syncError;
 
-                    // Add new value to standard_values array
-                    const currentValues = attrData.standard_values || [];
-                    const newValueObj = {
-                        name: newValue.trim(),
-                        unit: unit || null
-                    };
-                    currentValues.push(newValueObj);
+                    if (!syncResult || !syncResult.success) {
+                        alert(syncResult?.message || 'Failed to add standard value.');
+                        return;
+                    }
 
-                    // Update the attribute with new value
-                    const { error: updateError } = await supabase
-                        .from('project_attributes')
-                        .update({ standard_values: currentValues })
-                        .eq('id', attributeId);
-
-                    if (updateError) throw updateError;
-
-                    alert('Standard value added successfully (Admin - No approval required)\n\nPlease refresh the project to see the new value.');
+                    const mirrorNote = syncResult.mirrored ? '\n\nThis is an OEM Part No. value, so it was also added to the paired OEM/Aftermarket project automatically.' : '';
+                    alert('Standard value added successfully (Admin - No approval required)' + mirrorNote + '\n\nPlease refresh the project to see the new value.');
                     document.getElementById('add-value-modal').classList.add('hidden');
                     document.getElementById('add-value-form').reset();
                     
@@ -7911,6 +7903,26 @@ window.exportAllRequests = exportAllRequests;        // PDF Export
                     const reviewerId = document.getElementById('modal-reviewer-select').value;
                     if (!reviewerId) {
                         alert('Please assign a reviewer.');
+                        return;
+                    }
+
+                    // Duplicate check before submitting the request (deprecated values don't count as duplicates)
+                    const { data: existingAttrData, error: existingAttrError } = await supabase
+                        .from('project_attributes')
+                        .select('standard_values')
+                        .eq('id', attributeId)
+                        .single();
+
+                    if (existingAttrError) throw existingAttrError;
+
+                    const existingValues = existingAttrData.standard_values || [];
+                    const isDuplicate = existingValues.some(v =>
+                        (v.status || 'active') !== 'deprecated' &&
+                        (v.name || '').trim().toLowerCase() === valueWithUnit.trim().toLowerCase()
+                    );
+
+                    if (isDuplicate) {
+                        alert('This standard value already exists for this attribute. You cannot request to add a duplicate value.');
                         return;
                     }
 
