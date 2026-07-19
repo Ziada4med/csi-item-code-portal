@@ -16035,6 +16035,7 @@ function exportERPData(type) {
             'Item Group': item.classification_projects?.division_code || 'N/A',
             'Description 1': item.description1 || 'N/A',
             'Description 2': item.description2 || 'N/A',
+            'UOM': item.uom || 'N/A',
             'Size': item.size_value || 'N/A',
             'Price': item.unit_price ? `${item.unit_price} ${item.currency_code || ''}` : 'Not specified',
             'Manufacturer': item.manufacturer || 'Not specified',
@@ -16078,6 +16079,9 @@ function exportERPData(type) {
                     break;
                 case 'Description 2':
                     width = Math.max(width, 30);
+                    break;
+                case 'UOM':
+                    width = Math.max(width, 10);
                     break;
                 case 'Size':
                     width = Math.max(width, 12);
