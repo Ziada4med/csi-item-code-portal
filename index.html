@@ -434,6 +434,10 @@
                 <button id="add-standard-value-btn" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm">
                     + Add Standard Value
                 </button>
+                <button id="generate-rfq-btn" onclick="openRfqModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-md text-sm flex items-center gap-1">
+                    📋 Generate RFQ
+                    <span id="rfq-cart-count-badge" class="hidden bg-white text-indigo-700 text-xs font-bold rounded-full px-1.5 py-0.5 ml-1">0</span>
+                </button>
                 <button id="manage-deprecation-btn" class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded-md text-sm">
                      Manage Deprecation
                 </button>
@@ -1327,6 +1331,7 @@
                     <table class="divide-y divide-gray-200" style="min-width:1400px;width:100%;">
                         <thead class="bg-gray-50">
                             <tr>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Action</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Item Code</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Item Group</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Description 1</th>
@@ -1339,7 +1344,6 @@
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Item Type</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Approved Date</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">ERP Status</th>
-                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Action</th>
                             </tr>
                         </thead>
                         <tbody id="erp-items-table-body" class="bg-white divide-y divide-gray-200">
@@ -1561,6 +1565,99 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- RFQ Builder Modal -->
+    <div id="rfq-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-5xl w-full mx-4 max-h-[92vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-indigo-800">📋 RFQ Builder</h3>
+                    <button onclick="closeRfqModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+                </div>
+
+                <!-- Add Current Item Section -->
+                <div class="border border-indigo-200 rounded-lg p-4 mb-6 bg-indigo-50">
+                    <h4 class="font-medium text-indigo-800 mb-1">Add Current Item to Cart</h4>
+                    <p id="rfq-current-item-label" class="text-sm text-gray-600 mb-3">No project selected</p>
+
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Attributes to Include</label>
+                        <div id="rfq-attributes-list" class="border border-gray-300 rounded-md p-3 space-y-2 max-h-64 overflow-y-auto bg-white">
+                            <!-- populated by JS -->
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Country of Origin</label>
+                            <select id="rfq-required-coo" class="w-full px-2 py-1 text-sm border border-gray-300 rounded">
+                                <option value="">Select country...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">UOM <span class="text-red-500">*</span></label>
+                            <select id="rfq-required-uom" class="w-full px-2 py-1 text-sm border border-gray-300 rounded" required>
+                                <option value="">Select UoM...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Quantity <span class="text-red-500">*</span></label>
+                            <input type="text" id="rfq-required-qty" placeholder="e.g. 100" required class="w-full px-2 py-1 text-sm border border-gray-300 rounded">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Model</label>
+                            <input type="text" id="rfq-required-model" placeholder="e.g. XYZ-100" class="w-full px-2 py-1 text-sm border border-gray-300 rounded">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Manufacturer</label>
+                            <input type="text" id="rfq-required-manufacturer" placeholder="e.g. Bosch" class="w-full px-2 py-1 text-sm border border-gray-300 rounded">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Notes (optional)</label>
+                        <input type="text" id="rfq-item-notes" placeholder="Any additional notes for this item..." class="w-full px-2 py-1 text-sm border border-gray-300 rounded">
+                    </div>
+
+                    <button onclick="addCurrentItemToRfqCart()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                        + Add to RFQ Cart
+                    </button>
+                </div>
+
+                <!-- Cart Section -->
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-medium text-gray-800">RFQ Cart (<span id="rfq-cart-item-count">0</span> items)</h4>
+                        <button onclick="clearRfqCart()" id="rfq-clear-cart-btn" class="text-xs text-red-600 hover:text-red-800 hidden">Clear Cart</button>
+                    </div>
+                    <div id="rfq-cart-list" class="space-y-2 max-h-72 overflow-y-auto">
+                        <div class="text-center py-6 text-gray-400 text-sm">Cart is empty. Add items above.</div>
+                    </div>
+                </div>
+
+                <!-- Generate Section -->
+                <div class="border-t pt-4 flex justify-end gap-2">
+                    <button onclick="closeRfqModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md text-sm">Close</button>
+                    <button onclick="generateRfqEmail()" id="rfq-generate-btn" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium" disabled>
+                        ✉️ Generate RFQ Email
+                    </button>
+                </div>
+
+                <!-- Generated Email Preview -->
+                <div id="rfq-preview-section" class="hidden mt-6 border-t pt-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-medium text-gray-800">Generated RFQ Email <span id="rfq-reference-label" class="text-xs text-gray-500"></span></h4>
+                        <button onclick="copyRfqEmail()" class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md">📋 Copy Email</button>
+                    </div>
+                    <div class="mb-2">
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Subject</label>
+                        <input type="text" id="rfq-email-subject" readonly class="w-full px-2 py-1 text-sm border border-gray-300 rounded bg-gray-50">
+                    </div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Body</label>
+                    <div id="rfq-email-body-preview" class="border border-gray-300 rounded-md p-4 bg-white text-sm overflow-x-auto"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -3042,6 +3139,11 @@ async function initializeApp() {
         console.log('Initializing app for user:', currentUser);
         
         document.getElementById('user-info').textContent = `${currentUser.username} (${currentUser.role})`;
+
+        // Load this user's persisted RFQ cart count for the badge
+        if (typeof refreshRfqCartBadge === 'function') {
+            refreshRfqCartBadge();
+        }
         
         // MIGRATION: Disabled to prevent export interference  
         // Note: migrate_existing_additional_levels was causing 400 errors
@@ -15652,6 +15754,16 @@ function populateERPTable(items) {
     try {
         tableBody.innerHTML = pageItems.map((item, index) => `
             <tr class="hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}">
+                <td class="px-4 py-3 whitespace-nowrap text-center">
+                    ${canModify ? `
+                        <label class="flex items-center justify-center cursor-pointer">
+                            <input type="checkbox" class="erp-checkbox w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                   ${item.erp_integrated ? 'checked' : ''}
+                                   data-item-id="${item.id}" data-item-code="${item.item_code}"
+                                   onchange="handleERPToggleFromERPTab(this, ${item.id})">
+                            <span class="ml-2 text-xs font-medium text-gray-700">${item.erp_integrated ? 'Unmark' : 'Mark'}</span>
+                        </label>` : `<span class="text-xs text-gray-500">No Action</span>`}
+                </td>
                 <td class="px-4 py-3 whitespace-nowrap text-sm font-mono font-semibold text-blue-600">${item.item_code || 'N/A'}</td>
                 <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-purple-700 font-semibold">${item.classification_projects?.division_code || 'N/A'}</td>
                 <td class="px-4 py-3 text-sm text-gray-900" title="${item.description1 || ''}">${(item.description1 || 'N/A').substring(0,40)}${(item.description1||'').length>40?'...':''}</td>
@@ -15674,16 +15786,6 @@ function populateERPTable(items) {
                         ${item.erp_integrated ? 'INTEGRATED' : 'PENDING'}
                     </span>
                     ${item.erp_integrated && item.erp_integrated_at ? `<div class="text-xs text-gray-500 mt-1">${new Date(item.erp_integrated_at).toLocaleDateString()}</div>` : ''}
-                </td>
-                <td class="px-4 py-3 whitespace-nowrap text-center">
-                    ${canModify ? `
-                        <label class="flex items-center justify-center cursor-pointer">
-                            <input type="checkbox" class="erp-checkbox w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                                   ${item.erp_integrated ? 'checked' : ''}
-                                   data-item-id="${item.id}" data-item-code="${item.item_code}"
-                                   onchange="handleERPToggleFromERPTab(this, ${item.id})">
-                            <span class="ml-2 text-xs font-medium text-gray-700">${item.erp_integrated ? 'Unmark' : 'Mark'}</span>
-                        </label>` : `<span class="text-xs text-gray-500">No Action</span>`}
                 </td>
             </tr>`).join('');
 
@@ -16035,7 +16137,6 @@ function exportERPData(type) {
             'Item Group': item.classification_projects?.division_code || 'N/A',
             'Description 1': item.description1 || 'N/A',
             'Description 2': item.description2 || 'N/A',
-            'UOM': item.uom || 'N/A',
             'Size': item.size_value || 'N/A',
             'Price': item.unit_price ? `${item.unit_price} ${item.currency_code || ''}` : 'Not specified',
             'Manufacturer': item.manufacturer || 'Not specified',
@@ -16079,9 +16180,6 @@ function exportERPData(type) {
                     break;
                 case 'Description 2':
                     width = Math.max(width, 30);
-                    break;
-                case 'UOM':
-                    width = Math.max(width, 10);
                     break;
                 case 'Size':
                     width = Math.max(width, 12);
@@ -20181,6 +20279,443 @@ function exportCurrentResults(format) {
     console.log('Simple export system loaded and ready');
 
     // ===== END SIMPLE RELIABLE EXPORT SYSTEM =====
+
+    // ===== RFQ BUILDER (server-persisted, multi-project cart) =====
+
+    let rfqCartItemsCache = [];
+    let rfqSelectedAttributeValues = {}; // { attribute_id: selectedValueOrNull }
+
+    // Canonical signature for an RFQ cart item, used to block exact duplicates.
+    // Ignores id/timestamps/notes — matches on project + attribute selections + requirements.
+    function buildRfqItemSignature(item) {
+        const norm = v => (v === null || v === undefined ? '' : v.toString().trim().toLowerCase());
+        const attrsPart = (item.selected_attributes || [])
+            .map(a => `${a.attribute_id}:${norm(a.standard_value)}`)
+            .sort()
+            .join('|');
+        const reqPart = [item.required_coo, item.required_uom, item.required_qty, item.required_model, item.required_manufacturer]
+            .map(norm)
+            .join('|');
+        return `${item.project_id}::${attrsPart}::${reqPart}`;
+    }
+
+    // Load current user's cart count (call on login/init to show badge without opening modal)
+    async function refreshRfqCartBadge() {
+        try {
+            if (!currentUser || !currentUser.id) return;
+            const { count, error } = await supabase
+                .from('rfq_cart_items')
+                .select('id', { count: 'exact', head: true })
+                .eq('user_id', currentUser.id);
+            if (error) { console.error('RFQ badge count error:', error); return; }
+            const badge = document.getElementById('rfq-cart-count-badge');
+            if (!badge) return;
+            if (count > 0) {
+                badge.textContent = count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        } catch (e) {
+            console.error('refreshRfqCartBadge error:', e);
+        }
+    }
+
+    function renderRfqAttributesList() {
+        const container = document.getElementById('rfq-attributes-list');
+        if (!container) return;
+        rfqSelectedAttributeValues = {};
+
+        if (!currentProject || !Array.isArray(currentProject.attributes) || currentProject.attributes.length === 0) {
+            container.innerHTML = '<div class="text-sm text-gray-400 text-center py-4">No project selected, or project has no attributes.</div>';
+            return;
+        }
+
+        container.innerHTML = currentProject.attributes.map(attr => {
+            const hasValues = !attr.is_manual_entry && Array.isArray(attr.standard_values) && attr.standard_values.length > 0;
+            const valueOptions = hasValues
+                ? attr.standard_values
+                    .filter(v => (v.status || 'active') === 'active')
+                    .map(v => `<option value="${(v.name || '').replace(/"/g, '&quot;')}">${v.name}${v.unit ? ' ' + v.unit : ''}</option>`)
+                    .join('')
+                : '';
+
+            return `
+                <div class="flex flex-wrap items-center gap-2 py-1 border-b border-gray-100 last:border-b-0">
+                    <label class="flex items-center gap-2 flex-1 min-w-[180px]">
+                        <input type="checkbox" class="rfq-attr-checkbox w-4 h-4 text-indigo-600 rounded"
+                               data-attribute-id="${attr.attribute_id}"
+                               data-attribute-name="${(attr.attribute_name || '').replace(/"/g, '&quot;')}"
+                               onchange="toggleRfqAttrValueSelect(${attr.attribute_id}, this.checked)">
+                        <span class="text-sm text-gray-800">${attr.attribute_name}</span>
+                    </label>
+                    ${hasValues ? `
+                        <select id="rfq-attr-value-${attr.attribute_id}" disabled
+                                class="text-sm border border-gray-300 rounded px-2 py-1 flex-1 min-w-[160px]"
+                                onchange="rfqSelectedAttributeValues[${attr.attribute_id}] = this.value || null">
+                            <option value="">Any value (open request)</option>
+                            ${valueOptions}
+                        </select>
+                    ` : `<span class="text-xs text-gray-400">Free-text / manual attribute — no fixed value list</span>`}
+                </div>
+            `;
+        }).join('');
+    }
+    window.toggleRfqAttrValueSelect = function(attributeId, isChecked) {
+        const select = document.getElementById(`rfq-attr-value-${attributeId}`);
+        if (select) select.disabled = !isChecked;
+        if (!isChecked) delete rfqSelectedAttributeValues[attributeId];
+    };
+
+    async function openRfqModal() {
+        const modal = document.getElementById('rfq-modal');
+        if (!modal) return;
+
+        const label = document.getElementById('rfq-current-item-label');
+        if (label) {
+            label.textContent = currentProject
+                ? `Current item: ${currentProject.item_description || currentProject.division_description || 'Unnamed item'}`
+                : 'No project selected — select a project first to add it to the RFQ, or just review/generate the existing cart below.';
+        }
+
+        populateRfqComboboxes();
+        renderRfqAttributesList();
+        await loadRfqCart();
+
+        modal.classList.remove('hidden');
+    }
+    window.openRfqModal = openRfqModal;
+
+    function populateRfqComboboxes() {
+        const coo = document.getElementById('rfq-required-coo');
+        const uom = document.getElementById('rfq-required-uom');
+        if (coo && coo.options.length <= 1) {
+            const list = (countriesList && countriesList.length > 0)
+                ? countriesList.map(c => c.country_name)
+                : ['Saudi Arabia', 'United States', 'China', 'Germany', 'Japan'];
+            list.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                coo.appendChild(opt);
+            });
+        }
+        if (uom && uom.options.length <= 1) {
+            const list = (uomList && uomList.length > 0)
+                ? uomList.map(u => ({ value: u.uom_symbol || u.uom_name, label: `${u.uom_name} (${u.uom_symbol || u.uom_name})` }))
+                : [
+                    { value: 'EA', label: 'Each (EA)' }, { value: 'PCS', label: 'Pieces (PCS)' },
+                    { value: 'M', label: 'Meter (M)' }, { value: 'KG', label: 'Kilogram (KG)' },
+                    { value: 'L', label: 'Liter (L)' }, { value: 'M2', label: 'Square Meter (M2)' },
+                    { value: 'M3', label: 'Cubic Meter (M3)' }
+                ];
+            list.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.value;
+                opt.textContent = item.label;
+                uom.appendChild(opt);
+            });
+        }
+    }
+
+    function closeRfqModal() {
+        const modal = document.getElementById('rfq-modal');
+        if (modal) modal.classList.add('hidden');
+        const preview = document.getElementById('rfq-preview-section');
+        if (preview) preview.classList.add('hidden');
+    }
+    window.closeRfqModal = closeRfqModal;
+
+    async function addCurrentItemToRfqCart() {
+        try {
+            if (!currentUser || !currentUser.id) {
+                alert('You must be logged in to build an RFQ.');
+                return;
+            }
+            if (!currentProject || !currentProject.id) {
+                alert('Please select a project/item first.');
+                return;
+            }
+
+            const checkedBoxes = Array.from(document.querySelectorAll('.rfq-attr-checkbox:checked'));
+            if (checkedBoxes.length === 0) {
+                alert('Select at least one attribute to include in the RFQ for this item.');
+                return;
+            }
+
+            const selectedAttributes = checkedBoxes.map(cb => {
+                const attributeId = parseInt(cb.dataset.attributeId, 10);
+                const valueSelect = document.getElementById(`rfq-attr-value-${attributeId}`);
+                return {
+                    attribute_id: attributeId,
+                    attribute_name: cb.dataset.attributeName,
+                    standard_value: valueSelect && valueSelect.value ? valueSelect.value : null
+                };
+            });
+
+            const requiredUom = document.getElementById('rfq-required-uom')?.value?.trim() || '';
+            const requiredQty = document.getElementById('rfq-required-qty')?.value?.trim() || '';
+            if (!requiredUom) {
+                alert('UOM is required before adding this item to the RFQ cart.');
+                return;
+            }
+            if (!requiredQty) {
+                alert('Quantity is required before adding this item to the RFQ cart.');
+                return;
+            }
+
+            const requiredCoo = document.getElementById('rfq-required-coo')?.value?.trim() || null;
+            const requiredModel = document.getElementById('rfq-required-model')?.value?.trim() || null;
+            const requiredManufacturer = document.getElementById('rfq-required-manufacturer')?.value?.trim() || null;
+
+            const payload = {
+                user_id: currentUser.id,
+                project_id: currentProject.id,
+                item_code: null,
+                item_description: currentProject.item_description || currentProject.division_description || null,
+                division_code: currentProject.division_code || null,
+                selected_attributes: selectedAttributes,
+                required_coo: requiredCoo,
+                required_uom: requiredUom,
+                required_qty: requiredQty,
+                required_model: requiredModel,
+                required_manufacturer: requiredManufacturer,
+                notes: document.getElementById('rfq-item-notes')?.value?.trim() || null
+            };
+
+            // Re-sync cache from DB, then block exact duplicates (same project + same
+            // selected attributes/values + same COO/UOM/Qty/Model/Manufacturer)
+            await loadRfqCart();
+            const newSignature = buildRfqItemSignature(payload);
+            const isDuplicate = rfqCartItemsCache.some(existing => buildRfqItemSignature(existing) === newSignature);
+            if (isDuplicate) {
+                alert('This exact item is already in your RFQ cart (same project, attributes, and requirements). Adjust a value or remove the existing entry first if you meant to change it.');
+                return;
+            }
+
+            const { error } = await supabase.from('rfq_cart_items').insert(payload);
+            if (error) {
+                console.error('Error adding to RFQ cart:', error);
+                alert('Failed to add item to RFQ cart: ' + error.message);
+                return;
+            }
+
+            // Reset the "add item" form fields (keep project selected, allow adding another attribute set easily)
+            document.querySelectorAll('.rfq-attr-checkbox:checked').forEach(cb => cb.checked = false);
+            document.querySelectorAll('#rfq-attributes-list select').forEach(sel => { sel.disabled = true; sel.value = ''; });
+            ['rfq-required-coo','rfq-required-uom','rfq-required-qty','rfq-required-model','rfq-required-manufacturer','rfq-item-notes']
+                .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+
+            await loadRfqCart();
+            await refreshRfqCartBadge();
+        } catch (e) {
+            console.error('addCurrentItemToRfqCart error:', e);
+            alert('Unexpected error adding item to RFQ cart.');
+        }
+    }
+    window.addCurrentItemToRfqCart = addCurrentItemToRfqCart;
+
+    async function loadRfqCart() {
+        try {
+            if (!currentUser || !currentUser.id) { rfqCartItemsCache = []; renderRfqCartList(); return; }
+            const { data, error } = await supabase
+                .from('rfq_cart_items')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: true });
+            if (error) { console.error('Error loading RFQ cart:', error); return; }
+            rfqCartItemsCache = data || [];
+            renderRfqCartList();
+        } catch (e) {
+            console.error('loadRfqCart error:', e);
+        }
+    }
+
+    function renderRfqCartList() {
+        const list = document.getElementById('rfq-cart-list');
+        const countEl = document.getElementById('rfq-cart-item-count');
+        const genBtn = document.getElementById('rfq-generate-btn');
+        const clearBtn = document.getElementById('rfq-clear-cart-btn');
+        if (!list) return;
+
+        if (countEl) countEl.textContent = rfqCartItemsCache.length;
+        if (genBtn) genBtn.disabled = rfqCartItemsCache.length === 0;
+        if (clearBtn) clearBtn.classList.toggle('hidden', rfqCartItemsCache.length === 0);
+
+        if (rfqCartItemsCache.length === 0) {
+            list.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Cart is empty. Add items above.</div>';
+            return;
+        }
+
+        list.innerHTML = rfqCartItemsCache.map(item => {
+            const attrsHtml = (item.selected_attributes || []).map(a =>
+                `<span class="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-0.5 rounded mr-1 mb-1">${a.attribute_name}${a.standard_value ? ': ' + a.standard_value : ' (any)'}</span>`
+            ).join('');
+
+            const reqBits = [];
+            if (item.required_coo) reqBits.push(`COO: ${item.required_coo}`);
+            if (item.required_uom) reqBits.push(`UOM: ${item.required_uom}`);
+            if (item.required_qty) reqBits.push(`Qty: ${item.required_qty}`);
+            if (item.required_model) reqBits.push(`Model: ${item.required_model}`);
+            if (item.required_manufacturer) reqBits.push(`Mfr: ${item.required_manufacturer}`);
+
+            return `
+                <div class="border border-gray-200 rounded-md p-3 bg-gray-50">
+                    <div class="flex justify-between items-start gap-2">
+                        <div class="flex-1">
+                            <div class="text-sm font-semibold text-gray-800">${item.item_description || 'Unnamed item'}</div>
+                            <div class="mt-1">${attrsHtml || '<span class="text-xs text-gray-400">No attributes specified</span>'}</div>
+                            ${reqBits.length ? `<div class="text-xs text-gray-600 mt-1">${reqBits.join(' • ')}</div>` : ''}
+                            ${item.notes ? `<div class="text-xs text-gray-500 mt-1 italic">${item.notes}</div>` : ''}
+                        </div>
+                        <button onclick="removeRfqCartItem(${item.id})" class="text-red-500 hover:text-red-700 text-sm" title="Remove from cart">✕</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function removeRfqCartItem(id) {
+        try {
+            const { error } = await supabase.from('rfq_cart_items').delete().eq('id', id);
+            if (error) { console.error('Error removing RFQ cart item:', error); alert('Failed to remove item.'); return; }
+            await loadRfqCart();
+            await refreshRfqCartBadge();
+        } catch (e) {
+            console.error('removeRfqCartItem error:', e);
+        }
+    }
+    window.removeRfqCartItem = removeRfqCartItem;
+
+    async function clearRfqCart() {
+        if (!confirm('Remove all items from your RFQ cart?')) return;
+        try {
+            if (!currentUser || !currentUser.id) return;
+            const { error } = await supabase.from('rfq_cart_items').delete().eq('user_id', currentUser.id);
+            if (error) { console.error('Error clearing RFQ cart:', error); alert('Failed to clear cart.'); return; }
+            await loadRfqCart();
+            await refreshRfqCartBadge();
+        } catch (e) {
+            console.error('clearRfqCart error:', e);
+        }
+    }
+    window.clearRfqCart = clearRfqCart;
+
+    function buildRfqEmailHtml(items, rfqReference) {
+        const rows = items.map((item, idx) => {
+            const attrsText = (item.selected_attributes || [])
+                .map(a => `${a.attribute_name}${a.standard_value ? ' = ' + a.standard_value : ' (any)'}`)
+                .join('<br>');
+            return `
+                <tr>
+                    <td style="border:1px solid #ddd;padding:8px;text-align:center;">${idx + 1}</td>
+                    <td style="border:1px solid #ddd;padding:8px;">${escapeHtml(item.item_description)}</td>
+                    <td style="border:1px solid #ddd;padding:8px;">${attrsText || '-'}</td>
+                    <td style="border:1px solid #ddd;padding:8px;">${escapeHtml(item.required_coo) || '-'}</td>
+                    <td style="border:1px solid #ddd;padding:8px;">${escapeHtml(item.required_uom) || '-'}</td>
+                    <td style="border:1px solid #ddd;padding:8px;">${escapeHtml(item.required_qty) || '-'}</td>
+                    <td style="border:1px solid #ddd;padding:8px;">${escapeHtml(item.required_model) || '-'}</td>
+                    <td style="border:1px solid #ddd;padding:8px;">${escapeHtml(item.required_manufacturer) || '-'}</td>
+                </tr>
+            `;
+        }).join('');
+
+        return `
+            <div style="font-family: Arial, sans-serif; font-size: 14px; color: #222;">
+                <p>Dear Supplier,</p>
+                <p>We kindly request your best quotation for the following item(s). Please provide pricing, lead time, and confirm compliance with the specifications listed below.</p>
+                <p><strong>RFQ Reference:</strong> ${rfqReference}<br>
+                <strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+                <table style="border-collapse: collapse; width: 100%; margin-top: 10px;">
+                    <thead>
+                        <tr style="background-color:#f3f4f6;">
+                            <th style="border:1px solid #ddd;padding:8px;">#</th>
+                            <th style="border:1px solid #ddd;padding:8px;">Description</th>
+                            <th style="border:1px solid #ddd;padding:8px;">Required Attributes</th>
+                            <th style="border:1px solid #ddd;padding:8px;">COO</th>
+                            <th style="border:1px solid #ddd;padding:8px;">UOM</th>
+                            <th style="border:1px solid #ddd;padding:8px;">Qty</th>
+                            <th style="border:1px solid #ddd;padding:8px;">Model</th>
+                            <th style="border:1px solid #ddd;padding:8px;">Manufacturer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows}
+                    </tbody>
+                </table>
+                <p style="margin-top:16px;">Please respond with your quotation at your earliest convenience.</p>
+                <p>Best regards,<br>${escapeHtml(currentUser?.username) || 'Nesma Partners Procurement Team'}</p>
+            </div>
+        `;
+    }
+
+    async function generateRfqEmail() {
+        try {
+            if (!currentUser || !currentUser.id) { alert('You must be logged in.'); return; }
+            if (rfqCartItemsCache.length === 0) { alert('Your RFQ cart is empty.'); return; }
+
+            const rfqReference = 'RFQ-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' +
+                String(Date.now()).slice(-5);
+            const subject = `Request for Quotation — ${rfqReference} (${rfqCartItemsCache.length} item${rfqCartItemsCache.length > 1 ? 's' : ''})`;
+            const bodyHtml = buildRfqEmailHtml(rfqCartItemsCache, rfqReference);
+
+            // Log to rfq_history for admin reference
+            const { error: logError } = await supabase.from('rfq_history').insert({
+                rfq_reference: rfqReference,
+                generated_by: currentUser.id,
+                item_count: rfqCartItemsCache.length,
+                items: rfqCartItemsCache,
+                email_subject: subject,
+                email_body_html: bodyHtml
+            });
+            if (logError) {
+                console.error('Error logging RFQ history:', logError);
+                alert('Warning: RFQ email was generated but could not be logged to history: ' + logError.message);
+            }
+
+            // Show preview
+            document.getElementById('rfq-email-subject').value = subject;
+            document.getElementById('rfq-email-body-preview').innerHTML = bodyHtml;
+            document.getElementById('rfq-reference-label').textContent = `(${rfqReference})`;
+            document.getElementById('rfq-preview-section').classList.remove('hidden');
+
+            // Clear the cart now that the RFQ has been generated
+            const { error: clearError } = await supabase.from('rfq_cart_items').delete().eq('user_id', currentUser.id);
+            if (clearError) console.error('Error clearing cart after RFQ generation:', clearError);
+            await loadRfqCart();
+            await refreshRfqCartBadge();
+        } catch (e) {
+            console.error('generateRfqEmail error:', e);
+            alert('Unexpected error generating RFQ.');
+        }
+    }
+    window.generateRfqEmail = generateRfqEmail;
+
+    function copyRfqEmail() {
+        const subject = document.getElementById('rfq-email-subject')?.value || '';
+        const bodyEl = document.getElementById('rfq-email-body-preview');
+        if (!bodyEl) return;
+
+        try {
+            const range = document.createRange();
+            range.selectNode(bodyEl);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            document.execCommand('copy');
+            selection.removeAllRanges();
+            alert('RFQ email body copied to clipboard!\n\nSubject: ' + subject);
+        } catch (e) {
+            console.error('copyRfqEmail error:', e);
+            alert('Could not copy automatically — please select the email body manually and copy.');
+        }
+    }
+    window.copyRfqEmail = copyRfqEmail;
+
+    // Refresh badge shortly after load (covers the case where currentUser is set asynchronously on init)
+    setTimeout(() => { refreshRfqCartBadge(); }, 1500);
+
+    // ===== END RFQ BUILDER =====
 
     </script>
 </body>
