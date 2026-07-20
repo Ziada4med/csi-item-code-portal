@@ -434,10 +434,7 @@
                 <button id="add-standard-value-btn" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm">
                     + Add Standard Value
                 </button>
-                <button id="generate-rfq-btn" onclick="openRfqModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-md text-sm flex items-center gap-1">
-                    📋 Generate RFQ
-                    <span id="rfq-cart-count-badge" class="hidden bg-white text-indigo-700 text-xs font-bold rounded-full px-1.5 py-0.5 ml-1">0</span>
-                </button>
+                <!-- Generate RFQ button hidden for now (feature not yet released) - backend/modal/cart logic left intact -->
                 <button id="manage-deprecation-btn" class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded-md text-sm">
                      Manage Deprecation
                 </button>
@@ -7936,8 +7933,37 @@ window.exportAllRequests = exportAllRequests;        // PDF Export
                 const option = document.createElement('option');
                 option.value = attr.attribute_id;
                 option.textContent = attr.attribute_name;
+                option.dataset.attrName = attr.attribute_name || '';
                 select.appendChild(option);
             });
+
+            // Reset the UOM field to its default (enabled) state since no attribute is selected yet
+            updateUnitFieldForSelectedAttribute();
+        }
+
+        // Part No. attributes (OEM PART NO., AFTERMARKET PART NO., MODEL / PART NO., etc.) don't
+        // take a unit of measurement - a part number isn't quantified in units. Disable the UOM
+        // field whenever one of these attributes is selected in the Add Standard Value modal.
+        function updateUnitFieldForSelectedAttribute() {
+            const attributeSelect = document.getElementById('modal-attribute-select');
+            const unitSelect = document.getElementById('modal-unit-select');
+            if (!attributeSelect || !unitSelect) return;
+
+            const unitLabel = unitSelect.closest('.mb-4')?.querySelector('label');
+            const selectedOption = attributeSelect.options[attributeSelect.selectedIndex];
+            const attrName = selectedOption ? (selectedOption.dataset.attrName || '') : '';
+            const isPartNoAttribute = attrName.trim().toUpperCase().includes('PART NO');
+
+            if (isPartNoAttribute) {
+                unitSelect.value = '';
+                unitSelect.disabled = true;
+                unitSelect.classList.add('bg-gray-100', 'cursor-not-allowed', 'text-gray-400');
+                if (unitLabel) unitLabel.textContent = 'Unit of Measurement (not applicable for Part No. attributes)';
+            } else {
+                unitSelect.disabled = false;
+                unitSelect.classList.remove('bg-gray-100', 'cursor-not-allowed', 'text-gray-400');
+                if (unitLabel) unitLabel.textContent = 'Unit of Measurement';
+            }
         }
 
         // Update modal reviewers
@@ -7989,7 +8015,11 @@ window.exportAllRequests = exportAllRequests;        // PDF Export
                     if (syncError) throw syncError;
 
                     if (!syncResult || !syncResult.success) {
-                        alert(syncResult?.message || 'Failed to add standard value.');
+                        if (syncResult?.duplicate_project) {
+                            alert(`Cannot add: "${newValue.trim()}" already exists as an OEM Part No. in project "${syncResult.duplicate_project.project_name}" (${syncResult.duplicate_project.item_code}).`);
+                        } else {
+                            alert(syncResult?.message || 'Failed to add standard value.');
+                        }
                         return;
                     }
 
@@ -7997,6 +8027,7 @@ window.exportAllRequests = exportAllRequests;        // PDF Export
                     alert('Standard value added successfully (Admin - No approval required)' + mirrorNote + '\n\nPlease refresh the project to see the new value.');
                     document.getElementById('add-value-modal').classList.add('hidden');
                     document.getElementById('add-value-form').reset();
+                    updateUnitFieldForSelectedAttribute();
                     
                     // Reload the project to show new value
                     selectProjectFromData(currentProject);
@@ -8028,6 +8059,24 @@ window.exportAllRequests = exportAllRequests;        // PDF Export
                         return;
                     }
 
+                    // Cross-project check: OEM Part No. values must be unique across ALL PMV
+                    // projects (excluding this project's own paired OEM/Aftermarket counterpart,
+                    // since the same value is expected to exist on both sides of that pair).
+                    if (attributeName.trim().toUpperCase() === 'OEM PART NO.') {
+                        const { data: dupCheck, error: dupCheckError } = await supabase
+                            .rpc('check_oem_part_no_duplicate', {
+                                p_value: valueWithUnit,
+                                p_project_id: currentProject.id
+                            });
+
+                        if (dupCheckError) throw dupCheckError;
+
+                        if (dupCheck && dupCheck.duplicate) {
+                            alert(`Cannot request this value: "${valueWithUnit}" already exists as an OEM Part No. in project "${dupCheck.project_name}" (${dupCheck.item_code}).\n\nOEM Part No. values must be unique across all PMV projects. Please verify against that project instead.`);
+                            return;
+                        }
+                    }
+
                     const { data, error } = await supabase
                         .from('standard_value_requests')
                         .insert({
@@ -8048,6 +8097,7 @@ window.exportAllRequests = exportAllRequests;        // PDF Export
                         alert('Standard value request submitted successfully and assigned to reviewer!');
                         document.getElementById('add-value-modal').classList.add('hidden');
                         document.getElementById('add-value-form').reset();
+                        updateUnitFieldForSelectedAttribute();
 
                         // Notify reviewer via email (queue + Edge Function, same as Approval Portal)
                         try {
@@ -8381,8 +8431,15 @@ if (modelNumber) {
                 updateModalReviewers();
             }
             
+            updateUnitFieldForSelectedAttribute();
             document.getElementById('add-value-modal').classList.remove('hidden');
         });
+    }
+
+    // Disable/enable the UOM field as the selected attribute changes (Part No. attributes don't take a unit)
+    const modalAttributeSelectEl = document.getElementById('modal-attribute-select');
+    if (modalAttributeSelectEl) {
+        modalAttributeSelectEl.addEventListener('change', updateUnitFieldForSelectedAttribute);
     }
 
     // Deprecation Management Button
@@ -8406,6 +8463,8 @@ if (modelNumber) {
     if (modalCancel) {
         modalCancel.addEventListener('click', () => {
             document.getElementById('add-value-modal').classList.add('hidden');
+            document.getElementById('add-value-form').reset();
+            updateUnitFieldForSelectedAttribute();
         });
     }
     
