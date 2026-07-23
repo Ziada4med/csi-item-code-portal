@@ -429,7 +429,14 @@
     <!-- Attributes Section -->
     <div class="mb-6">
         <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold text-gray-800">Select Attributes</h2>
+            <div class="flex items-center space-x-3">
+                <h2 class="text-xl font-semibold text-gray-800">Select Attributes</h2>
+                <button id="use-last-selection-btn" onclick="applyLastSelection()"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-md text-sm hidden"
+                        title="Re-apply the attribute selections from the last generated code for this project">
+                    &#8635; Use Last Selection
+                </button>
+            </div>
             <div class="flex space-x-2">
                 <button id="add-standard-value-btn" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm">
                     + Add Standard Value
@@ -2256,6 +2263,7 @@ var supabase = window.supabaseClient;
         let currentProject = null;
         let attributeSelections = {};
         let attributeOrder = [];
+        let lastGeneratedCodeData = null; // Cached attribute_order + attribute_selections from the last generated code of the current project
         let includeHeaders = {}; // Now used for per-attribute admin settings
         let attributeDisplaySettings = {}; // New: stores per-attribute display settings
         let uomList = [];
@@ -4718,6 +4726,7 @@ let displayText = project.additional_level_value && project.additional_level_val
     try {
         checkReorderability();
         renderAttributes();
+        loadLastGeneratedCodeSettings(); // Apply shared attribute arrangement + enable "Use Last Selection"
         updateModalAttributes();
         loadProjectHistory();
         loadProjectManufacturers(project.project_id);
@@ -5488,6 +5497,148 @@ function updateManualAttributeValue(attrId, value, unitSelectId) {
             attributeOrder = newOrder;
             console.log('New attribute order:', attributeOrder);
             updatePreview();
+        }
+
+        // Load attribute_order + attribute_selections from the last generated code of this project.
+        // The arrangement used in the last generated code is applied for ALL users until a code
+        // is generated with a different arrangement (shared, order persists via item_code_workflow).
+        async function loadLastGeneratedCodeSettings() {
+            lastGeneratedCodeData = null;
+            const useLastBtn = document.getElementById('use-last-selection-btn');
+            if (useLastBtn) useLastBtn.classList.add('hidden');
+
+            if (!currentProject || !currentProject.id) return;
+            const projectIdAtLoad = currentProject.id;
+
+            try {
+                const { data, error } = await supabase
+                    .from('item_code_workflow')
+                    .select('attribute_order, attribute_selections, created_at')
+                    .eq('project_id', projectIdAtLoad)
+                    .neq('status', 'rejected')
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+
+                if (error) throw error;
+                // Bail out if the user switched projects while we were fetching
+                if (!currentProject || currentProject.id !== projectIdAtLoad) return;
+                if (!data || data.length === 0) {
+                    console.log('No previously generated code for project', projectIdAtLoad);
+                    return;
+                }
+
+                lastGeneratedCodeData = data[0];
+                console.log('Loaded last generated code settings:', lastGeneratedCodeData);
+
+                // Show "Use Last Selection" button if there are selections to re-apply
+                if (useLastBtn && lastGeneratedCodeData.attribute_selections &&
+                    Object.keys(lastGeneratedCodeData.attribute_selections).length > 0) {
+                    useLastBtn.classList.remove('hidden');
+                }
+
+                // Apply the persisted attribute arrangement (validated against current attribute set)
+                const savedOrder = lastGeneratedCodeData.attribute_order;
+                const attrCount = (currentProject.attributes || []).length;
+                if (Array.isArray(savedOrder) && attrCount > 0) {
+                    const cleaned = [];
+                    savedOrder.forEach(i => {
+                        if (Number.isInteger(i) && i >= 0 && i < attrCount && !cleaned.includes(i)) {
+                            cleaned.push(i);
+                        }
+                    });
+                    // Append any attributes added after that code was generated
+                    for (let i = 0; i < attrCount; i++) {
+                        if (!cleaned.includes(i)) cleaned.push(i);
+                    }
+                    const changed = JSON.stringify(cleaned) !== JSON.stringify(attributeOrder);
+                    attributeOrder = cleaned;
+                    if (changed) {
+                        console.log('Applying persisted attribute arrangement:', attributeOrder);
+                        renderAttributes();
+                        updatePreview();
+                    }
+                }
+            } catch (err) {
+                console.error('Error loading last generated code settings:', err);
+            }
+        }
+
+        // Re-apply the attribute selections from the last generated code of this project
+        function applyLastSelection() {
+            if (!currentProject || !lastGeneratedCodeData || !lastGeneratedCodeData.attribute_selections ||
+                Object.keys(lastGeneratedCodeData.attribute_selections).length === 0) {
+                alert('No previously generated code found for this project.');
+                return;
+            }
+
+            const selections = lastGeneratedCodeData.attribute_selections;
+            const skipped = [];
+            let appliedCount = 0;
+
+            Object.keys(selections).forEach(attrIdKey => {
+                const sel = selections[attrIdKey];
+                if (!sel || sel.value === undefined || sel.value === null || sel.value === '') return;
+
+                const attrId = parseInt(attrIdKey);
+                const attrIndex = currentProject.attributes.findIndex(a => a && a.attribute_id === attrId);
+                if (attrIndex === -1) {
+                    skipped.push(`Attribute ID ${attrIdKey} (no longer part of this project)`);
+                    return;
+                }
+                const attr = currentProject.attributes[attrIndex];
+                const rawValue = sel.rawValue !== undefined && sel.rawValue !== null ? sel.rawValue : sel.value;
+                const unit = sel.unit || '';
+
+                const manualInput = document.getElementById(`manual-attr-${attrId}`);
+                const unitSelect = document.getElementById(`unit-attr-${attrId}`);
+
+                if (sel.index === 'manual') {
+                    // Manual entry attribute
+                    if (manualInput) {
+                        manualInput.value = rawValue;
+                        if (unitSelect) unitSelect.value = unit;
+                        updateManualAttributeValue(attrId, rawValue, `unit-attr-${attrId}`);
+                        appliedCount++;
+                    } else {
+                        skipped.push(`${attr.attribute_name} (manual entry field not available)`);
+                    }
+                } else {
+                    // Standard value - find and check the matching radio button
+                    const radios = document.querySelectorAll(`input[type="radio"][name="attr-${attrIndex}"]`);
+                    let matched = null;
+                    radios.forEach(r => { if (!matched && r.value === rawValue) matched = r; });
+
+                    if (matched) {
+                        matched.checked = true;
+                        // Recompute the current value index from the radio id (attr-X-val-N) since
+                        // deprecations may have shifted positions since the code was generated
+                        let curIndex = sel.index;
+                        const idMatch = matched.id ? matched.id.match(/-val-(\d+)$/) : null;
+                        if (idMatch) curIndex = parseInt(idMatch[1]) + 1;
+                        const radioUnit = (matched.dataset && matched.dataset.unit) ? matched.dataset.unit : unit;
+                        selectAttribute(attrId, rawValue, curIndex, radioUnit);
+                        appliedCount++;
+                    } else if (manualInput) {
+                        // Fallback: value list changed and a manual entry box is rendered instead
+                        manualInput.value = rawValue;
+                        if (unitSelect) unitSelect.value = unit;
+                        updateManualAttributeValue(attrId, rawValue, `unit-attr-${attrId}`);
+                        appliedCount++;
+                    } else {
+                        skipped.push(`${attr.attribute_name}: "${rawValue}" (value no longer available)`);
+                    }
+                }
+            });
+
+            updatePreview();
+            checkForDuplicates();
+            checkGenerateButton();
+            if (typeof checkForVariationPreview === 'function') checkForVariationPreview();
+
+            console.log(`Use Last Selection: applied ${appliedCount}, skipped ${skipped.length}`);
+            if (skipped.length > 0) {
+                alert(`Applied ${appliedCount} selection(s) from the last generated code.\n\nSkipped:\n- ${skipped.join('\n- ')}`);
+            }
         }
 
         // Select attribute
@@ -6685,6 +6836,7 @@ function getFormattedCombination() {
                     // Reload and reset
                     loadProjectHistory();
                     checkReorderability();
+                    loadLastGeneratedCodeSettings(); // Refresh shared arrangement/selection cache
                     resetForm();
                     updatePreview();
                     return; // Exit early, don't create new request
@@ -6769,6 +6921,7 @@ function getFormattedCombination() {
                     
                     loadProjectHistory();
                     checkReorderability();
+                    loadLastGeneratedCodeSettings(); // Refresh shared arrangement/selection cache
                     resetForm();
                     updatePreview();
                 } else {
@@ -6845,6 +6998,7 @@ function getFormattedCombination() {
                     
                     loadProjectHistory();
                     checkReorderability();
+                    loadLastGeneratedCodeSettings(); // Refresh shared arrangement/selection cache
                     resetForm();
                     updatePreview();
                 } else {
