@@ -15876,17 +15876,20 @@ async function loadERPDashboard() {
             console.log('Loaded approved items for ERP:', erpItems.length);
         }
 
-        // Scope ERP dashboard for specific data-entry users by project category
-        // Rakesh Singh (PMV only) / Yogesh Nadesan (everything except PMV)
+        // Scope ERP dashboard PMV visibility: PMV items are exclusive to Rakesh Singh (id 191)
+        // among erp_data_entry users. Every other ERP Data Entry user (Yogesh, Ricky, or any
+        // future ERP Data Entry account) never sees PMV items. Admins are unrestricted.
         // PMV projects are identified by their classification project's item_code starting with "XX PMV"
-        if (currentUser.id === 191) {
-            erpItems = erpItems.filter(item =>
-                (item.classification_projects?.item_code || '').toUpperCase().startsWith('XX PMV')
-            );
-        } else if (currentUser.id === 31) {
-            erpItems = erpItems.filter(item =>
-                !(item.classification_projects?.item_code || '').toUpperCase().startsWith('XX PMV')
-            );
+        if (currentUser.role === 'erp_data_entry') {
+            if (currentUser.id === 191) {
+                erpItems = erpItems.filter(item =>
+                    (item.classification_projects?.item_code || '').toUpperCase().startsWith('XX PMV')
+                );
+            } else {
+                erpItems = erpItems.filter(item =>
+                    !(item.classification_projects?.item_code || '').toUpperCase().startsWith('XX PMV')
+                );
+            }
         }
 
         // Store data globally
