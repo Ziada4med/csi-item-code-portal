@@ -402,6 +402,13 @@
                 <input type="text" id="search-standard-value" placeholder="Search by standard value..." 
                        class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-blue-500">
             </div>
+
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Generated Item Code</label>
+                <input type="text" id="search-generated-item-code" placeholder="Search by item code..."
+                       class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-blue-500">
+                <p class="mt-1 text-xs text-gray-500">Finds the project that generated an active or disabled item code.</p>
+            </div>
             
             <div class="flex items-end">
                 <button id="clear-search-btn" class="w-full px-3 py-1 bg-gray-500 text-white text-sm rounded hover:bg-gray-600">
@@ -4024,7 +4031,8 @@ function clearAdvancedSearchInputs() {
         'search-creator', 
         'search-csi-code',
         'search-attribute-name',
-        'search-standard-value'
+        'search-standard-value',
+        'search-generated-item-code'
     ];
     
     searchInputs.forEach(inputId => {
@@ -4156,7 +4164,8 @@ function setupAdvancedProjectSearch() {
         creator: document.getElementById('search-creator'),
         csiCode: document.getElementById('search-csi-code'),
         attributeName: document.getElementById('search-attribute-name'),
-        standardValue: document.getElementById('search-standard-value')
+        standardValue: document.getElementById('search-standard-value'),
+        generatedItemCode: document.getElementById('search-generated-item-code')
     };
     
     const resultsDropdown = document.getElementById('search-results-dropdown');
@@ -4247,7 +4256,8 @@ function initializeAdvancedSearchElements() {
             creator: document.getElementById('search-creator'),
             csiCode: document.getElementById('search-csi-code'),
             attributeName: document.getElementById('search-attribute-name'),
-            standardValue: document.getElementById('search-standard-value')
+            standardValue: document.getElementById('search-standard-value'),
+            generatedItemCode: document.getElementById('search-generated-item-code')
         };
     }
     
@@ -4257,7 +4267,9 @@ function initializeAdvancedSearchElements() {
 }
 
 // Advanced search function (moved outside to be globally accessible)
-function performAdvancedSearch() {
+let advancedSearchRequestToken = 0;
+
+async function performAdvancedSearch() {
     console.log(' Performing advanced search...');
     console.log(' DEBUG: Function called at', new Date().toISOString());
     
@@ -4278,7 +4290,8 @@ function performAdvancedSearch() {
             creator: document.getElementById('search-creator'),
             csiCode: document.getElementById('search-csi-code'),
             attributeName: document.getElementById('search-attribute-name'),
-            standardValue: document.getElementById('search-standard-value')
+            standardValue: document.getElementById('search-standard-value'),
+            generatedItemCode: document.getElementById('search-generated-item-code')
         };
         const directDropdown = document.getElementById('search-results-dropdown');
         
@@ -4309,7 +4322,8 @@ function performAdvancedSearch() {
         creator: advancedSearchInputs.creator?.value.toLowerCase().trim() || '',
         csiCode: advancedSearchInputs.csiCode?.value.toLowerCase().trim() || '',
         attributeName: advancedSearchInputs.attributeName?.value.toLowerCase().trim() || '',
-        standardValue: advancedSearchInputs.standardValue?.value.toLowerCase().trim() || ''
+        standardValue: advancedSearchInputs.standardValue?.value.toLowerCase().trim() || '',
+        generatedItemCode: advancedSearchInputs.generatedItemCode?.value.trim() || ''
     };
     
     console.log('Search criteria:', criteria);
@@ -4318,7 +4332,8 @@ function performAdvancedSearch() {
         creator: advancedSearchInputs.creator?.value,
         csiCode: advancedSearchInputs.csiCode?.value,
         attributeName: advancedSearchInputs.attributeName?.value,
-        standardValue: advancedSearchInputs.standardValue?.value
+        standardValue: advancedSearchInputs.standardValue?.value,
+        generatedItemCode: advancedSearchInputs.generatedItemCode?.value
     });
     
     // Check if any search criteria is provided
@@ -4332,6 +4347,51 @@ function performAdvancedSearch() {
         return;
     }
     
+    // Generated item codes live in the workflow tables, not in the project list.
+    // Resolve matching code(s) first, then restrict the results to projects already
+    // available to the signed-in user through get_user_accessible_projects().
+    const requestToken = ++advancedSearchRequestToken;
+    let projectIdsForItemCode = null;
+    if (criteria.generatedItemCode) {
+        const searchTerms = criteria.generatedItemCode
+            .split(',')
+            .map(term => term.trim())
+            .filter(Boolean);
+
+        try {
+            const responses = await Promise.all(searchTerms.map(itemCode =>
+                supabase.rpc('search_all_item_codes_with_status', {
+                    search_filters_param: { item_code: itemCode },
+                    include_disabled_param: true
+                })
+            ));
+
+            if (requestToken !== advancedSearchRequestToken) return;
+
+            projectIdsForItemCode = new Set();
+            responses.forEach(({ data, error }) => {
+                if (error) {
+                    console.error('Generated item code project lookup failed:', error);
+                    return;
+                }
+
+                if (data?.success && Array.isArray(data.item_codes)) {
+                    data.item_codes.forEach(item => {
+                        const projectId = item.project_id ?? item.classification_project_id ?? item.classification_projects?.id;
+                        if (projectId !== undefined && projectId !== null) {
+                            projectIdsForItemCode.add(String(projectId));
+                        }
+                    });
+                }
+            });
+        } catch (error) {
+            console.error('Generated item code project lookup failed:', error);
+            advancedResultsDropdown.innerHTML = '<div class="project-option text-red-500">Unable to search item codes. Please try again.</div>';
+            advancedResultsDropdown.classList.remove('hidden');
+            return;
+        }
+    }
+
     const filtered = allProjects.filter(project => {
         let matches = true;
         
@@ -4398,6 +4458,12 @@ function performAdvancedSearch() {
             if (!hasMatchingValue) {
                 matches = false;
             }
+        }
+
+        // Match projects through the generated item-code lookup. allProjects is
+        // intentionally still the authority for project access and project data.
+        if (projectIdsForItemCode && !projectIdsForItemCode.has(String(project.project_id ?? project.id ?? ''))) {
+            matches = false;
         }
         
         return matches;
