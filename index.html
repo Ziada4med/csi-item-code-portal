@@ -11734,9 +11734,19 @@ function generateSingleRequestPDF(item) {
     const filename = `ItemCode_${item.item_code || 'Unknown'}_${Date.now()}.pdf`;
     doc.save(filename);
 }
+// Hierarchy nodes are rendered on demand. Building every descendant card up front
+// made a large search freeze or crash the browser before the user opened a branch.
+let hierarchyNodeCache = new Map();
+let hierarchyNodeSequence = 0;
+let hierarchyResultCount = 0;
+
 // Display codes in hierarchical WBS structure
 function displayHierarchyView(codes) {
     const hierarchyView = document.getElementById('hierarchy-view');
+    if (!hierarchyView) return;
+    hierarchyNodeCache = new Map();
+    hierarchyNodeSequence = 0;
+    hierarchyResultCount = codes.length;
     
     // Group codes by CSI hierarchy
     const hierarchy = {};
@@ -11748,7 +11758,9 @@ function displayHierarchyView(codes) {
         const divisionKey = project.division_code;
         const sectionKey = `${project.division_code}-${project.section_code}`;
         const detailedKey = `${project.division_code}-${project.section_code}-${project.detailed_section_code}`;
-        const itemKey = `${project.division_code}-${project.section_code}-${project.detailed_section_code}-${project.project_item_code}`;
+        // RPC payloads use item_code. project_item_code exists only in older payloads.
+        const projectItemCode = project.project_item_code || project.item_code || project.csi_item_code || 'UNSPECIFIED';
+        const itemKey = `${project.division_code}-${project.section_code}-${project.detailed_section_code}-${projectItemCode}`;
         
         if (!hierarchy[divisionKey]) {
             hierarchy[divisionKey] = {
@@ -11782,8 +11794,8 @@ function displayHierarchyView(codes) {
         
         if (!hierarchy[divisionKey].sections[sectionKey].detailedSections[detailedKey].items[itemKey]) {
             hierarchy[divisionKey].sections[sectionKey].detailedSections[detailedKey].items[itemKey] = {
-                code: project.project_item_code,
-                title: project.project_item_code,
+                code: projectItemCode,
+                title: projectItemCode,
                 description: project.item_description || project.project_name || 'No description',
                 project_name: project.project_name,
                 type: 'item',
@@ -11795,145 +11807,155 @@ function displayHierarchyView(codes) {
     });
     
     // Render hierarchy
-    hierarchyView.innerHTML = Object.values(hierarchy).map(division => 
-        createHierarchyCard(division, 'division')
-    ).join('');
-}
-
-// Create hierarchy card
-function createHierarchyCard(node, level) {
-    const levelColors = {
-        division: 'bg-blue-50 border-blue-200',
-        section: 'bg-green-50 border-green-200',
-        detailed_section: 'bg-yellow-50 border-yellow-200',
-        item: 'bg-purple-50 border-purple-200'
-    };
-    
-    const levelIcons = {
-        division: '',
-        section: '',
-        detailed_section: '',
-        item: ''
-    };
-    
-    let content = `
-        <div class="border rounded-lg ${levelColors[level]} p-4 mb-3">
-            <div class="flex items-center justify-between mb-2">
-                <div class="flex-1">
-                    <h3 class="font-semibold text-gray-800 mb-1">
-                        ${levelIcons[level]} 
-                        <span class="font-mono text-sm">${node.code || node.title}</span>
-                        ${node.project_name ? `- ${node.project_name}` : ''}
-                    </h3>
-                    ${node.description && node.description !== 'No description' ? 
-                        `<p class="text-sm text-gray-600 ml-6">${node.description}</p>` : 
-                        ''
-                    }
-                </div>
-                <button onclick="toggleHierarchyNode(this)" class="text-gray-500 hover:text-gray-700 ml-2">
-                    <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </button>
+    hierarchyView.innerHTML = `
+        <div class="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+            <div>
+                <p class="text-sm font-semibold text-slate-800">CSI hierarchy <span class="ml-2 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">${codes.length} result${codes.length === 1 ? '' : 's'}</span></p>
+                <p class="text-xs text-slate-500">Use the tree to navigate; open a result for full procurement details.</p>
             </div>
-            <div class="hierarchy-content">
-    `;
-    
-    if (node.sections) {
-        content += Object.values(node.sections).map(section => 
-            createHierarchyCard(section, 'section')
-        ).join('');
-    } else if (node.detailedSections) {
-        content += Object.values(node.detailedSections).map(detailedSection => 
-            createHierarchyCard(detailedSection, 'detailed_section')
-        ).join('');
-    } else if (node.items) {
-        content += Object.values(node.items).map(item => 
-            createHierarchyCard(item, 'item')
-        ).join('');
-    } else if (node.codes) {
-        content += node.codes.map(code => createCodeCard(code)).join('');
-    }
-    
-    content += `
+            <div class="flex gap-2">
+                <button type="button" onclick="setHierarchyExpanded(true)" class="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">Expand all</button>
+                <button type="button" onclick="setHierarchyExpanded(false)" class="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">Collapse all</button>
             </div>
         </div>
+        <div class="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
+            ${Object.values(hierarchy).map(division => createHierarchyCard(division, 'division')).join('')}
+        </div>
     `;
+
+    // Small result sets remain immediately readable. Larger sets stay lazy so a
+    // view switch never creates thousands of hidden descendants.
+    if (codes.length <= 20) {
+        hierarchyView.querySelectorAll(':scope > .rounded-xl [data-hierarchy-node] > button[aria-expanded]')
+            .forEach(button => {
+                if (!button.closest('.hierarchy-content')) expandHierarchyBranch(button);
+            });
+    }
+}
+
+// Create a lightweight hierarchy node. Its children are only materialized when opened.
+function createHierarchyCard(node, level) {
+    const levelStyle = {
+        division: 'border-blue-500 text-blue-700',
+        section: 'border-emerald-500 text-emerald-700',
+        detailed_section: 'border-amber-500 text-amber-700',
+        item: 'border-violet-500 text-violet-700'
+    };
     
-    return content;
+    const childCount = node.sections ? Object.keys(node.sections).length :
+        node.detailedSections ? Object.keys(node.detailedSections).length :
+        node.items ? Object.keys(node.items).length : (node.codes?.length || 0);
+    const countLabel = node.codes ? `${childCount} item ${childCount === 1 ? 'code' : 'codes'}` : `${childCount} branch${childCount === 1 ? '' : 'es'}`;
+
+    const nodeKey = `hierarchy-${++hierarchyNodeSequence}`;
+    hierarchyNodeCache.set(nodeKey, node);
+
+    return `
+        <section data-hierarchy-node class="ml-1 border-l-2 ${levelStyle[level]} py-1">
+            <button type="button" onclick="toggleHierarchyNode(this)" aria-expanded="false" class="group flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <svg class="hierarchy-chevron h-4 w-4 shrink-0 -rotate-90 text-slate-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                <span class="h-2 w-2 shrink-0 rounded-full bg-current opacity-80"></span>
+                <span class="min-w-0 flex-1">
+                    <span class="font-mono text-sm font-semibold text-slate-800">${escapeHtml(node.code || node.title)}</span>${node.project_name ? ` <span class="ml-1 text-sm font-medium text-slate-700">${escapeHtml(node.project_name)}</span>` : ''}
+                    ${node.description && node.description !== 'No description' ? `<span class="ml-2 text-xs text-slate-500">${escapeHtml(node.description)}</span>` : ''}
+                </span>
+                <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">${countLabel}</span>
+            </button>
+            <div class="hierarchy-content hidden ml-5 border-l border-slate-200 pl-2" data-node-key="${nodeKey}" data-loaded="false"></div>
+        </section>
+    `;
+}
+
+function renderHierarchyChildren(nodeKey) {
+    const node = hierarchyNodeCache.get(nodeKey);
+    if (!node) return '';
+
+    if (node.sections) {
+        return Object.values(node.sections).map(section =>
+            createHierarchyCard(section, 'section')
+        ).join('');
+    }
+    if (node.detailedSections) {
+        return Object.values(node.detailedSections).map(detailedSection =>
+            createHierarchyCard(detailedSection, 'detailed_section')
+        ).join('');
+    }
+    if (node.items) {
+        return Object.values(node.items).map(item =>
+            createHierarchyCard(item, 'item')
+        ).join('');
+    }
+    return node.codes ? node.codes.map(code => createCodeCard(code)).join('') : '';
 }
 
 // Create individual code card
 // Create individual code card
 function createCodeCard(code) {
     const project = code.classification_projects;
+    const creatorName = code.creator_name || code.created_by_name || code.created_by_user?.username || code.created_by_user?.full_name || 'Not recorded';
+    const codeStatus = code.status ? code.status.replaceAll('_', ' ') : 'Unknown';
     
     return `
-        <div class="bg-white border border-gray-200 rounded p-4 mb-2 shadow-sm hover:shadow-md transition-shadow">
-            <div class="flex justify-between items-start mb-3">
+        <article class="my-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-300 hover:shadow-md">
+            <div class="flex items-start justify-between gap-3">
                 <div class="flex-1">
-                    <div class="font-mono text-sm font-semibold text-blue-600">${code.item_code}</div>
-                    <div class="text-xs text-gray-500 mt-1">${project?.project_name || 'Unknown Project'}</div>
+                    <div class="font-mono text-base font-semibold text-blue-700">${escapeHtml(code.item_code || 'No code')}</div>
+                    <div class="text-sm font-medium text-slate-800 mt-1">${escapeHtml(code.description1 || 'No description available')}</div>
+                    <div class="text-xs text-gray-500 mt-1">${escapeHtml(project?.project_name || 'Unknown project')}</div>
                 </div>
-                <div class="text-xs text-gray-500">${formatDate(code.created_at)}</div>
+                <div class="shrink-0 text-right">
+                    <span class="inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">${escapeHtml(codeStatus)}</span>
+                    <div class="mt-1 text-xs text-gray-500">${formatDate(code.created_at)}</div>
+                </div>
             </div>
             
-            <!-- ENHANCED INFORMATION GRID WITH REQUIRED FIELDS -->
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm mb-3">
+            <div class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 border-y border-slate-100 py-3 text-sm md:grid-cols-5">
                 <div>
-                    <span class="font-medium text-gray-600">Created by:</span>
-                    <div class="text-gray-900">${code.created_by_user?.username || 'Unknown'}</div>
-                    ${code.created_by_user?.email ? `<div class="text-xs text-gray-500">${code.created_by_user.email}</div>` : ''}
+                    <span class="block text-xs text-slate-500">Created by</span>
+                    <div class="font-medium text-slate-800">${escapeHtml(creatorName)}</div>
                 </div>
                 <div>
-                    <span class="font-medium text-gray-600">Unit Price:</span>
-                    <div class="font-mono bg-green-50 px-2 py-1 rounded text-green-800 text-xs">
+                    <span class="block text-xs text-slate-500">Price</span>
+                    <div class="font-mono font-medium text-emerald-700">
                         ${code.unit_price ? `${code.unit_price} ${code.currency_code || ''}` : 'Not specified'}
                     </div>
                 </div>
                 <div>
-                    <span class="font-medium text-gray-600">Manufacturer:</span>
-                    <div class="text-gray-900">${code.manufacturer || 'Not specified'}</div>
+                    <span class="block text-xs text-slate-500">Manufacturer</span>
+                    <div class="font-medium text-slate-800">${escapeHtml(code.manufacturer || 'Not specified')}</div>
                 </div>
                 <div>
-                    <span class="font-medium text-gray-600">UOM:</span>
-                    <div class="text-gray-900">${code.uom || 'N/A'}</div>
+                    <span class="block text-xs text-slate-500">Model · UOM</span>
+                    <div class="font-medium text-slate-800">${escapeHtml(code.model_number || '—')} · ${escapeHtml(code.uom || '—')}</div>
                 </div>
                 <div>
-                    <span class="font-medium text-gray-600">Country:</span>
-                    <div class="text-gray-900">${code.country_of_origin || 'N/A'}</div>
-                </div>
-                <div>
-                    <span class="font-medium text-gray-600">Model:</span>
-                    <div class="text-gray-900">${code.model_number || 'N/A'}</div>
+                    <span class="block text-xs text-slate-500">Country of origin</span>
+                    <div class="font-medium text-slate-800">${escapeHtml(code.country_of_origin || '—')}</div>
                 </div>
                 ${code.size_value ? `
-                <div class="col-span-2 md:col-span-3">
-                    <span class="font-medium text-gray-600">📏 Size:</span>
-                    <div class="font-mono bg-purple-50 px-2 py-1 rounded text-purple-800 text-xs inline-block">${code.size_value}</div>
+                <div class="col-span-2 md:col-span-5">
+                    <span class="text-xs text-slate-500">Size</span>
+                    <span class="ml-2 font-mono text-xs font-medium text-violet-700">${escapeHtml(code.size_value)}</span>
                 </div>` : ''}
             </div>
             
-            <div class="space-y-2 text-sm mb-3">
-                <div><span class="font-medium text-gray-600">Description 1:</span> <span class="text-gray-900">${code.description1 || 'N/A'}</span></div>
-                <div><span class="font-medium text-gray-600">Description 2:</span> <span class="text-gray-900">${code.description2 || 'N/A'}</span></div>
-            </div>
+            ${code.description2 ? `<details class="mb-3 rounded bg-slate-50 px-3 py-2 text-sm"><summary class="cursor-pointer font-medium text-slate-700">Show full specification</summary><p class="mt-2 text-slate-700">${escapeHtml(code.description2)}</p></details>` : ''}
             
-            <div class="mt-3 flex space-x-2">
-                <button onclick="viewCodeDetails(${code.id})" class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200">
+            <div class="mt-3 flex flex-wrap gap-2">
+                <button onclick="viewCodeDetails(${code.id})" class="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700">
                     View Details
                 </button>
-                <button onclick="copyToClipboard('${code.item_code}')" class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded hover:bg-gray-200">
+                <button onclick="copyToClipboard('${code.item_code}')" class="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
                     Copy Code
                 </button>
-                <button onclick="exportItemToPDF(${code.id}, 'approved')" class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded hover:bg-red-200">
+                <button onclick="exportItemToPDF(${code.id}, 'approved')" class="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
                     PDF
                 </button>
-                <button onclick="exportItemToExcel(${code.id}, 'approved')" class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded hover:bg-green-200">
+                <button onclick="exportItemToExcel(${code.id}, 'approved')" class="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
                      Excel
                 </button>
             </div>
-        </div>
+        </article>
     `;
 }
 // Display codes in simple list view
@@ -11971,20 +11993,14 @@ function toggleSearchView() {
         }
     }
     
-    // Re-display current results with new view
-    const listView = document.getElementById('list-view');
-    const hierarchyView = document.getElementById('hierarchy-view');
-    
-    let hasCurrentResults = false;
-    if (searchHierarchyView && hierarchyView && hierarchyView.children.length > 0) {
-        hasCurrentResults = true;
-    } else if (!searchHierarchyView && listView && listView.children.length > 0) {
-        hasCurrentResults = true;
-    }
-    
-    // Only re-run search if we have data to display
-    if (allApprovedCodes && allApprovedCodes.length > 0) {
-        displaySearchResults(allApprovedCodes);
+    // Render the existing filtered set. Re-rendering all project codes here made a
+    // simple view switch rebuild hundreds or thousands of nodes and froze the UI.
+    const visibleResults = Array.isArray(window.lastFilteredResults)
+        ? window.lastFilteredResults
+        : allApprovedCodes;
+
+    if (visibleResults && visibleResults.length > 0) {
+        displaySearchResults(visibleResults);
     }
 }
 
@@ -12074,16 +12090,61 @@ async function exportRequestToExcel(requestId) {
 
 // Toggle hierarchy node visibility
 function toggleHierarchyNode(button) {
-    const content = button.closest('.border').querySelector('.hierarchy-content');
-    const icon = button.querySelector('svg');
-    
-    if (content.style.display === 'none') {
-        content.style.display = 'block';
-        icon.style.transform = 'rotate(0deg)';
-    } else {
-        content.style.display = 'none';
-        icon.style.transform = 'rotate(-90deg)';
+    const node = button.closest('[data-hierarchy-node]');
+    const content = node?.querySelector(':scope > .hierarchy-content');
+    if (!content) return;
+    const expanded = button.getAttribute('aria-expanded') !== 'false';
+    setHierarchyNodeExpanded(button, !expanded);
+}
+
+function setHierarchyExpanded(expanded) {
+    // Expanding a large result set defeats lazy rendering and can block the main
+    // thread. Users can still open the needed branch without loading everything.
+    if (expanded && hierarchyResultCount > 100) {
+        alert(`Expand all is available for up to 100 results. This search has ${hierarchyResultCount}; open the required branch instead.`);
+        return;
     }
+
+    const rootButtons = [...document.querySelectorAll('#hierarchy-view > .rounded-xl [data-hierarchy-node] > button[aria-expanded]')]
+        .filter(button => !button.closest('.hierarchy-content'));
+
+    if (!expanded) {
+        document.querySelectorAll('[data-hierarchy-node] > button[aria-expanded]').forEach(button => {
+            setHierarchyNodeExpanded(button, false);
+        });
+        return;
+    }
+
+    rootButtons.forEach(button => expandHierarchyBranch(button));
+}
+
+function setHierarchyNodeExpanded(button, expanded) {
+    const node = button.closest('[data-hierarchy-node]');
+    const content = node?.querySelector(':scope > .hierarchy-content');
+    if (!content) return;
+
+    if (expanded && content.dataset.loaded !== 'true') {
+        content.innerHTML = renderHierarchyChildren(content.dataset.nodeKey);
+        content.dataset.loaded = 'true';
+    }
+
+    button.setAttribute('aria-expanded', String(expanded));
+    content.classList.toggle('hidden', !expanded);
+    button.querySelector('.hierarchy-chevron')?.classList.toggle('-rotate-90', !expanded);
+
+    // Releasing collapsed descendants is what keeps repeated branch switching
+    // cheap, even after a user has inspected several large branches.
+    if (!expanded) {
+        content.innerHTML = '';
+        content.dataset.loaded = 'false';
+    }
+}
+
+function expandHierarchyBranch(button) {
+    setHierarchyNodeExpanded(button, true);
+    const node = button.closest('[data-hierarchy-node]');
+    node?.querySelectorAll(':scope > .hierarchy-content > [data-hierarchy-node] > button[aria-expanded]')
+        .forEach(childButton => expandHierarchyBranch(childButton));
 }
 
 // View detailed information about a code
