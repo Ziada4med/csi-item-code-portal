@@ -433,6 +433,66 @@
             
             <!-- Project Details (Hidden initially) -->
 <div id="project-details" class="hidden">
+    <!-- Project guidance images: controlled official sketch + user supporting images -->
+    <section id="project-guidance-panel" class="mb-6 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h2 class="text-xl font-semibold text-slate-800">Project Attribute Guide</h2>
+                <p class="text-sm text-slate-600">Use the official sketch to understand the attribute structure. Supporting images are additional references.</p>
+            </div>
+            <span class="text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-full px-3 py-1">Reference only — does not affect item-code generation</span>
+        </div>
+
+        <div class="p-5 grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h3 class="font-semibold text-slate-800">Official Attribute Sketch</h3>
+                        <p class="text-xs text-slate-500">One controlled diagram per project</p>
+                    </div>
+                    <span class="text-xs font-medium text-blue-700 bg-blue-50 px-2 py-1 rounded">Admin controlled</span>
+                </div>
+                <div id="official-sketch-container" class="min-h-52 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50 flex items-center justify-center p-3"></div>
+                <div id="official-sketch-admin-controls" class="hidden mt-3">
+                    <button type="button" onclick="toggleGuidanceUploadForm('official')" class="w-full flex items-center justify-between rounded-lg bg-blue-50 border border-blue-100 px-3 py-2 text-left text-sm font-semibold text-blue-900 hover:bg-blue-100">
+                        <span>Upload or replace official sketch</span><span id="official-upload-chevron">▾</span>
+                    </button>
+                    <div id="official-upload-form" class="hidden mt-2 rounded-lg bg-blue-50 border border-blue-100 p-3">
+                    <input id="official-sketch-file" type="file" accept="image/jpeg,image/png,image/webp" class="block w-full text-sm text-slate-700 mb-2">
+                    <input id="official-sketch-title" type="text" maxlength="160" placeholder="Sketch title (optional)" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-md mb-2">
+                    <textarea id="official-sketch-caption" maxlength="1000" placeholder="What does this diagram explain? (optional)" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-md mb-2" rows="2"></textarea>
+                    <button type="button" onclick="uploadProjectGuidanceImage('official_sketch')" class="bg-blue-700 hover:bg-blue-800 text-white px-3 py-2 rounded-md text-sm">Save Official Sketch</button>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h3 class="font-semibold text-slate-800">Supporting Images</h3>
+                        <p class="text-xs text-slate-500">Photos, datasheet extracts, and other useful references</p>
+                    </div>
+                    <span id="supporting-image-count" class="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-1 rounded">0 images</span>
+                </div>
+                <div id="supporting-images-container" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4"></div>
+                <div class="mt-4">
+                    <button type="button" onclick="toggleGuidanceUploadForm('supporting')" class="w-full flex items-center justify-between rounded-lg bg-emerald-50 border border-emerald-100 px-3 py-2 text-left text-sm font-semibold text-emerald-900 hover:bg-emerald-100">
+                        <span>Add supporting image</span><span id="supporting-upload-chevron">▾</span>
+                    </button>
+                    <div id="supporting-upload-form" class="hidden mt-2 rounded-lg bg-emerald-50 border border-emerald-100 p-3">
+                    <input id="supporting-image-file" type="file" accept="image/jpeg,image/png,image/webp" class="block w-full text-sm text-slate-700 mb-2">
+                    <input id="supporting-image-title" type="text" maxlength="160" placeholder="Image title (optional)" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-md mb-2">
+                    <textarea id="supporting-image-caption" maxlength="1000" placeholder="Explain why this image is useful (optional)" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-md mb-2" rows="2"></textarea>
+                    <select id="supporting-image-attribute" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-md mb-2">
+                        <option value="">Applies to the whole project</option>
+                    </select>
+                    <button type="button" onclick="uploadProjectGuidanceImage('supporting_image')" class="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-2 rounded-md text-sm">Add Supporting Image</button>
+                    <p class="mt-2 text-xs text-emerald-800">JPG, PNG, or WebP only; maximum 5 MB.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
     <!-- Attributes Section -->
     <div class="mb-6">
         <div class="flex justify-between items-center mb-4">
@@ -1717,6 +1777,23 @@
                 <button type="button" id="apply-deprecation-changes" class="px-4 py-2 bg-orange-600 text-white rounded-md hidden">
                     Apply Changes
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="guidance-image-viewer" class="hidden fixed inset-0 z-[100] bg-slate-950/90 p-4 sm:p-8" role="dialog" aria-modal="true" aria-label="Image viewer">
+        <div class="h-full max-w-7xl mx-auto flex flex-col">
+            <div class="flex items-center justify-between gap-3 text-white mb-3">
+                <div class="min-w-0"><p id="guidance-viewer-title" class="font-semibold truncate"></p><p id="guidance-viewer-caption" class="text-sm text-slate-300 truncate"></p></div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" onclick="adjustGuidanceImageZoom(-0.2)" class="rounded bg-white/15 hover:bg-white/25 px-3 py-2">−</button>
+                    <button type="button" onclick="resetGuidanceImageZoom()" class="rounded bg-white/15 hover:bg-white/25 px-3 py-2 text-sm">Reset</button>
+                    <button type="button" onclick="adjustGuidanceImageZoom(0.2)" class="rounded bg-white/15 hover:bg-white/25 px-3 py-2">+</button>
+                    <button type="button" onclick="closeGuidanceImageViewer()" class="rounded bg-red-600 hover:bg-red-700 px-3 py-2 text-sm">Close</button>
+                </div>
+            </div>
+            <div id="guidance-image-scroll-area" class="flex-1 overflow-auto rounded-lg bg-black/40 cursor-grab active:cursor-grabbing">
+                <img id="guidance-viewer-image" src="" alt="" class="block max-w-none origin-top-left transition-transform duration-150">
             </div>
         </div>
     </div>
@@ -4797,6 +4874,7 @@ let displayText = project.additional_level_value && project.additional_level_val
     
     try {
         checkReorderability();
+        loadProjectGuidanceImages();
         renderAttributes();
         loadLastGeneratedCodeSettings(); // Apply shared attribute arrangement + enable "Use Last Selection"
         updateModalAttributes();
@@ -4808,6 +4886,236 @@ let displayText = project.additional_level_value && project.additional_level_val
         console.error('Error in project selection functions:', error);
     }
 }        
+
+const PROJECT_GUIDANCE_BUCKET = 'project-guidance-images';
+let guidanceImageZoom = 1;
+
+function toggleGuidanceUploadForm(type) {
+    const form = document.getElementById(`${type}-upload-form`);
+    const chevron = document.getElementById(`${type}-upload-chevron`);
+    if (!form) return;
+    const isOpening = form.classList.contains('hidden');
+    form.classList.toggle('hidden', !isOpening);
+    if (chevron) chevron.textContent = isOpening ? '▴' : '▾';
+}
+
+function openGuidanceImageViewer(url, title, caption) {
+    const viewer = document.getElementById('guidance-image-viewer');
+    const image = document.getElementById('guidance-viewer-image');
+    if (!viewer || !image) return;
+    document.getElementById('guidance-viewer-title').textContent = title || 'Project guidance image';
+    document.getElementById('guidance-viewer-caption').textContent = caption || 'Use + / − to zoom; scroll to inspect the full image.';
+    image.src = url;
+    image.alt = title || 'Project guidance image';
+    viewer.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+    resetGuidanceImageZoom();
+}
+
+function closeGuidanceImageViewer() {
+    const viewer = document.getElementById('guidance-image-viewer');
+    if (viewer) viewer.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+}
+
+function resetGuidanceImageZoom() {
+    guidanceImageZoom = 1;
+    applyGuidanceImageZoom();
+    const scrollArea = document.getElementById('guidance-image-scroll-area');
+    if (scrollArea) scrollArea.scrollTo({ top: 0, left: 0 });
+}
+
+function adjustGuidanceImageZoom(delta) {
+    guidanceImageZoom = Math.min(3, Math.max(0.4, guidanceImageZoom + delta));
+    applyGuidanceImageZoom();
+}
+
+function applyGuidanceImageZoom() {
+    const image = document.getElementById('guidance-viewer-image');
+    if (!image) return;
+    image.style.width = `${guidanceImageZoom * 100}%`;
+    image.style.height = 'auto';
+}
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') closeGuidanceImageViewer();
+});
+
+function populateGuidanceAttributeOptions() {
+    const select = document.getElementById('supporting-image-attribute');
+    if (!select) return;
+    select.innerHTML = '<option value="">Applies to the whole project</option>';
+    (currentProject?.attributes || []).forEach(attr => {
+        if (!attr?.attribute_id || !attr?.attribute_name) return;
+        const option = document.createElement('option');
+        option.value = attr.attribute_id;
+        option.textContent = attr.attribute_name;
+        select.appendChild(option);
+    });
+}
+
+function guidanceImageUrl(storagePath) {
+    return supabase.storage.from(PROJECT_GUIDANCE_BUCKET).getPublicUrl(storagePath).data.publicUrl;
+}
+
+function setGuidanceLoading() {
+    const official = document.getElementById('official-sketch-container');
+    const supporting = document.getElementById('supporting-images-container');
+    if (official) official.innerHTML = '<span class="text-sm text-slate-500">Loading official sketch…</span>';
+    if (supporting) supporting.innerHTML = '<span class="text-sm text-slate-500 col-span-full">Loading supporting images…</span>';
+}
+
+async function loadProjectGuidanceImages() {
+    if (!currentProject?.id) return;
+    populateGuidanceAttributeOptions();
+    setGuidanceLoading();
+    const adminControls = document.getElementById('official-sketch-admin-controls');
+    if (adminControls) adminControls.classList.toggle('hidden', currentUser?.role !== 'admin');
+
+    try {
+        const { data, error } = await supabase
+            .from('project_guidance_images')
+            .select('id, image_type, storage_path, file_name, title, caption, attribute_id, uploaded_by, created_at, users:uploaded_by(username)')
+            .eq('project_id', currentProject.id)
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        renderProjectGuidanceImages(data || []);
+    } catch (error) {
+        console.error('Unable to load project guidance images:', error);
+        const official = document.getElementById('official-sketch-container');
+        const supporting = document.getElementById('supporting-images-container');
+        if (official) official.innerHTML = '<span class="text-sm text-red-600">Guidance images could not be loaded.</span>';
+        if (supporting) supporting.innerHTML = '';
+    }
+}
+
+function renderProjectGuidanceImages(images) {
+    const official = images.find(image => image.image_type === 'official_sketch');
+    const supporting = images.filter(image => image.image_type === 'supporting_image');
+    const officialContainer = document.getElementById('official-sketch-container');
+    const supportingContainer = document.getElementById('supporting-images-container');
+    const supportingCount = document.getElementById('supporting-image-count');
+
+    if (officialContainer) {
+        officialContainer.innerHTML = official ? `
+            <div class="w-full">
+                <button type="button" onclick="openGuidanceImageViewer('${guidanceImageUrl(official.storage_path)}', '${escapeHtml(official.title || 'Official Attribute Sketch').replace(/'/g, "\\'")}', '${escapeHtml(official.caption || '').replace(/'/g, "\\'")}')" class="block w-full group text-left" title="Open and inspect image">
+                    <img src="${guidanceImageUrl(official.storage_path)}" alt="${escapeHtml(official.title || 'Official attribute sketch')}" class="max-h-96 w-full object-contain rounded-md bg-white group-hover:opacity-95">
+                </button>
+                <div class="pt-3 flex items-start justify-between gap-3">
+                    <div>
+                        <p class="text-sm font-semibold text-slate-800">${escapeHtml(official.title || 'Official Attribute Sketch')}</p>
+                        ${official.caption ? `<p class="text-xs text-slate-600 mt-1">${escapeHtml(official.caption)}</p>` : ''}
+                    </div>
+                    ${currentUser?.role === 'admin' ? `<button type="button" onclick="deleteProjectGuidanceImage('${official.id}')" class="text-xs text-red-700 hover:text-red-900">Remove</button>` : ''}
+                </div>
+            </div>` : '<div class="text-center text-sm text-slate-500"><p class="font-medium">No official sketch yet</p><p class="mt-1">An admin can add the controlled attribute diagram here.</p></div>';
+    }
+
+    if (supportingCount) supportingCount.textContent = `${supporting.length} image${supporting.length === 1 ? '' : 's'}`;
+    if (supportingContainer) {
+        supportingContainer.innerHTML = supporting.length ? supporting.map(image => {
+            const linkedAttribute = (currentProject?.attributes || []).find(attr => String(attr.attribute_id) === String(image.attribute_id));
+            const canDelete = currentUser?.role === 'admin' || Number(image.uploaded_by) === Number(currentUser?.id);
+            return `<article class="border border-slate-200 rounded-lg overflow-hidden bg-white">
+                <button type="button" onclick="openGuidanceImageViewer('${guidanceImageUrl(image.storage_path)}', '${escapeHtml(image.title || image.file_name).replace(/'/g, "\\'")}', '${escapeHtml(image.caption || '').replace(/'/g, "\\'")}')" class="block w-full text-left" title="Open and inspect image"><img src="${guidanceImageUrl(image.storage_path)}" alt="${escapeHtml(image.title || image.file_name)}" class="h-28 w-full object-cover bg-slate-100 hover:opacity-90"></button>
+                <div class="p-2">
+                    <p class="text-xs font-semibold text-slate-800 truncate" title="${escapeHtml(image.title || image.file_name)}">${escapeHtml(image.title || image.file_name)}</p>
+                    ${linkedAttribute ? `<p class="text-xs text-blue-700 mt-1 truncate">${escapeHtml(linkedAttribute.attribute_name)}</p>` : ''}
+                    ${image.caption ? `<p class="text-xs text-slate-500 mt-1 line-clamp-2">${escapeHtml(image.caption)}</p>` : ''}
+                    <div class="flex justify-between mt-2 text-xs text-slate-500"><span>${escapeHtml(image.users?.username || 'User')}</span>${canDelete ? `<button type="button" onclick="deleteProjectGuidanceImage('${image.id}')" class="text-red-700 hover:text-red-900">Remove</button>` : ''}</div>
+                </div>
+            </article>`;
+        }).join('') : '<div class="col-span-full rounded-lg border border-dashed border-slate-200 p-5 text-center text-sm text-slate-500">No supporting images have been added.</div>';
+    }
+}
+
+function getGuidanceInput(type) {
+    const prefix = type === 'official_sketch' ? 'official-sketch' : 'supporting-image';
+    return {
+        file: document.getElementById(`${prefix}-file`),
+        title: document.getElementById(`${prefix}-title`),
+        caption: document.getElementById(`${prefix}-caption`),
+        attributeId: type === 'supporting_image' ? document.getElementById('supporting-image-attribute') : null
+    };
+}
+
+async function uploadProjectGuidanceImage(type) {
+    if (!currentProject?.id || !currentUser?.id) return alert('Select a project before uploading an image.');
+    if (type === 'official_sketch' && currentUser.role !== 'admin') return alert('Only admins can change the official sketch.');
+
+    const input = getGuidanceInput(type);
+    const file = input.file?.files?.[0];
+    if (!file) return alert('Choose an image first.');
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type) || file.size > 5242880) return alert('Use a JPG, PNG, or WebP image no larger than 5 MB.');
+
+    const extension = file.name.split('.').pop().toLowerCase();
+    const filePath = type === 'official_sketch'
+        ? `official/${currentProject.id}/official-${Date.now()}.${extension}`
+        : `supporting/${currentProject.id}/${currentUser.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extension}`;
+
+    try {
+        const { error: uploadError } = await supabase.storage.from(PROJECT_GUIDANCE_BUCKET).upload(filePath, file, { contentType: file.type, upsert: false });
+        if (uploadError) throw uploadError;
+
+        const baseRecord = {
+            project_id: currentProject.id,
+            image_type: type,
+            storage_path: filePath,
+            file_name: file.name,
+            mime_type: file.type,
+            file_size_bytes: file.size,
+            title: input.title?.value?.trim() || null,
+            caption: input.caption?.value?.trim() || null,
+            attribute_id: input.attributeId?.value ? Number(input.attributeId.value) : null,
+            uploaded_by: currentUser.id,
+            updated_at: new Date().toISOString()
+        };
+
+        if (type === 'official_sketch') {
+            const { data: existing, error: existingError } = await supabase.from('project_guidance_images').select('id, storage_path').eq('project_id', currentProject.id).eq('image_type', type).maybeSingle();
+            if (existingError) throw existingError;
+            const result = existing
+                ? await supabase.from('project_guidance_images').update(baseRecord).eq('id', existing.id)
+                : await supabase.from('project_guidance_images').insert(baseRecord);
+            if (result.error) throw result.error;
+            if (existing?.storage_path) await supabase.storage.from(PROJECT_GUIDANCE_BUCKET).remove([existing.storage_path]);
+        } else {
+            const { error: recordError } = await supabase.from('project_guidance_images').insert(baseRecord);
+            if (recordError) throw recordError;
+        }
+
+        input.file.value = '';
+        if (input.title) input.title.value = '';
+        if (input.caption) input.caption.value = '';
+        if (input.attributeId) input.attributeId.value = '';
+        await loadProjectGuidanceImages();
+    } catch (error) {
+        console.error('Unable to upload project guidance image:', error);
+        await supabase.storage.from(PROJECT_GUIDANCE_BUCKET).remove([filePath]);
+        alert(`Image upload failed: ${error.message}`);
+    }
+}
+
+async function deleteProjectGuidanceImage(imageId) {
+    if (!currentProject?.id || !imageId) return;
+    try {
+        const { data: image, error: lookupError } = await supabase.from('project_guidance_images').select('id, storage_path, image_type, uploaded_by').eq('id', imageId).eq('project_id', currentProject.id).single();
+        if (lookupError) throw lookupError;
+        const allowed = currentUser?.role === 'admin' || Number(image.uploaded_by) === Number(currentUser?.id);
+        if (!allowed) return alert('You can only remove images you uploaded.');
+        if (!confirm(`Remove this ${image.image_type === 'official_sketch' ? 'official sketch' : 'supporting image'}?`)) return;
+        const { error: deleteError } = await supabase.from('project_guidance_images').delete().eq('id', image.id);
+        if (deleteError) throw deleteError;
+        const { error: storageError } = await supabase.storage.from(PROJECT_GUIDANCE_BUCKET).remove([image.storage_path]);
+        if (storageError) console.warn('Image record deleted but file cleanup failed:', storageError);
+        await loadProjectGuidanceImages();
+    } catch (error) {
+        console.error('Unable to remove project guidance image:', error);
+        alert(`Image removal failed: ${error.message}`);
+    }
+}
 
 
 async function loadUOMs() {
