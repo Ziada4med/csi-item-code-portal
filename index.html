@@ -1189,13 +1189,23 @@
                                 <div class="p-4">
                                     <h3 class="text-lg font-semibold text-gray-800 mb-3">Export Item Codes</h3>
                                     
-                                    <!-- Filter Selection -->
+                                    <!-- Export Scope Selection -->
                                     <div class="mb-4">
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Status:</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Item State:</label>
+                                        <select id="export-item-state-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
+                                            <option value="all">All Items (Enabled + Disabled)</option>
+                                            <option value="enabled">Enabled Items Only</option>
+                                            <option value="disabled">Disabled Items Only</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- ERP Filter Selection -->
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">ERP Status:</label>
                                         <select id="export-filter-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500">
-                                            <option value="all">All Approved Item Codes</option>
-                                            <option value="erp_integrated">ERP Integrated Codes Only</option>
-                                            <option value="erp_pending">Pending ERP Integration</option>
+                                            <option value="all">All ERP Statuses</option>
+                                            <option value="erp_integrated">ERP Integrated Only</option>
+                                            <option value="erp_pending">Pending ERP Integration Only</option>
                                         </select>
                                     </div>
                                     
@@ -9676,27 +9686,39 @@ function setupSearchExportFunctionality() {
     const exportExcelBtn = document.getElementById('export-excel-btn');
     const exportPdfBtn = document.getElementById('search-export-pdf-btn');
     
+    // Use idempotent onclick bindings here. A legacy "universal export" block later in
+    // the file overrides window.exportFilteredToExcel; Search Codes must not depend on it.
     if (exportDropdownBtn) {
-        exportDropdownBtn.addEventListener('click', toggleExportDropdown);
+        exportDropdownBtn.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleExportDropdown();
+        };
     }
     
     if (exportExcelBtn) {
-        exportExcelBtn.addEventListener('click', () => {
-            const filterType = document.getElementById('export-filter-select').value;
-            exportFilteredToExcel(filterType);
-            document.getElementById('export-dropdown-menu').classList.add('hidden');
-        });
+        exportExcelBtn.onclick = async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const filterType = document.getElementById('export-filter-select')?.value || 'all';
+            const itemState = document.getElementById('export-item-state-select')?.value || 'all';
+            await exportSearchCodesToExcel(filterType, itemState);
+            document.getElementById('export-dropdown-menu')?.classList.add('hidden');
+        };
     }
     
     if (exportPdfBtn) {
-        exportPdfBtn.addEventListener('click', () => {
-            const filterType = document.getElementById('export-filter-select').value;
-            exportFilteredToPDF(filterType);
-            document.getElementById('export-dropdown-menu').classList.add('hidden');
-        });
+        exportPdfBtn.onclick = async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const filterType = document.getElementById('export-filter-select')?.value || 'all';
+            const itemState = document.getElementById('export-item-state-select')?.value || 'all';
+            await exportSearchCodesToPDF(filterType, itemState);
+            document.getElementById('export-dropdown-menu')?.classList.add('hidden');
+        };
     }
     
-    console.log('Export functionality setup complete');
+    console.log('Search Codes export functionality setup complete');
 }
 
 // ===== PROJECT SEARCH FUNCTIONS (PHASE 1) =====
@@ -12300,87 +12322,103 @@ async function copyToClipboard(text) {
 
 // ===== ENHANCED EXPORT FUNCTIONALITY =====
 
-// Get filtered data based on export selection
-function getFilteredExportData(filterType) {
-    console.log(' Getting filtered data for export, filter type:', filterType);
-    console.log(' allApprovedCodes is array:', Array.isArray(allApprovedCodes));
-    console.log(' allApprovedCodes length:', allApprovedCodes.length);
-    
-    let filteredData = [];
-    
-    switch (filterType) {
+// Get the current Search Codes result set and apply both export dimensions:
+// 1) item state (enabled / disabled / all), and 2) ERP integration status.
+function getFilteredExportData(filterType = 'all', itemState = 'all') {
+    console.log(' Getting Search Codes data for export:', { filterType, itemState });
+
+    // Export what the user is currently looking at. displaySearchResults() always sets
+    // window.lastFilteredResults, including an empty array for a search with zero matches.
+    // Before the first result render, fall back to the selected project's loaded codes.
+    const baseData = Array.isArray(window.lastFilteredResults)
+        ? window.lastFilteredResults
+        : (Array.isArray(allApprovedCodes) ? allApprovedCodes : []);
+
+    console.log(' Search Codes export base rows:', baseData.length);
+    let filteredData = [...baseData];
+
+    // Item state scope. The search RPC marks disabled rows with is_disabled=true.
+    switch (itemState) {
+        case 'enabled':
+            filteredData = filteredData.filter(code => code.is_disabled !== true);
+            break;
+        case 'disabled':
+            filteredData = filteredData.filter(code => code.is_disabled === true);
+            break;
         case 'all':
-            // All approved item codes
-            filteredData = [...allApprovedCodes];
-            break;
-            
-        case 'erp_integrated':
-            // Only ERP integrated codes
-            filteredData = allApprovedCodes.filter(code => code.erp_integrated === true);
-            break;
-            
-        case 'erp_pending':
-            // Only pending ERP integration codes
-            filteredData = allApprovedCodes.filter(code => code.erp_integrated !== true);
-            break;
-            
         default:
-            filteredData = [...allApprovedCodes];
+            break;
     }
-    
-    console.log(` Filtered data: ${filteredData.length} items for export type '${filterType}'`);
-    console.log(' First filtered item:', filteredData[0]);
+
+    // ERP integration scope can be combined with any item-state choice.
+    switch (filterType) {
+        case 'erp_integrated':
+            filteredData = filteredData.filter(code => code.erp_integrated === true);
+            break;
+        case 'erp_pending':
+            filteredData = filteredData.filter(code => code.erp_integrated !== true);
+            break;
+        case 'all':
+        default:
+            break;
+    }
+
+    console.log(` Search Codes export rows: ${filteredData.length} for state='${itemState}', ERP='${filterType}'`);
     return filteredData;
 }
 
-// Export to Excel with filtering
-async function exportFilteredToExcel(filterType) {
+function getSearchCodesExportLabels(filterType = 'all', itemState = 'all') {
+    const stateNames = {
+        all: { file: 'All_Items', title: 'All Items' },
+        enabled: { file: 'Enabled_Items', title: 'Enabled Items' },
+        disabled: { file: 'Disabled_Items', title: 'Disabled Items' }
+    };
+    const erpNames = {
+        all: { file: 'All_ERP_Statuses', title: 'All ERP Statuses' },
+        erp_integrated: { file: 'ERP_Integrated', title: 'ERP Integrated' },
+        erp_pending: { file: 'ERP_Pending', title: 'Pending ERP Integration' }
+    };
+
+    const state = stateNames[itemState] || stateNames.all;
+    const erp = erpNames[filterType] || erpNames.all;
+    return {
+        file: `${state.file}_${erp.file}`,
+        title: `${state.title} — ${erp.title}`,
+        sheet: `${state.file}_${erp.file}`.substring(0, 31)
+    };
+}
+
+// Export to Excel with item-state + ERP filtering
+async function exportSearchCodesToExcel(filterType = 'all', itemState = 'all') {
     try {
-        console.log('Starting filtered Excel export with filter:', filterType);
-        
-        const exportData = getFilteredExportData(filterType);
-        
+        console.log('Starting Search Codes Excel export:', { filterType, itemState });
+
+        const exportData = getFilteredExportData(filterType, itemState);
+
         if (exportData.length === 0) {
-            alert('No data available for export with the selected filter.');
+            alert('No data available for export with the selected item-state and ERP filters.');
             return;
         }
-        
-        // Prepare data for Excel
+
+        // Search Codes export column contract: keep exactly the ten columns from the
+        // user's reference workbook, in the same order. Item-state and ERP choices
+        // control which rows are exported; they do not add extra columns.
         const excelData = exportData.map(item => ({
             'Item Code': item.item_code || '',
-            'Base Item Code': item.is_variation ? item.item_code.split('/')[0] : item.item_code,
-            'Is Variation': item.is_variation ? 'Yes' : 'No',
-            'Variation Number': item.variation_number || '',
-            'Variation Suffix': item.variation_suffix || '',
-            'Project Name': item.classification_projects?.project_name || '',
             'Description 1': item.description1 || '',
             'Description 2': item.description2 || '',
-            'CSI Division': item.classification_projects?.division_code || '',
-            'CSI Section': item.classification_projects?.section_code || '',
-            'CSI Detailed Section': item.classification_projects?.detailed_section_code || '',
-            'CSI Item Code': item.classification_projects?.item_code || '',
-            'Additional Level': item.classification_projects?.additional_level_name || '',
-            'Additional Value': item.classification_projects?.additional_level_value || '',
             'UOM': item.uom || '',
             'Country of Origin': item.country_of_origin || '',
             'Model Number': item.model_number || '',
-            'Unit Price': item.unit_price || '',
+            'Unit Price': item.unit_price ?? '',
             'Currency': item.currency_code || '',
             'Manufacturer': item.manufacturer || '',
-            'ERP Integrated': item.erp_integrated ? 'Yes' : 'No',
-            'ERP Integration Date': item.erp_integrated_at ? new Date(item.erp_integrated_at).toLocaleDateString() : '',
-            'Created By': item.created_by_user?.username || '',
-            'Created Date': item.created_at ? new Date(item.created_at).toLocaleDateString() : '',
-            'Status': item.status || '',
-            'Approved By': item.approved_by || '',
-            'Approved Date': item.approved_at ? new Date(item.approved_at).toLocaleDateString() : '',
-            'Attribute Selections': JSON.stringify(item.attribute_selections || {})
+            'Created Date': item.created_at ? new Date(item.created_at).toLocaleDateString() : ''
         }));
-        
-        // Create workbook
+
         const workbook = XLSX.utils.book_new();
         const worksheet = XLSX.utils.json_to_sheet(excelData);
-        
+
         // Auto-adjust column widths
         const colWidths = [];
         const headers = Object.keys(excelData[0] || {});
@@ -12390,183 +12428,126 @@ async function exportFilteredToExcel(filterType) {
                 const cellValue = String(row[header] || '');
                 maxLength = Math.max(maxLength, cellValue.length);
             });
-            colWidths[index] = { width: Math.min(maxLength + 5, 50) }; // Cap at 50 characters
+            colWidths[index] = { width: Math.min(maxLength + 5, 50) };
         });
         worksheet['!cols'] = colWidths;
-        
-        // Add the worksheet to workbook
-        const filterNames = {
-            'all': 'All_Approved_Codes',
-            'erp_integrated': 'ERP_Integrated_Codes',
-            'erp_pending': 'Pending_ERP_Codes'
-        };
-        
-        XLSX.utils.book_append_sheet(workbook, worksheet, filterNames[filterType] || 'Item_Codes');
-        
-        // Generate filename with timestamp and filter type
+
+        const labels = getSearchCodesExportLabels(filterType, itemState);
+        XLSX.utils.book_append_sheet(workbook, worksheet, labels.sheet);
+
         const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '').replace(/-/g, '').replace(/T/g, '');
-        const filename = `ItemCodes_${filterNames[filterType] || 'Export'}_${timestamp}.xlsx`;
-        
-        // Save the file
+        const filename = `ItemCodes_${labels.file}_${timestamp}.xlsx`;
+
         XLSX.writeFile(workbook, filename);
-        
+
         console.log(`Excel export completed: ${filename}, ${exportData.length} items`);
-        alert(`Excel export completed successfully!\n\nFile: ${filename}\nItems exported: ${exportData.length}`);
-        
+        alert(`Excel export completed successfully!\n\nScope: ${labels.title}\nFile: ${filename}\nItems exported: ${exportData.length}`);
+
     } catch (error) {
-        console.error('Error in filtered Excel export:', error);
+        console.error('Error in Search Codes Excel export:', error);
         alert('Failed to export to Excel: ' + error.message);
     }
 }
 
-// Export to PDF with automatic text wrapping
-async function exportFilteredToPDF(filterType) {
+// Export to PDF with item-state + ERP filtering
+async function exportSearchCodesToPDF(filterType = 'all', itemState = 'all') {
     try {
-        console.log('Starting PDF export with filter:', filterType);
-        
-        const exportData = getFilteredExportData(filterType);
-        
+        console.log('Starting Search Codes PDF export:', { filterType, itemState });
+
+        const exportData = getFilteredExportData(filterType, itemState);
+
         if (exportData.length === 0) {
-            alert('No data available for export with the selected filter.');
+            alert('No data available for export with the selected item-state and ERP filters.');
             return;
         }
-        
+
         const { jsPDF } = window.jspdf;
-        
-        // Create new PDF with landscape orientation for better table fit
         const doc = new jsPDF({
             orientation: 'landscape',
             unit: 'pt',
-            format: 'a3' // Using A3 for more space
+            format: 'a3'
         });
-        
-        // Set fonts
+
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(16);
-        
-        // Filter names for title
-        const filterTitles = {
-            'all': 'All Approved Item Codes',
-            'erp_integrated': 'ERP Integrated Item Codes',
-            'erp_pending': 'Pending ERP Integration Item Codes'
-        };
-        
-        const title = filterTitles[filterType] || 'Item Codes Export';
-        
-        // Add title
-        doc.text(title, 40, 40);
+
+        const labels = getSearchCodesExportLabels(filterType, itemState);
+        doc.text(`Item Codes — ${labels.title}`, 40, 40);
         doc.setFontSize(10);
         doc.text(`Generated: ${new Date().toLocaleString()}`, 40, 60);
         doc.text(`Total Items: ${exportData.length}`, 40, 75);
-        
-        // Prepare table data with text wrapping consideration
+
         const tableHeaders = [
-            'Item Code',
-            'Project Name',
-            'Description 1',
-            'Description 2',
-            'CSI Path',
-            'UOM',
-            'Country',
-            'Model',
-            'Price',
-            'Manufacturer',
-            'ERP Status',
-            'Created By',
-            'Created Date'
+            'Item Code', 'Description 1', 'Description 2', 'UOM', 'Country of Origin',
+            'Model Number', 'Unit Price', 'Currency', 'Manufacturer', 'Created Date'
         ];
-        
+
         const tableData = exportData.map(item => [
             item.item_code || '',
-            item.classification_projects?.project_name || '',
             item.description1 || '',
             item.description2 || '',
-            `${item.classification_projects?.division_code || ''}-${item.classification_projects?.section_code || ''}-${item.classification_projects?.detailed_section_code || ''}`,
             item.uom || '',
             item.country_of_origin || '',
             item.model_number || '',
-            `${item.unit_price || ''} ${item.currency_code || ''}`.trim(),
+            item.unit_price ?? '',
+            item.currency_code || '',
             item.manufacturer || '',
-            item.erp_integrated ? 'Integrated' : 'Pending',
-            item.created_by_user?.username || '',
             item.created_at ? new Date(item.created_at).toLocaleDateString() : ''
         ]);
-        
-        // AutoTable configuration with text wrapping
-        const autoTableConfig = {
+
+        doc.autoTable({
             head: [tableHeaders],
             body: tableData,
             startY: 100,
             margin: { left: 20, right: 20 },
             styles: {
-                fontSize: 7,
+                fontSize: 6.5,
                 cellPadding: 3,
-                overflow: 'linebreak', // Enable text wrapping
+                overflow: 'linebreak',
                 lineColor: [200, 200, 200],
                 lineWidth: 0.5
             },
             headStyles: {
-                fillColor: [66, 139, 202], // Blue header
+                fillColor: [66, 139, 202],
                 textColor: 255,
-                fontSize: 8,
+                fontSize: 7.5,
                 fontStyle: 'bold',
                 halign: 'center'
             },
-            alternateRowStyles: {
-                fillColor: [245, 245, 245]
-            },
+            alternateRowStyles: { fillColor: [245, 245, 245] },
             columnStyles: {
-                0: { cellWidth: 80 },  // Item Code
-                1: { cellWidth: 100 }, // Project Name  
-                2: { cellWidth: 120 }, // Description 1
-                3: { cellWidth: 120 }, // Description 2
-                4: { cellWidth: 80 },  // CSI Path
-                5: { cellWidth: 40 },  // UOM
-                6: { cellWidth: 60 },  // Country
-                7: { cellWidth: 70 },  // Model
-                8: { cellWidth: 60 },  // Price
-                9: { cellWidth: 80 },  // Manufacturer
-                10: { cellWidth: 60 }, // ERP Status
-                11: { cellWidth: 60 }, // Created By
-                12: { cellWidth: 70 }  // Created Date
+                0: { cellWidth: 82 },
+                1: { cellWidth: 95 },
+                2: { cellWidth: 180 },
+                3: { cellWidth: 38 },
+                4: { cellWidth: 65 },
+                5: { cellWidth: 72 },
+                6: { cellWidth: 55 },
+                7: { cellWidth: 42 },
+                8: { cellWidth: 105 },
+                9: { cellWidth: 58 }
             },
-            // Enable automatic row height adjustment for text wrapping
             didDrawCell: function(data) {
-                // Ensure minimum row height for readability
-                if (data.row.height < 25) {
-                    data.row.height = 25;
-                }
+                if (data.row.height < 25) data.row.height = 25;
             }
-        };
-        
-        // Generate the table
-        doc.autoTable(autoTableConfig);
-        
-        // Add page numbers
+        });
+
         const pageCount = doc.internal.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
             doc.setFontSize(8);
             doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.getWidth() - 60, doc.internal.pageSize.getHeight() - 20);
         }
-        
-        // Generate filename
+
         const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '').replace(/-/g, '').replace(/T/g, '');
-        const filterNames = {
-            'all': 'All_Approved_Codes',
-            'erp_integrated': 'ERP_Integrated_Codes',
-            'erp_pending': 'Pending_ERP_Codes'
-        };
-        const filename = `ItemCodes_${filterNames[filterType] || 'Export'}_${timestamp}.pdf`;
-        
-        // Save the PDF
+        const filename = `ItemCodes_${labels.file}_${timestamp}.pdf`;
         doc.save(filename);
-        
+
         console.log(`PDF export completed: ${filename}, ${exportData.length} items`);
-        alert(`PDF export completed successfully!\n\nFile: ${filename}\nItems exported: ${exportData.length}\nPages: ${pageCount}`);
-        
+        alert(`PDF export completed successfully!\n\nScope: ${labels.title}\nFile: ${filename}\nItems exported: ${exportData.length}\nPages: ${pageCount}`);
+
     } catch (error) {
-        console.error('Error in PDF export:', error);
+        console.error('Error in Search Codes PDF export:', error);
         alert('Failed to export to PDF: ' + error.message);
     }
 }
