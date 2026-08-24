@@ -504,7 +504,13 @@
                     &#8635; Use Last Selection
                 </button>
             </div>
-            <div class="flex space-x-2">
+            <div class="flex flex-wrap items-center gap-2">
+                <button id="refresh-project-attributes-btn" type="button" onclick="refreshCurrentProjectAttributes()"
+                        class="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-wait text-white px-3 py-1 rounded-md text-sm inline-flex items-center gap-1.5"
+                        title="Fetch the latest attributes and approved standard values for this project without reloading the page">
+                    <span id="refresh-project-attributes-icon" aria-hidden="true">&#8635;</span>
+                    <span id="refresh-project-attributes-label">Refresh Attributes</span>
+                </button>
                 <button id="add-standard-value-btn" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm">
                     + Add Standard Value
                 </button>
@@ -4227,6 +4233,183 @@ function renderProjectDropdown(projects) {
         // Select project
         // Select project
 // Select project by ID. The heavy project payload is fetched only at this point.
+let refreshAttributesRequestToken = 0;
+
+function getStandardValueDisplayParts(value) {
+    if (typeof value === 'object' && value !== null) {
+        return {
+            name: String(value.name ?? value.value ?? ''),
+            unit: String(value.unit ?? value.unit_code ?? '')
+        };
+    }
+    return { name: String(value ?? ''), unit: '' };
+}
+
+function isActiveStandardValue(value) {
+    if (typeof value !== 'object' || value === null) return true;
+    return value.status !== 'deprecated' && !value.deprecated;
+}
+
+function attributeAllowsManualSelection(attr) {
+    if (attr?.is_manual_entry === true) return true;
+    const values = Array.isArray(attr?.standard_values) ? attr.standard_values : [];
+    return !values.some(isActiveStandardValue);
+}
+
+function canRestoreAttributeSelection(attr, selection) {
+    if (!attr || !selection) return false;
+
+    if (selection.index === 'manual') {
+        return attributeAllowsManualSelection(attr);
+    }
+
+    const rawValue = String(selection.rawValue ?? selection.value ?? '').trim();
+    const selectedUnit = String(selection.unit ?? '').trim();
+    if (!rawValue) return false;
+
+    return (Array.isArray(attr.standard_values) ? attr.standard_values : [])
+        .filter(isActiveStandardValue)
+        .some(value => {
+            const parts = getStandardValueDisplayParts(value);
+            if (parts.name !== rawValue) return false;
+            return !selectedUnit || !parts.unit || parts.unit === selectedUnit;
+        });
+}
+
+function restoreAttributeControlsFromSelections() {
+    if (!currentProject?.attributes) return;
+
+    currentProject.attributes.forEach(attr => {
+        const selection = attributeSelections[attr.attribute_id];
+        if (!selection) return;
+
+        const originalIndex = currentProject.attributes.indexOf(attr);
+        if (selection.index === 'manual') {
+            const manualInput = document.getElementById(`manual-attr-${attr.attribute_id}`);
+            const unitSelect = document.getElementById(`unit-attr-${attr.attribute_id}`);
+            if (manualInput) manualInput.value = selection.rawValue ?? selection.value ?? '';
+            if (unitSelect && selection.unit) unitSelect.value = selection.unit;
+            return;
+        }
+
+        const rawValue = String(selection.rawValue ?? selection.value ?? '');
+        const radios = document.querySelectorAll(`input[name="attr-${originalIndex}"]`);
+        for (const radio of radios) {
+            if (radio.value === rawValue) {
+                radio.checked = true;
+                break;
+            }
+        }
+    });
+}
+
+async function refreshCurrentProjectAttributes() {
+    if (!currentProject?.id) {
+        showNotification('Select a project first.', 'error');
+        return;
+    }
+
+    const projectId = Number(currentProject.id);
+    const requestToken = ++refreshAttributesRequestToken;
+    const button = document.getElementById('refresh-project-attributes-btn');
+    const icon = document.getElementById('refresh-project-attributes-icon');
+    const label = document.getElementById('refresh-project-attributes-label');
+
+    const previousSelections = JSON.parse(JSON.stringify(attributeSelections || {}));
+    const previousAttributes = Array.isArray(currentProject.attributes) ? [...currentProject.attributes] : [];
+    const previousOrderedIds = (attributeOrder && attributeOrder.length)
+        ? attributeOrder.map(index => previousAttributes[index]?.attribute_id).filter(Boolean)
+        : previousAttributes.map(attr => attr.attribute_id).filter(Boolean);
+    const previousIncludeHeaders = { ...includeHeaders };
+
+    if (button) button.disabled = true;
+    if (icon) icon.classList.add('animate-spin');
+    if (label) label.textContent = 'Refreshing...';
+
+    try {
+        // Force=true bypasses the 5-minute project-detail cache so newly approved values appear immediately.
+        projectDetailCache.delete(String(projectId));
+        const refreshedProject = await fetchProjectDetails(projectId, true);
+
+        // Ignore a late response if the user switched projects while this request was running.
+        if (requestToken !== refreshAttributesRequestToken || Number(currentProject?.id) !== projectId) return;
+        if (!refreshedProject) throw new Error('Project is no longer available or accessible.');
+
+        currentProject = refreshedProject;
+        if (!currentProject.id && currentProject.project_id) currentProject.id = currentProject.project_id;
+        if (!Array.isArray(currentProject.attributes)) currentProject.attributes = [];
+
+        const newIndexByAttributeId = new Map(
+            currentProject.attributes.map((attr, index) => [String(attr.attribute_id), index])
+        );
+        const rebuiltOrder = [];
+        previousOrderedIds.forEach(attributeId => {
+            const index = newIndexByAttributeId.get(String(attributeId));
+            if (index !== undefined && !rebuiltOrder.includes(index)) rebuiltOrder.push(index);
+        });
+        currentProject.attributes.forEach((attr, index) => {
+            if (!rebuiltOrder.includes(index)) rebuiltOrder.push(index);
+        });
+        attributeOrder = rebuiltOrder;
+
+        includeHeaders = {};
+        currentProject.attributes.forEach(attr => {
+            includeHeaders[attr.attribute_id] = previousIncludeHeaders[attr.attribute_id] ?? false;
+        });
+
+        attributeSelections = {};
+        let restoredCount = 0;
+        let clearedCount = 0;
+        Object.entries(previousSelections).forEach(([attributeId, selection]) => {
+            const attr = currentProject.attributes.find(item => String(item.attribute_id) === String(attributeId));
+            if (!attr) {
+                clearedCount += 1;
+                return;
+            }
+            if (canRestoreAttributeSelection(attr, selection)) {
+                attributeSelections[attr.attribute_id] = selection;
+                restoredCount += 1;
+            } else {
+                clearedCount += 1;
+            }
+        });
+
+        renderAttributes();
+        restoreAttributeControlsFromSelections();
+        updateModalAttributes();
+        populateGuidanceAttributeOptions();
+
+        const countLabel = document.getElementById('selected-project-attribute-count');
+        if (countLabel) {
+            countLabel.textContent = `${currentProject.attributes.length} attribute(s) available`;
+        }
+
+        updatePreview();
+        checkGenerateButton();
+        checkForDuplicates();
+        checkForVariationPreview();
+
+        const preservedText = restoredCount ? ` ${restoredCount} current selection(s) preserved.` : '';
+        const clearedText = clearedCount ? ` ${clearedCount} stale selection(s) cleared.` : '';
+        showNotification(`Attributes refreshed.${preservedText}${clearedText}`, 'success');
+        console.log('Project attributes refreshed from server:', {
+            projectId,
+            attributeCount: currentProject.attributes.length,
+            restoredSelections: restoredCount,
+            clearedSelections: clearedCount
+        });
+    } catch (error) {
+        console.error('Failed to refresh project attributes:', error);
+        showNotification('Unable to refresh attributes: ' + (error.message || 'Unknown error'), 'error');
+    } finally {
+        if (requestToken === refreshAttributesRequestToken) {
+            if (button) button.disabled = false;
+            if (icon) icon.classList.remove('animate-spin');
+            if (label) label.textContent = 'Refresh Attributes';
+        }
+    }
+}
+
 async function selectProject(projectId) {
     console.log('Selecting project on demand:', projectId);
     try {
@@ -4432,7 +4615,7 @@ let displayText = project.additional_level_value && project.additional_level_val
             ` : ''}
             <div class="md:col-span-2">
                 <p class="text-sm text-blue-600 font-medium">Attributes</p>
-                <p class="text-gray-600 text-sm">${currentProject.attributes.length} attribute(s) available</p>
+                <p id="selected-project-attribute-count" class="text-gray-600 text-sm">${currentProject.attributes.length} attribute(s) available</p>
             </div>
         </div>
     `;
