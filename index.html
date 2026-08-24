@@ -2352,7 +2352,137 @@ var supabase = window.supabaseClient;
         let attributeDisplaySettings = {}; // New: stores per-attribute display settings
         let uomList = [];
         let countriesList = [];
-        let allProjects = [];
+        let allProjects = []; // Legacy compatibility only. Project discovery is now server-side/lazy.
+        const PROJECT_CACHE_TTL_MS = 5 * 60 * 1000;
+        const projectSearchCache = new Map();
+        const projectDetailCache = new Map();
+        const csiOptionsCache = new Map();
+        const csiRequestTokens = Object.create(null);
+        let projectSearchRequestToken = 0;
+        let cascadeSyncToken = 0;
+
+        function nextCsiRequestToken(level) {
+            csiRequestTokens[level] = (csiRequestTokens[level] || 0) + 1;
+            return csiRequestTokens[level];
+        }
+
+        function isLatestCsiRequest(level, token) {
+            return csiRequestTokens[level] === token;
+        }
+
+        function cancelPendingCsiRequests() {
+            ['division', 'section', 'detailed-section', 'item-code', 'additional-level'].forEach(level => nextCsiRequestToken(level));
+        }
+
+        function readTimedCache(cache, key) {
+            const entry = cache.get(key);
+            if (!entry) return null;
+            if (Date.now() - entry.timestamp > PROJECT_CACHE_TTL_MS) {
+                cache.delete(key);
+                return null;
+            }
+            return entry.value;
+        }
+
+        function writeTimedCache(cache, key, value) {
+            cache.set(key, { value, timestamp: Date.now() });
+            return value;
+        }
+
+        function invalidateProjectDiscoveryCache(projectId = null) {
+            projectSearchCache.clear();
+            csiOptionsCache.clear();
+            cancelPendingCsiRequests();
+            if (projectId !== null && projectId !== undefined) {
+                projectDetailCache.delete(String(projectId));
+            } else {
+                projectDetailCache.clear();
+            }
+        }
+
+        function normalizeLazyProject(project) {
+            if (!project) return null;
+            const normalized = { ...project };
+            normalized.project_id = normalized.project_id ?? normalized.id;
+            normalized.id = normalized.id ?? normalized.project_id;
+            normalized.item_description = normalized.item_description || normalized.project_name || 'No description available';
+            normalized.attributes = Array.isArray(normalized.attributes)
+                ? normalized.attributes.filter(attr => attr && attr.attribute_id && attr.attribute_name)
+                : [];
+            normalized.tags = Array.isArray(normalized.tags) ? normalized.tags : [];
+            return normalized;
+        }
+
+        async function searchAccessibleProjects(criteria = {}, limit = 15) {
+            if (!currentUser?.id) return [];
+            const args = {
+                p_user_id: currentUser.id,
+                p_query: criteria.projectName || criteria.query || null,
+                p_project_filter: currentProjectFilter || 'all',
+                p_creator: criteria.creator || null,
+                p_csi_code: criteria.csiCode || null,
+                p_attribute_name: criteria.attributeName || null,
+                p_standard_value: criteria.standardValue || null,
+                p_generated_item_code: criteria.generatedItemCode || null,
+                p_limit: Math.max(1, Math.min(limit || 15, 50))
+            };
+            const cacheKey = JSON.stringify(args);
+            const cached = readTimedCache(projectSearchCache, cacheKey);
+            if (cached) return cached;
+
+            const { data, error } = await supabase.rpc('search_user_accessible_projects_v2', args);
+            if (error) throw error;
+            return writeTimedCache(projectSearchCache, cacheKey, (data || []).map(normalizeLazyProject));
+        }
+
+        async function fetchProjectDetails(projectId, force = false) {
+            if (!currentUser?.id || projectId === null || projectId === undefined) return null;
+            const key = String(projectId);
+            if (!force) {
+                const cached = readTimedCache(projectDetailCache, key);
+                if (cached) return cached;
+            }
+
+            const { data, error } = await supabase.rpc('get_user_accessible_project_v2', {
+                p_user_id: currentUser.id,
+                p_project_id: Number(projectId)
+            });
+            if (error) throw error;
+            const row = Array.isArray(data) ? data[0] : data;
+            const normalized = normalizeLazyProject(row);
+            if (!normalized) return null;
+            return writeTimedCache(projectDetailCache, key, normalized);
+        }
+
+        async function fetchCsiOptions(level, filters = {}) {
+            if (!currentUser?.id) return [];
+            const args = {
+                p_user_id: currentUser.id,
+                p_level: level,
+                p_project_filter: currentProjectFilter || 'all',
+                p_division_code: filters.divisionCode || null,
+                p_section_code: filters.sectionCode || null,
+                p_detailed_section_code: filters.detailedSectionCode || null,
+                p_item_code: filters.itemCode || null
+            };
+            const cacheKey = JSON.stringify(args);
+            const cached = readTimedCache(csiOptionsCache, cacheKey);
+            if (cached) return cached;
+
+            const { data, error } = await supabase.rpc('get_user_accessible_csi_options_v2', args);
+            if (error) throw error;
+            return writeTimedCache(csiOptionsCache, cacheKey, data || []);
+        }
+
+        async function refreshCurrentProjectData() {
+            const projectId = currentProject?.id || currentProject?.project_id;
+            if (!projectId) return null;
+            invalidateProjectDiscoveryCache(projectId);
+            const freshProject = await fetchProjectDetails(projectId, true);
+            if (freshProject) currentProject = freshProject;
+            return freshProject;
+        }
+
         let nextSerial = 1;
 let requestsData = [];
 let historyData = [];
@@ -3290,43 +3420,20 @@ if (currentUser.role === 'admin' || currentUser.role === 'erp_data_entry') {
 } else {
     console.log('Disabled Codes access denied for role:', currentUser.role);
 }
-
-        // Load initial data in sequence to avoid race conditions
-        console.log('Loading UOMs...');
-        await loadUOMs();
-        
-        console.log('Loading countries...');
-        await loadCountries();
-        
-        console.log('Loading reviewers...');
-        await loadReviewers();
-        
-        console.log('Loading currencies...');
-        await loadCurrencies();
-        
-        console.log('Loaded approved projects...');
-        await loadApprovedProjects();
-
-        // Debug: Show some example projects with their CSI codes
-        if (allProjects && allProjects.length > 0) {
-            console.log('=== DEBUGGING CSI CODES ===');
-            allProjects.slice(0, 5).forEach((project, index) => {
-                console.log(`Project ${index + 1}:`, {
-                    project_id: project.project_id,
-                    project_name: project.project_name,
-                    division_code: project.division_code,
-                    section_code: project.section_code, 
-                    detailed_section_code: project.detailed_section_code,
-                    item_code: project.item_code,
-                    additional_level_name: project.additional_level_name,
-                    additional_level_value: project.additional_level_value
-                });
-            });
-            console.log('=== END DEBUGGING ===');
-        }
+        // Load small reference lists in parallel. Project payloads are intentionally NOT loaded here.
+        console.log('Loading reference data in parallel...');
+        await Promise.all([
+            loadUOMs(),
+            loadCountries(),
+            loadReviewers(),
+            loadCurrencies()
+        ]);
 
         console.log('Setting up event listeners...');
         setupEventListeners();
+
+        // Project discovery is now lazy: only small CSI option/search queries run on demand.
+        initializeLazyProjectDiscovery();
         
         // Load attribute display settings after everything else is set up
         console.log('Loading attribute display settings...');
@@ -3343,165 +3450,77 @@ if (currentUser.role === 'admin' || currentUser.role === 'erp_data_entry') {
         alert('Failed to initialize application. Please refresh the page and try again.');
     }
 }
-        // Load approved projects and setup cascading dropdowns
+        // Legacy compatibility wrapper. This no longer downloads all approved projects.
 async function loadApprovedProjects() {
-    try {
-        // Use new access-controlled RPC function instead of get_all_approved_projects
-        const { data, error } = await supabase.rpc('get_user_accessible_projects', {
-            p_user_id: currentUser.id
-        });
-        
-        if (error) {
-            console.error('Projects error:', error);
-            throw error;
-        }
-
-        allProjects = data || [];
-        console.log('FILTERED PROJECT DATA (based on creator category):', allProjects);
-        console.log(`User can access ${allProjects.length} projects based on category: ${data[0]?.creator_category || 'unknown'}`);
-
-        // Check what's actually in the first project
-        if (allProjects.length > 0) {
-            console.log('First accessible project:', allProjects[0]);
-            console.log('Access reason:', allProjects[0].access_reason);
-            console.log('Project classification:', allProjects[0].project_classification);
-            console.log('Creator category:', allProjects[0].creator_category);
-        }
-        
-        // Fix missing item_description for each project
-        allProjects = allProjects.map(project => {
-            if (!project.item_description) {
-                // Use project_name or a default description
-                project.item_description = project.project_name || 'No description available';
-            }
-            
-            // Ensure attributes is always an array
-            if (!project.attributes || project.attributes === null) {
-                project.attributes = [];
-            }
-            
-            // Filter out null attributes that can come from LEFT JOIN
-            if (Array.isArray(project.attributes)) {
-                project.attributes = project.attributes.filter(attr => 
-                    attr && attr.attribute_id && attr.attribute_name
-                );
-            }
-            
-            return project;
-        });
-    } catch (error) {
-        console.error('Error loading projects:', error);
-        alert('Failed to load projects. Please check console for details, or try refreshing the page.');
-    } finally {
-        // Wire up UI controls (buttons, dropdowns, tabs) regardless of whether the project
-        // data itself loaded successfully - these are independent of allProjects, and if this
-        // step is skipped whenever the RPC above fails/times out, buttons across the Generate
-        // and Search Codes tabs (e.g. Switch to Card View) silently never get their click
-        // listeners attached for the rest of the session.
-        setupCascadingDropdowns();
-        setupAdvancedProjectSearch();
-        setupSearchCodesTab();
-        setupProjectClassificationFilter();
-    }
+    console.warn('loadApprovedProjects() is deprecated: using lazy project discovery instead.');
+    invalidateProjectDiscoveryCache();
+    await loadDivisions();
+    if (currentProject?.id || currentProject?.project_id) await refreshCurrentProjectData();
+    return [];
 }
 
 // NEW FUNCTION: Setup project classification filtering
-let originalAllProjects = []; // Store original unfiltered data
 let currentProjectFilter = 'all';
 
+function initializeLazyProjectDiscovery() {
+    setupCascadingDropdowns();
+    setupAdvancedProjectSearch();
+    setupSearchCodesTab();
+    setupProjectClassificationFilter();
+}
+
 function setupProjectClassificationFilter() {
-    // Store the original projects data
-    originalAllProjects = [...allProjects];
-    
-    // Setup radio button event listeners
     const filterRadios = document.querySelectorAll('input[name="project-filter"]');
     filterRadios.forEach(radio => {
+        if (radio.dataset.lazyFilterBound === 'true') return;
+        radio.dataset.lazyFilterBound = 'true';
         radio.addEventListener('change', handleProjectFilterChange);
     });
-    
-    // Update initial filter info
     updateFilterInfo();
 }
 
 function handleProjectFilterChange(event) {
-    currentProjectFilter = event.target.value;
-    
-    // Filter projects based on selection
-    if (currentProjectFilter === 'all') {
-        allProjects = [...originalAllProjects];
-    } else {
-        allProjects = originalAllProjects.filter(project => {
-            // Check if project has the classification we're filtering for
-            return project.project_classification === currentProjectFilter ||
-                   project.creator_category === currentProjectFilter;
-        });
-    }
-    
-    console.log(`🔍 Filtered to ${currentProjectFilter}: ${allProjects.length} projects`);
-    
-    // Update the UI
-    updateFilterInfo();
-    
-    // Reset and rebuild dropdowns with filtered data
+    currentProjectFilter = event.target.value || 'all';
+    console.log(`Project filter changed to ${currentProjectFilter}; invalidating lazy caches.`);
+    invalidateProjectDiscoveryCache();
     resetCascadingDropdowns();
-    loadDivisions();
-    
-    // Clear any current project selection
     clearProjectSelection();
-    
-    // Update advanced search if visible
-    if (typeof setupAdvancedProjectSearch === 'function') {
-        setupAdvancedProjectSearch();
-    }
+    updateFilterInfo();
+    loadDivisions();
 }
 
 function updateFilterInfo() {
     const filterInfo = document.getElementById('filter-info');
-    if (filterInfo && allProjects) {
-        const totalOriginal = originalAllProjects.length || 0;
-        const currentFiltered = allProjects.length || 0;
-        
-        if (currentProjectFilter === 'all') {
-            filterInfo.textContent = `Showing all ${totalOriginal} accessible projects`;
-        } else {
-            filterInfo.textContent = `Showing ${currentFiltered} of ${totalOriginal} projects (${currentProjectFilter})`;
-        }
-    }
+    if (!filterInfo) return;
+    const label = currentProjectFilter === 'all' ? 'all accessible types' : currentProjectFilter;
+    filterInfo.textContent = `On-demand mode — querying ${label}`;
 }
 
 function resetCascadingDropdowns() {
-    // Reset all dropdown selections
-    const dropdowns = [
-        'division-select', 'section-select', 'detailed-section-select', 
-        'item-code-select', 'additional-level-select'
-    ];
-    
+    const dropdowns = ['division-select', 'section-select', 'detailed-section-select', 'item-code-select', 'additional-level-select'];
     dropdowns.forEach(id => {
         const select = document.getElementById(id);
         if (select) {
             select.innerHTML = `<option value="">Choose ${id.replace('-select', '').replace('-', ' ')}...</option>`;
-            if (id !== 'division-select') {
-                select.disabled = true;
-            }
+            select.disabled = id !== 'division-select';
+        }
+        const field = id.replace('-select', '');
+        const input = document.getElementById(`${field}-combo-input`);
+        if (input) {
+            input.value = '';
+            input.disabled = id !== 'division-select';
         }
     });
 }
 
 function clearProjectSelection() {
-    // Clear any currently selected project
-    window.currentProject = null;
-    
-    // Clear project details if displayed
-    const projectDetailsElements = [
-        'selected-project-name', 'project-details', 'attribute-container'
-    ];
-    
-    projectDetailsElements.forEach(id => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.innerHTML = '';
-        }
-    });
+    currentProject = null;
+    attributeSelections = {};
+    attributeOrder = [];
+    const selected = document.getElementById('selected-project-display');
+    const details = document.getElementById('project-details');
+    if (selected) selected.classList.add('hidden');
+    if (details) details.classList.add('hidden');
 }
 
        // Setup cascading dropdowns
@@ -3518,14 +3537,17 @@ function setupCascadingDropdowns() {
         return;
     }
     
-    // Setup event listeners for cascading behavior
-    divisionSelect.addEventListener('change', handleDivisionChange);
-    sectionSelect.addEventListener('change', handleSectionChange);
-    detailedSectionSelect.addEventListener('change', handleDetailedSectionChange);
-    itemCodeSelect.addEventListener('change', handleItemCodeChange);
-    additionalLevelSelect.addEventListener('change', handleAdditionalLevelChange);
-    
-    // Load initial divisions
+    // Setup event listeners for cascading behavior once.
+    if (divisionSelect.dataset.lazyCascadeBound !== 'true') {
+        divisionSelect.dataset.lazyCascadeBound = 'true';
+        divisionSelect.addEventListener('change', handleDivisionChange);
+        sectionSelect.addEventListener('change', handleSectionChange);
+        detailedSectionSelect.addEventListener('change', handleDetailedSectionChange);
+        itemCodeSelect.addEventListener('change', handleItemCodeChange);
+        additionalLevelSelect.addEventListener('change', handleAdditionalLevelChange);
+    }
+
+    // Tiny access-aware query: division options only, never full project payloads.
     loadDivisions();
 }
 
@@ -3635,38 +3657,24 @@ function filterAttributeValueOptions(attributeId, query) {
     });
 }
 
-// Load divisions that have approved projects
+// Load divisions that have accessible approved projects (server-side, lightweight)
 async function loadDivisions() {
+    const divisionSelect = document.getElementById('division-select');
+    if (!divisionSelect) return;
+    divisionSelect.innerHTML = '<option value="">Choose division...</option>';
+    const requestToken = nextCsiRequestToken('division');
     try {
-        const divisionSelect = document.getElementById('division-select');
-        divisionSelect.innerHTML = '<option value="">Choose division...</option>';
-        
-        // Get divisions using the proper RPC function
-        const { data: divisionsData, error } = await supabase.rpc('get_divisions');
-        
-        if (error) {
-            console.error('Error loading divisions:', error);
-            throw error;
-        }
-        
-        // Get unique divisions from approved projects to filter
-        const approvedDivisions = [...new Set(allProjects.map(p => p.division_code))];
-        
-        // Filter divisions to only show those with approved projects
-        const availableDivisions = divisionsData.filter(division => 
-            approvedDivisions.includes(division.division_code)
-        ).sort((a, b) => a.division_code.localeCompare(b.division_code));
-        
-        availableDivisions.forEach(division => {
+        const options = await fetchCsiOptions('division');
+        if (!isLatestCsiRequest('division', requestToken)) return;
+        options.forEach(row => {
             const option = document.createElement('option');
-            option.value = division.division_code;
-            option.textContent = `${division.division_code} - ${division.division_description}`;
+            option.value = row.option_value;
+            option.textContent = row.option_label || row.option_value;
             divisionSelect.appendChild(option);
         });
-        
-        console.log('Loaded divisions:', availableDivisions.length);
+        console.log('Loaded accessible divisions on demand:', options.length);
     } catch (error) {
-        console.error('Error loading divisions:', error);
+        console.error('Error loading accessible divisions:', error);
     }
 }
 
@@ -3692,44 +3700,22 @@ async function handleDivisionChange(e) {
     }
 }
 
-// Load sections for selected division
+// Load sections for selected division (server-side, lightweight)
 async function loadSections(divisionCode) {
+    const sectionSelect = document.getElementById('section-select');
+    if (!sectionSelect) return;
+    sectionSelect.innerHTML = '<option value="">Choose section...</option>';
+    const requestToken = nextCsiRequestToken('section');
     try {
-        const sectionSelect = document.getElementById('section-select');
-        sectionSelect.innerHTML = '<option value="">Choose section...</option>';
-        
-        // Get sections using the proper RPC function
-        const { data: sectionsData, error } = await supabase.rpc('get_sections', {
-            division_code_param: divisionCode
-        });
-        
-        if (error) {
-            console.error('Error loading sections:', error);
-            throw error;
-        }
-        
-        // Get unique sections from approved projects to filter
-        // Include sections that might be duplicated as detailed sections
-        const approvedSections = [...new Set(
-            allProjects
-                .filter(p => p.division_code === divisionCode)
-                .flatMap(p => [p.section_code, p.detailed_section_code]) // Include both section and detailed section codes
-                .filter(code => code) // Remove null/undefined values
-        )];
-        
-        // Filter sections to only show those with approved projects
-        const availableSections = sectionsData.filter(section => 
-            approvedSections.includes(section.section_code)
-        ).sort((a, b) => a.section_code.localeCompare(b.section_code));
-        
-        availableSections.forEach(section => {
+        const options = await fetchCsiOptions('section', { divisionCode });
+        if (!isLatestCsiRequest('section', requestToken)) return;
+        options.forEach(row => {
             const option = document.createElement('option');
-            option.value = section.section_code;
-            option.textContent = `${section.section_code} - ${section.section_description}`;
+            option.value = row.option_value;
+            option.textContent = row.option_label || row.option_value;
             sectionSelect.appendChild(option);
         });
-        
-        console.log('Loaded sections for', divisionCode, ':', availableSections.length);
+        console.log('Loaded accessible sections on demand:', options.length);
     } catch (error) {
         console.error('Error loading sections:', error);
     }
@@ -3756,98 +3742,22 @@ async function handleSectionChange(e) {
     }
 }
 
-// Load detailed sections for selected division and section
+// Load detailed sections for selected division and section (server-side, lightweight)
 async function loadDetailedSections(divisionCode, sectionCode) {
+    const detailedSectionSelect = document.getElementById('detailed-section-select');
+    if (!detailedSectionSelect) return;
+    detailedSectionSelect.innerHTML = '<option value="">Choose detailed section...</option>';
+    const requestToken = nextCsiRequestToken('detailed-section');
     try {
-        const detailedSectionSelect = document.getElementById('detailed-section-select');
-        detailedSectionSelect.innerHTML = '<option value="">Choose detailed section...</option>';
-        
-        // First, get unique detailed sections from approved projects for this division/section
-        const matchingProjects = allProjects.filter(p => p.division_code === divisionCode && p.section_code === sectionCode);
-        console.log('Matching projects for detailed sections:', matchingProjects.length, matchingProjects);
-        
-        const projectDetailedSections = [...new Set(
-            matchingProjects
-                .map(p => p.detailed_section_code)
-                .filter(code => code) // Remove null/undefined values
-        )];
-        
-        console.log('Project detailed sections found:', projectDetailedSections);
-        console.log('Looking for division:', divisionCode, 'section:', sectionCode);
-        
-        // Try to get detailed sections using the RPC function
-        let availableDetailedSections = [];
-        
-        try {
-            const { data: detailedSectionsData, error } = await supabase.rpc('get_detailed_sections', {
-                division_code_param: divisionCode,
-                section_code_param: sectionCode
-            });
-            
-            if (error) {
-                console.warn('RPC call failed, using project data directly:', error);
-                throw error;
-            }
-            
-            console.log('RPC detailed sections data:', detailedSectionsData);
-            
-            // Filter detailed sections using RPC data
-            availableDetailedSections = detailedSectionsData.filter(detailedSection => 
-                projectDetailedSections.includes(detailedSection.detailed_section_code)
-            );
-            
-            console.log('Filtered RPC detailed sections:', availableDetailedSections);
-            
-            // If RPC filtering returns empty but we have project detailed sections, use fallback
-            if (availableDetailedSections.length === 0 && projectDetailedSections.length > 0) {
-                console.log('RPC filtering returned empty, falling back to project data');
-                throw new Error('RPC filtering returned empty results');
-            }
-            
-        } catch (rpcError) {
-            // If RPC fails (common with duplicate levels), create options directly from project data
-            console.log('Using direct project data for detailed sections due to RPC error:', rpcError);
-            
-            availableDetailedSections = projectDetailedSections.map(detailedSectionCode => {
-                // Find a project with this detailed section code to get description
-                const project = matchingProjects.find(p => p.detailed_section_code === detailedSectionCode);
-                
-                console.log('Found project for detailed section', detailedSectionCode, ':', project);
-                
-                // For duplicate levels, try to get the proper description from the CSI hierarchy
-                // If detailed_section_code equals section_code, use section description
-                let description = 'No description available';
-                
-                if (project) {
-                    if (project.detailed_section_description && project.detailed_section_description.trim() !== '') {
-                        description = project.detailed_section_description;
-                    } else if (project.section_description && project.section_description.trim() !== '') {
-                        description = project.section_description;
-                    } else if (project.project_name && project.project_name.trim() !== '') {
-                        description = project.project_name;
-                    }
-                }
-                
-                return {
-                    detailed_section_code: detailedSectionCode,
-                    detailed_section_description: description
-                };
-            });
-            
-            console.log('Created detailed sections from project data:', availableDetailedSections);
-        }
-        
-        // Sort available detailed sections
-        availableDetailedSections.sort((a, b) => a.detailed_section_code.localeCompare(b.detailed_section_code));
-        
-        availableDetailedSections.forEach(detailedSection => {
+        const options = await fetchCsiOptions('detailed-section', { divisionCode, sectionCode });
+        if (!isLatestCsiRequest('detailed-section', requestToken)) return;
+        options.forEach(row => {
             const option = document.createElement('option');
-            option.value = detailedSection.detailed_section_code;
-            option.textContent = `${detailedSection.detailed_section_code} - ${detailedSection.detailed_section_description}`;
+            option.value = row.option_value;
+            option.textContent = row.option_label || row.option_value;
             detailedSectionSelect.appendChild(option);
         });
-        
-        console.log('Loaded detailed sections:', availableDetailedSections.length, availableDetailedSections);
+        console.log('Loaded accessible detailed sections on demand:', options.length);
     } catch (error) {
         console.error('Error loading detailed sections:', error);
     }
@@ -3873,184 +3783,69 @@ async function handleDetailedSectionChange(e) {
     }
 }
 
-// Load item codes for selected hierarchy
+// Load item codes for selected hierarchy (server-side, lightweight)
 async function loadItemCodes(divisionCode, sectionCode, detailedSectionCode) {
+    const itemCodeSelect = document.getElementById('item-code-select');
+    if (!itemCodeSelect) return;
+    itemCodeSelect.innerHTML = '<option value="">Choose item code...</option>';
+    const requestToken = nextCsiRequestToken('item-code');
     try {
-        const itemCodeSelect = document.getElementById('item-code-select');
-        itemCodeSelect.innerHTML = '<option value="">Choose item code...</option>';
-        
-        // First, get unique item codes from approved projects for this hierarchy
-        const projectItemCodes = [...new Set(
-            allProjects
-                .filter(p => 
-                    p.division_code === divisionCode && 
-                    p.section_code === sectionCode && 
-                    p.detailed_section_code === detailedSectionCode
-                )
-                .map(p => p.item_code)
-                .filter(code => code) // Remove null/undefined values
-        )];
-        
-        console.log('Project item codes found:', projectItemCodes);
-        
-        // Try to get item codes using the RPC function
-        let availableItemCodes = [];
-        
-        try {
-            const { data: itemCodesData, error } = await supabase.rpc('get_items', {
-                division_code_param: divisionCode,
-                section_code_param: sectionCode,
-                detailed_section_code_param: detailedSectionCode
-            });
-            
-            if (error) {
-                console.warn('RPC call failed, using project data directly:', error);
-                throw error;
-            }
-            
-            // Filter item codes using RPC data
-            availableItemCodes = itemCodesData.filter(itemCode => 
-                projectItemCodes.includes(itemCode.item_code)
-            );
-            
-            // If RPC filtering returns empty but we have project item codes, use fallback
-            if (availableItemCodes.length === 0 && projectItemCodes.length > 0) {
-                console.log('RPC filtering returned empty for item codes, falling back to project data');
-                throw new Error('RPC filtering returned empty results');
-            }
-            
-        } catch (rpcError) {
-            // If RPC fails (common with duplicate levels), create options directly from project data
-            console.log('Using direct project data for item codes due to RPC error');
-            
-            availableItemCodes = projectItemCodes.map(itemCode => {
-                // Find a project with this item code to get description
-                const project = allProjects.find(p => 
-                    p.division_code === divisionCode && 
-                    p.section_code === sectionCode && 
-                    p.detailed_section_code === detailedSectionCode && 
-                    p.item_code === itemCode
-                );
-                
-                // For duplicate levels, try to get the proper description
-                let description = 'No description available';
-                
-                if (project) {
-                    if (project.item_description && project.item_description.trim() !== '') {
-                        description = project.item_description;
-                    } else if (project.detailed_section_description && project.detailed_section_description.trim() !== '') {
-                        description = project.detailed_section_description;
-                    } else if (project.section_description && project.section_description.trim() !== '') {
-                        description = project.section_description;
-                    } else if (project.project_name && project.project_name.trim() !== '') {
-                        description = project.project_name;
-                    }
-                }
-                
-                return {
-                    item_code: itemCode,
-                    item_description: description
-                };
-            });
-        }
-        
-        // Sort available item codes
-        availableItemCodes.sort((a, b) => a.item_code.localeCompare(b.item_code));
-        
-        availableItemCodes.forEach(itemCode => {
+        const options = await fetchCsiOptions('item-code', { divisionCode, sectionCode, detailedSectionCode });
+        if (!isLatestCsiRequest('item-code', requestToken)) return;
+        options.forEach(row => {
             const option = document.createElement('option');
-            option.value = itemCode.item_code;
-            option.textContent = `${itemCode.item_code} - ${itemCode.item_description}`;
+            option.value = row.option_value;
+            option.textContent = row.option_label || row.option_value;
             itemCodeSelect.appendChild(option);
         });
-        
-        console.log('Loaded item codes:', availableItemCodes.length);
+        console.log('Loaded accessible item codes on demand:', options.length);
     } catch (error) {
         console.error('Error loading item codes:', error);
     }
 }
 
 // Handle item code selection
-function handleItemCodeChange(e) {
+async function handleItemCodeChange(e) {
     const selectedItemCode = e.target.value;
     const selectedDivision = document.getElementById('division-select').value;
     const selectedSection = document.getElementById('section-select').value;
     const selectedDetailedSection = document.getElementById('detailed-section-select').value;
-    
-    // Reset additional level dropdown
+
     resetDropdown('additional-level-select', 'Choose additional level...');
-    
     if (selectedItemCode) {
-        loadAdditionalLevels(selectedDivision, selectedSection, selectedDetailedSection, selectedItemCode);
+        await loadAdditionalLevels(selectedDivision, selectedSection, selectedDetailedSection, selectedItemCode);
         enableDropdown('additional-level-select');
     } else {
         disableDropdown('additional-level-select');
     }
 }
 
-// Load additional level values for selected item code
-function loadAdditionalLevels(divisionCode, sectionCode, detailedSectionCode, itemCode) {
+// Load only the projects at the selected final CSI path; full attributes still remain unloaded.
+async function loadAdditionalLevels(divisionCode, sectionCode, detailedSectionCode, itemCode) {
     const additionalLevelSelect = document.getElementById('additional-level-select');
+    if (!additionalLevelSelect) return;
     additionalLevelSelect.innerHTML = '<option value="">Choose additional level...</option>';
-    
-    // Get approved projects for this exact CSI path
-    const matchingProjects = allProjects.filter(p => 
-        p.division_code === divisionCode && 
-        p.section_code === sectionCode && 
-        p.detailed_section_code === detailedSectionCode && 
-        p.item_code === itemCode
-    );
-    
-    // Group by additional level name and value
-    const additionalLevels = matchingProjects.map(project => ({
-        project_id: project.project_id,
-        level_name: project.additional_level_name || 'Base Level',
-        level_value: project.additional_level_value || 'Base Item',
-        display_name: project.display_name,
-        project: project
-    }));
-    
-    additionalLevels.forEach(level => {
-        const option = document.createElement('option');
-        option.value = level.project_id;
-        option.textContent = level.level_name && level.level_value ? 
-            `${level.level_name}: ${level.level_value}` : 
-            level.level_value || 'Base Level';
-        option.dataset.project = JSON.stringify(level.project);
-        additionalLevelSelect.appendChild(option);
-    });
-    
-    console.log('Loaded additional levels:', additionalLevels.length);
+    const requestToken = nextCsiRequestToken('additional-level');
+    try {
+        const options = await fetchCsiOptions('additional-level', { divisionCode, sectionCode, detailedSectionCode, itemCode });
+        if (!isLatestCsiRequest('additional-level', requestToken)) return;
+        options.forEach(row => {
+            const option = document.createElement('option');
+            option.value = row.option_value;
+            option.textContent = row.option_label || row.project_name || `Project ${row.project_id}`;
+            additionalLevelSelect.appendChild(option);
+        });
+        console.log('Loaded final project options on demand:', options.length);
+    } catch (error) {
+        console.error('Error loading final project options:', error);
+    }
 }
 
-// Handle final project selection
-function handleAdditionalLevelChange(e) {
+// Handle final project selection. Full attributes are fetched only now.
+async function handleAdditionalLevelChange(e) {
     const selectedProjectId = e.target.value;
-    
-    if (selectedProjectId) {
-        const selectedOption = e.target.options[e.target.selectedIndex];
-        
-        if (!selectedOption.dataset.project) {
-            console.error('No project data found in option');
-            return;
-        }
-        
-        try {
-            const project = JSON.parse(selectedOption.dataset.project);
-            console.log('Selected project from cascading dropdown:', project);
-            selectProjectFromData(project);
-            
-            // Clear advanced search inputs
-            clearAdvancedSearchInputs();
-        } catch (error) {
-            console.error('Error parsing project data:', error);
-            alert('Error loading project data. Please try again.');
-        }
-    } else {
-        // Reset when no project selected
-        currentProject = null;
-        document.getElementById('selected-project-display').classList.add('hidden');
-        document.getElementById('project-details').classList.add('hidden');
+    if (!selectedProjectId) {
+        clearProjectSelection();
         const manufacturerReqLabel = document.getElementById('manufacturer-requirement-label');
         if (manufacturerReqLabel) {
             manufacturerReqLabel.textContent = '(Optional)';
@@ -4058,7 +3853,11 @@ function handleAdditionalLevelChange(e) {
             manufacturerReqLabel.classList.add('text-gray-500');
         }
         setAddManufacturerButtonEnabled(true);
+        return;
     }
+
+    await selectProject(Number(selectedProjectId));
+    clearAdvancedSearchInputs();
 }
 
 // Utility functions for dropdown management
@@ -4126,101 +3925,53 @@ function clearAdvancedSearchInputs() {
 // Update cascading dropdowns to reflect selected project (when selected via advanced search)
 async function updateCascadingDropdownsForProject(project) {
     if (!project) return;
-    
+    const syncToken = ++cascadeSyncToken;
+
     try {
-        console.log('Updating cascading dropdowns for project:', project);
-        
-        // Set division
         const divisionSelect = document.getElementById('division-select');
-        if (divisionSelect) {
-            divisionSelect.value = project.division_code;
-            syncCsiComboDisplay('division');
-            console.log('Set division to:', project.division_code);
-            
-            // Load sections and set section
-            await handleDivisionChange({ target: { value: project.division_code } });
-            
-            // Wait for sections to load, then set section
-            await new Promise(resolve => setTimeout(resolve, 200));
-            
-            const sectionSelect = document.getElementById('section-select');
-            if (sectionSelect) {
-                // Check if the section option exists
-                const sectionOption = Array.from(sectionSelect.options).find(opt => opt.value === project.section_code);
-                if (sectionOption) {
-                    sectionSelect.value = project.section_code;
-                    syncCsiComboDisplay('section');
-                    console.log('Set section to:', project.section_code);
-                    
-                    // Load detailed sections and set detailed section
-                    await handleSectionChange({ target: { value: project.section_code } });
-                    
-                    // Wait for detailed sections to load, then set detailed section
-                    await new Promise(resolve => setTimeout(resolve, 200));
-                    
-                    const detailedSectionSelect = document.getElementById('detailed-section-select');
-                    if (detailedSectionSelect) {
-                        // Check if the detailed section option exists
-                        const detailedSectionOption = Array.from(detailedSectionSelect.options).find(opt => opt.value === project.detailed_section_code);
-                        if (detailedSectionOption) {
-                            detailedSectionSelect.value = project.detailed_section_code;
-                            syncCsiComboDisplay('detailed-section');
-                            console.log('Set detailed section to:', project.detailed_section_code);
-                            
-                            // Load item codes and set item code
-                            await handleDetailedSectionChange({ target: { value: project.detailed_section_code } });
-                            
-                            // Wait for item codes to load, then set item code
-                            await new Promise(resolve => setTimeout(resolve, 200));
-                            
-                            const itemCodeSelect = document.getElementById('item-code-select');
-                            if (itemCodeSelect) {
-                                // Check if the item code option exists
-                                const itemCodeOption = Array.from(itemCodeSelect.options).find(opt => opt.value === project.item_code);
-                                if (itemCodeOption) {
-                                    itemCodeSelect.value = project.item_code;
-                                    syncCsiComboDisplay('item-code');
-                                    console.log('Set item code to:', project.item_code);
-                                    
-                                    // Load additional levels and set final project
-                                    await handleItemCodeChange({ target: { value: project.item_code } });
-                                    
-                                    // Wait for additional levels to load, then set project
-                                    await new Promise(resolve => setTimeout(resolve, 200));
-                                    
-                                    const additionalLevelSelect = document.getElementById('additional-level-select');
-                                    if (additionalLevelSelect) {
-                                        // Check if the project option exists
-                                        const projectOption = Array.from(additionalLevelSelect.options).find(opt => opt.value === project.project_id);
-                                        if (projectOption) {
-                                            additionalLevelSelect.value = project.project_id;
-                                            syncCsiComboDisplay('additional-level');
-                                            console.log('Set additional level to project:', project.project_id);
-                                        } else {
-                                            console.warn('Project option not found in additional level dropdown');
-                                        }
-                                    }
-                                } else {
-                                    console.warn('Item code option not found:', project.item_code);
-                                }
-                            }
-                        } else {
-                            console.warn('Detailed section option not found:', project.detailed_section_code);
-                        }
-                    }
-                } else {
-                    console.warn('Section option not found:', project.section_code);
-                }
-            }
+        const sectionSelect = document.getElementById('section-select');
+        const detailedSectionSelect = document.getElementById('detailed-section-select');
+        const itemCodeSelect = document.getElementById('item-code-select');
+        const additionalLevelSelect = document.getElementById('additional-level-select');
+        if (!divisionSelect || !sectionSelect || !detailedSectionSelect || !itemCodeSelect || !additionalLevelSelect) return;
+
+        // Ensure division options are present, then walk the path. Each loader is already access-aware and cached.
+        if (!Array.from(divisionSelect.options).some(opt => opt.value === project.division_code)) {
+            await loadDivisions();
+            if (syncToken !== cascadeSyncToken) return;
         }
-        
-        // Clear advanced search
+        divisionSelect.value = project.division_code;
+        syncCsiComboDisplay('division');
+
+        await loadSections(project.division_code);
+        if (syncToken !== cascadeSyncToken) return;
+        sectionSelect.value = project.section_code;
+        enableDropdown('section-select');
+        syncCsiComboDisplay('section');
+
+        await loadDetailedSections(project.division_code, project.section_code);
+        if (syncToken !== cascadeSyncToken) return;
+        detailedSectionSelect.value = project.detailed_section_code;
+        enableDropdown('detailed-section-select');
+        syncCsiComboDisplay('detailed-section');
+
+        await loadItemCodes(project.division_code, project.section_code, project.detailed_section_code);
+        if (syncToken !== cascadeSyncToken) return;
+        itemCodeSelect.value = project.item_code;
+        enableDropdown('item-code-select');
+        syncCsiComboDisplay('item-code');
+
+        await loadAdditionalLevels(project.division_code, project.section_code, project.detailed_section_code, project.item_code);
+        if (syncToken !== cascadeSyncToken) return;
+        additionalLevelSelect.value = String(project.project_id ?? project.id ?? '');
+        enableDropdown('additional-level-select');
+        syncCsiComboDisplay('additional-level');
+
         clearAdvancedSearchInputs();
-        
     } catch (error) {
-        console.error('Error updating cascading dropdowns for project:', error);
-        // If there's an error, at least try to clear the advanced search
-        clearAdvancedSearchInputs();
+        if (syncToken === cascadeSyncToken) {
+            console.error('Error updating cascading dropdowns for project:', error);
+        }
     }
 }
 
@@ -4347,207 +4098,46 @@ function initializeAdvancedSearchElements() {
 let advancedSearchRequestToken = 0;
 
 async function performAdvancedSearch() {
-    console.log(' Performing advanced search...');
-    console.log(' DEBUG: Function called at', new Date().toISOString());
-    
-    // Initialize elements if not done
     initializeAdvancedSearchElements();
-    
-    // Debug element initialization
-    console.log(' DEBUG: advancedSearchInputs:', advancedSearchInputs);
-    console.log(' DEBUG: advancedResultsDropdown:', advancedResultsDropdown);
-    
-    if (!advancedSearchInputs || !advancedResultsDropdown) {
-        console.error(' Advanced search elements not found');
-        console.log(' DEBUG: Trying direct element access...');
-        
-        // Try direct access as fallback
-        const directElements = {
-            projectName: document.getElementById('search-project-name'),
-            creator: document.getElementById('search-creator'),
-            csiCode: document.getElementById('search-csi-code'),
-            attributeName: document.getElementById('search-attribute-name'),
-            standardValue: document.getElementById('search-standard-value'),
-            generatedItemCode: document.getElementById('search-generated-item-code')
-        };
-        const directDropdown = document.getElementById('search-results-dropdown');
-        
-        console.log(' DEBUG: Direct elements:', directElements);
-        console.log(' DEBUG: Direct dropdown:', directDropdown);
-        
-        if (!directDropdown) {
-            console.error(' Even direct access failed - search-results-dropdown not found');
-            return;
-        }
-        
-        // Use direct access
-        advancedSearchInputs = directElements;
-        advancedResultsDropdown = directDropdown;
-    }
-    
-    console.log('Available projects:', allProjects ? allProjects.length : 0);
-    
-    if (!allProjects || allProjects.length === 0) {
-        console.warn('No projects available for search');
-        advancedResultsDropdown.innerHTML = '<div class="project-option text-red-500">No projects loaded. Please refresh the page.</div>';
-        advancedResultsDropdown.classList.remove('hidden');
-        return;
-    }
-    
+    if (!advancedSearchInputs || !advancedResultsDropdown) return;
+
     const criteria = {
-        projectName: advancedSearchInputs.projectName?.value.toLowerCase().trim() || '',
-        creator: advancedSearchInputs.creator?.value.toLowerCase().trim() || '',
-        csiCode: advancedSearchInputs.csiCode?.value.toLowerCase().trim() || '',
-        attributeName: advancedSearchInputs.attributeName?.value.toLowerCase().trim() || '',
-        standardValue: advancedSearchInputs.standardValue?.value.toLowerCase().trim() || '',
+        projectName: advancedSearchInputs.projectName?.value.trim() || '',
+        creator: advancedSearchInputs.creator?.value.trim() || '',
+        csiCode: advancedSearchInputs.csiCode?.value.trim() || '',
+        attributeName: advancedSearchInputs.attributeName?.value.trim() || '',
+        standardValue: advancedSearchInputs.standardValue?.value.trim() || '',
         generatedItemCode: advancedSearchInputs.generatedItemCode?.value.trim() || ''
     };
-    
-    console.log('Search criteria:', criteria);
-    console.log(' DEBUG: Input values retrieved:', {
-        projectName: advancedSearchInputs.projectName?.value,
-        creator: advancedSearchInputs.creator?.value,
-        csiCode: advancedSearchInputs.csiCode?.value,
-        attributeName: advancedSearchInputs.attributeName?.value,
-        standardValue: advancedSearchInputs.standardValue?.value,
-        generatedItemCode: advancedSearchInputs.generatedItemCode?.value
-    });
-    
-    // Check if any search criteria is provided
-    const hasSearchCriteria = Object.values(criteria).some(value => value.length > 0);
-    
-    console.log(' DEBUG: Has search criteria:', hasSearchCriteria);
-    
-    if (!hasSearchCriteria) {
-        console.log(' DEBUG: No search criteria, hiding dropdown');
+
+    const values = Object.values(criteria).filter(Boolean);
+    if (values.length === 0) {
         advancedResultsDropdown.classList.add('hidden');
         return;
     }
-    
-    // Generated item codes live in the workflow tables, not in the project list.
-    // Resolve matching code(s) first, then restrict the results to projects already
-    // available to the signed-in user through get_user_accessible_projects().
-    const requestToken = ++advancedSearchRequestToken;
-    let projectIdsForItemCode = null;
-    if (criteria.generatedItemCode) {
-        const searchTerms = criteria.generatedItemCode
-            .split(',')
-            .map(term => term.trim())
-            .filter(Boolean);
 
-        try {
-            const responses = await Promise.all(searchTerms.map(itemCode =>
-                supabase.rpc('search_all_item_codes_with_status', {
-                    search_filters_param: { item_code: itemCode },
-                    include_disabled_param: true
-                })
-            ));
-
-            if (requestToken !== advancedSearchRequestToken) return;
-
-            projectIdsForItemCode = new Set();
-            responses.forEach(({ data, error }) => {
-                if (error) {
-                    console.error('Generated item code project lookup failed:', error);
-                    return;
-                }
-
-                if (data?.success && Array.isArray(data.item_codes)) {
-                    data.item_codes.forEach(item => {
-                        const projectId = item.project_id ?? item.classification_project_id ?? item.classification_projects?.id;
-                        if (projectId !== undefined && projectId !== null) {
-                            projectIdsForItemCode.add(String(projectId));
-                        }
-                    });
-                }
-            });
-        } catch (error) {
-            console.error('Generated item code project lookup failed:', error);
-            advancedResultsDropdown.innerHTML = '<div class="project-option text-red-500">Unable to search item codes. Please try again.</div>';
-            advancedResultsDropdown.classList.remove('hidden');
-            return;
-        }
+    const numericProjectIdSearch = /^\d+$/.test(criteria.projectName);
+    const hasUsefulTerm = numericProjectIdSearch || values.some(value => value.length >= 2);
+    if (!hasUsefulTerm) {
+        advancedResultsDropdown.innerHTML = '<div class="project-option text-gray-500">Type at least 2 characters to search.</div>';
+        advancedResultsDropdown.classList.remove('hidden');
+        return;
     }
 
-    const filtered = allProjects.filter(project => {
-        let matches = true;
-        
-        // Enhanced project name search (includes project ID and project tags)
-        if (criteria.projectName) {
-            const projectName = (project.project_name || '').toLowerCase();
-            let nameMatches = projectName.includes(criteria.projectName);
+    const requestToken = ++advancedSearchRequestToken;
+    advancedResultsDropdown.innerHTML = '<div class="project-option text-gray-500">Searching database...</div>';
+    advancedResultsDropdown.classList.remove('hidden');
 
-            // Match by project ID (exact or prefix) when the search term is numeric
-            if (!nameMatches && /^\d+$/.test(criteria.projectName)) {
-                const pid = String(project.project_id ?? project.id ?? '');
-                nameMatches = pid === criteria.projectName || pid.startsWith(criteria.projectName);
-            }
-
-            // Also search in project tags
-            if (!nameMatches && project.tags && Array.isArray(project.tags)) {
-                const tagMatches = project.tags.some(tag => {
-                    const tagStr = typeof tag === 'string' ? tag.toLowerCase() : String(tag).toLowerCase();
-                    return tagStr.includes(criteria.projectName);
-                });
-                console.log(` Tag search for "${criteria.projectName}":`, tagMatches, 'in tags:', project.tags);
-                nameMatches = tagMatches;
-            }
-            
-            if (!nameMatches) {
-                matches = false;
-            }
-        }
-        
-        // Creator search (if available in project data)
-        if (criteria.creator) {
-            const creatorName = (project.creator_name || '').toLowerCase();
-            if (!creatorName.includes(criteria.creator)) {
-                matches = false;
-            }
-        }
-        
-        // CSI Code search (search across all CSI levels)
-        if (criteria.csiCode) {
-            const csiText = `${project.division_code || ''} ${project.section_code || ''} ${project.detailed_section_code || ''} ${project.item_code || ''}`.toLowerCase();
-            if (!csiText.includes(criteria.csiCode)) {
-                matches = false;
-            }
-        }
-        
-        // Attribute name search
-        if (criteria.attributeName && project.attributes) {
-            const hasMatchingAttribute = project.attributes.some(attr => 
-                attr && attr.attribute_name && attr.attribute_name.toLowerCase().includes(criteria.attributeName)
-            );
-            if (!hasMatchingAttribute) {
-                matches = false;
-            }
-        }
-        
-        // Standard value search
-        if (criteria.standardValue && project.attributes) {
-            const hasMatchingValue = project.attributes.some(attr => 
-                attr && attr.standard_values && Array.isArray(attr.standard_values) && 
-                attr.standard_values.some(val => 
-                    val && val.name && val.name.toLowerCase().includes(criteria.standardValue)
-                )
-            );
-            if (!hasMatchingValue) {
-                matches = false;
-            }
-        }
-
-        // Match projects through the generated item-code lookup. allProjects is
-        // intentionally still the authority for project access and project data.
-        if (projectIdsForItemCode && !projectIdsForItemCode.has(String(project.project_id ?? project.id ?? ''))) {
-            matches = false;
-        }
-        
-        return matches;
-    });
-    
-    console.log(' Filtered results:', filtered.length);
-    renderAdvancedSearchResults(filtered);
+    try {
+        const projects = await searchAccessibleProjects(criteria, 20);
+        if (requestToken !== advancedSearchRequestToken) return;
+        renderAdvancedSearchResults(projects);
+    } catch (error) {
+        if (requestToken !== advancedSearchRequestToken) return;
+        console.error('Advanced project search failed:', error);
+        advancedResultsDropdown.innerHTML = '<div class="project-option text-red-500">Project search failed. Please try again.</div>';
+        advancedResultsDropdown.classList.remove('hidden');
+    }
 }
 
 // Render advanced search results (moved outside to be globally accessible)
@@ -4636,39 +4226,30 @@ function renderProjectDropdown(projects) {
 }
         // Select project
         // Select project
-// Select project by ID
-function selectProject(projectId) {
-    console.log('selectProject called with ID:', projectId);
-    console.log('Available projects:', allProjects.length);
-    
-    if (!allProjects || allProjects.length === 0) {
-        console.error('No projects available');
-        alert('No projects loaded. Please refresh the page.');
-        return;
+// Select project by ID. The heavy project payload is fetched only at this point.
+async function selectProject(projectId) {
+    console.log('Selecting project on demand:', projectId);
+    try {
+        const project = await fetchProjectDetails(projectId);
+        if (!project) {
+            alert('Project is no longer available or you do not have access to it.');
+            return;
+        }
+        selectProjectFromData(project);
+
+        const searchInputs = [
+            'search-desc1', 'search-desc2', 'search-item-code',
+            'search-project-name-codes', 'search-csi-path', 'search-country',
+            'search-model', 'search-uom', 'search-attributes', 'search-erp-status'
+        ];
+        searchInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = '';
+        });
+    } catch (error) {
+        console.error('Failed to load selected project:', error);
+        alert('Unable to load this project. Please try again.');
     }
-    
-    const project = allProjects.find(p => p.project_id === projectId || p.id === projectId);
-    if (!project) {
-        console.error('Project not found:', projectId);
-        console.log('Available project IDs:', allProjects.map(p => p.project_id || p.id));
-        alert('Project not found. Please try selecting a different project.');
-        return;
-    }
-    
-    console.log('Found project:', project);
-    selectProjectFromData(project);
-    
-    // Clear any search inputs
-    const searchInputs = [
-         'search-desc1', 'search-desc2', 'search-item-code', 
-    'search-project-name-codes', 'search-csi-path', 'search-country',
-    'search-model', 'search-uom', 'search-attributes', 'search-erp-status'
-    ];
-    
-    searchInputs.forEach(inputId => {
-        const input = document.getElementById(inputId);
-        if (input) input.value = '';
-    });
 }
 function selectProjectFromData(project) {
     console.log('Selecting project:', project);
@@ -9387,8 +8968,8 @@ async function simulateDeprecateValue(valueName, attributeId) {
             if (data && data.success) {
                 alert(' Value "' + valueName + '" has been deprecated successfully.\n\nReason: ' + reason.trim());
                 
-                // Reload the project data to reflect changes
-                await loadApprovedProjects();
+                // Refresh only the current project's detail payload.
+                await refreshCurrentProjectData();
                 
                 // Refresh the deprecation modal if still open
                 const modal = document.getElementById('deprecation-modal');
@@ -9454,8 +9035,8 @@ async function simulateReactivateValue(valueName, attributeId) {
             if (data && data.success) {
                 alert(' Value "' + valueName + '" has been reactivated successfully.\n\nReason: ' + finalReason);
                 
-                // Reload the project data to reflect changes
-                await loadApprovedProjects();
+                // Refresh only the current project's detail payload.
+                await refreshCurrentProjectData();
                 
                 // Refresh the deprecation modal if still open
                 const modal = document.getElementById('deprecation-modal');
@@ -9937,102 +9518,33 @@ function setupSearchExportFunctionality() {
 
 // ===== PROJECT SEARCH FUNCTIONS (PHASE 1) =====
 
-// Perform project search
-function performProjectSearch() {
-    console.log('🔍 performProjectSearch CALLED!'); // DEBUG
-    
+// Perform project search directly against the database (debounced by setupProjectSearch).
+async function performProjectSearch() {
     const searchInput = document.getElementById('project-search-input');
     const dropdown = document.getElementById('project-search-dropdown');
-    
-    console.log('🔍 Search input element:', searchInput); // DEBUG
-    console.log('🔍 Search input value:', searchInput?.value); // DEBUG
-    console.log('🔍 Dropdown element:', dropdown); // DEBUG
-    
-    if (!searchInput || !dropdown) {
-        console.error('Project search elements not found');
-        return;
-    }
-    
+    if (!searchInput || !dropdown) return;
+
     const searchTerm = searchInput.value.trim();
-    
-    console.log('🔍 Search term after trim:', searchTerm); // DEBUG
-    
-    // Numeric terms are allowed at any length so short project IDs (e.g. "7", "58") are searchable
     const isNumericSearch = /^\d+$/.test(searchTerm);
     if (searchTerm.length < 2 && !isNumericSearch) {
         dropdown.classList.add('hidden');
-        console.log('🔍 Search term too short, hiding dropdown'); // DEBUG
         return;
     }
-    
-    try {
-        console.log('Searching projects with term:', searchTerm);
-        
-        // Use already loaded allProjects data for client-side filtering
-        if (!allProjects || allProjects.length === 0) {
-            console.warn('No projects loaded for search');
-            dropdown.innerHTML = `
-                <div class="p-3 text-gray-500 text-sm">
-                    No projects available. Please refresh the page.
-                </div>
-            `;
-            dropdown.classList.remove('hidden');
-            return;
-        }
-        
-        console.log('🔍 Total projects available:', allProjects.length); // DEBUG
-        
-        // Filter projects based on search term
-        const searchLower = searchTerm.toLowerCase();
-        const filteredProjects = allProjects.filter(project => {
-            // Search by project ID (exact or prefix) when the term is numeric
-            if (/^\d+$/.test(searchLower)) {
-                const pid = String(project.project_id ?? project.id ?? '');
-                if (pid === searchLower || pid.startsWith(searchLower)) {
-                    return true;
-                }
-            }
 
-            // Search in project name
-            if (project.project_name && project.project_name.toLowerCase().includes(searchLower)) {
-                return true;
-            }
-            
-            // Search in item code
-            if (project.item_code && project.item_code.toLowerCase().includes(searchLower)) {
-                return true;
-            }
-            
-            // Search in tags if they exist
-            if (project.tags && Array.isArray(project.tags)) {
-                const tagsString = project.tags.join(' ').toLowerCase();
-                if (tagsString.includes(searchLower)) {
-                    return true;
-                }
-            }
-            
-            // Search in CSI codes
-            if (project.division_code && project.division_code.toLowerCase().includes(searchLower)) {
-                return true;
-            }
-            if (project.section_code && project.section_code.toLowerCase().includes(searchLower)) {
-                return true;
-            }
-            if (project.detailed_section_code && project.detailed_section_code.toLowerCase().includes(searchLower)) {
-                return true;
-            }
-            
-            return false;
-        }).slice(0, 10); // Limit to 10 results
-        
-        console.log('Filtered projects:', filteredProjects.length);
-        console.log('🔍 Filtered results:', filteredProjects); // DEBUG
-        
-        projectSearchResults = filteredProjects;
-        displayProjectSearchResults(projectSearchResults);
-        
+    const requestToken = ++projectSearchRequestToken;
+    dropdown.innerHTML = '<div class="p-3 text-gray-500 text-sm">Searching database...</div>';
+    dropdown.classList.remove('hidden');
+
+    try {
+        const projects = await searchAccessibleProjects({ query: searchTerm }, 10);
+        if (requestToken !== projectSearchRequestToken) return;
+        projectSearchResults = projects;
+        displayProjectSearchResults(projects);
     } catch (error) {
-        console.error('Error in project search:', error);
+        if (requestToken !== projectSearchRequestToken) return;
+        console.error('Project search failed:', error);
+        dropdown.innerHTML = '<div class="p-3 text-red-500 text-sm">Project search failed. Please try again.</div>';
+        dropdown.classList.remove('hidden');
     }
 }
 
@@ -10061,7 +9573,7 @@ function displayProjectSearchResults(projects) {
         
         return `
             <div class="project-option p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0" 
-                 data-project='${JSON.stringify(project)}'>
+                 data-project-id="${project.project_id ?? project.id ?? ''}">
                 <div class="font-medium text-gray-800">${project.project_name || 'Unnamed Project'} <span class="text-xs text-gray-400 font-normal">(ID: ${project.project_id ?? project.id ?? '-'})</span></div>
                 <div class="text-sm text-gray-600">${project.item_code} - ${project.division_code}.${project.section_code}.${project.detailed_section_code}</div>
                 ${tagsDisplay}
@@ -10075,60 +9587,51 @@ function displayProjectSearchResults(projects) {
     // Add click handlers for project selection
     dropdown.querySelectorAll('.project-option').forEach(option => {
         option.addEventListener('click', () => {
-            const projectData = JSON.parse(option.dataset.project);
-            selectSearchProject(projectData);
+            const projectId = Number(option.dataset.projectId);
+            const projectData = projectSearchResults.find(p => Number(p.project_id ?? p.id) === projectId);
+            if (projectData) selectSearchProject(projectData);
         });
     });
 }
 
-// Select a project and proceed to Phase 2
-function selectSearchProject(project) {
-    console.log('Selected project for search:', project);
-    
-    selectedSearchProject = project;
-    
-    // Hide project search dropdown
+// Select a project and proceed to Phase 2. Fetch attributes only after selection.
+async function selectSearchProject(project) {
+    const projectId = project?.project_id ?? project?.id;
+    if (!projectId) return;
+
     const dropdown = document.getElementById('project-search-dropdown');
-    if (dropdown) {
-        dropdown.classList.add('hidden');
-    }
-    
-    // Show selected project display
-    const selectedDisplay = document.getElementById('selected-project-search-display');
-    const selectedInfo = document.getElementById('selected-project-search-info');
-    
-    if (selectedDisplay && selectedInfo) {
-        const tags = Array.isArray(project.tags) ? project.tags.join(', ') : '';
-        const tagsDisplay = tags ? `<div class="text-sm text-blue-600 mt-1">Tags: ${tags}</div>` : '';
-        
-        selectedInfo.innerHTML = `
-            <div>
-                <div class="font-medium text-gray-800">${project.project_name || 'Unnamed Project'}</div>
-                <div class="text-sm text-gray-600">${project.item_code} - ${project.division_code}.${project.section_code}.${project.detailed_section_code}</div>
-                ${tagsDisplay}
-            </div>
-        `;
-        
-        selectedDisplay.classList.remove('hidden');
-    }
-    
-    // Load project attributes from already available data
-    const projectAttributes = project.attributes || [];
-    console.log('Project attributes from loaded data:', projectAttributes);
-    
-    displayAttributeSearchFields(projectAttributes);
-    
-    // Show attribute search phase
-    const attributePhase = document.getElementById('attribute-search-phase');
-    if (attributePhase) {
-        attributePhase.classList.remove('hidden');
-    }
-    
-    // Perform initial search to show all project items in table view
-    setTimeout(async () => {
-        await loadProjectScopedApprovedCodes(project.id || project.project_id);
+    if (dropdown) dropdown.classList.add('hidden');
+
+    try {
+        const fullProject = await fetchProjectDetails(projectId);
+        if (!fullProject) throw new Error('Project details not available');
+        selectedSearchProject = fullProject;
+
+        const selectedDisplay = document.getElementById('selected-project-search-display');
+        const selectedInfo = document.getElementById('selected-project-search-info');
+        if (selectedDisplay && selectedInfo) {
+            const tags = Array.isArray(fullProject.tags) ? fullProject.tags.join(', ') : '';
+            const tagsDisplay = tags ? `<div class="text-sm text-blue-600 mt-1">Tags: ${escapeHtml(tags)}</div>` : '';
+            selectedInfo.innerHTML = `
+                <div>
+                    <div class="font-medium text-gray-800">${escapeHtml(fullProject.project_name || 'Unnamed Project')}</div>
+                    <div class="text-sm text-gray-600">${escapeHtml(fullProject.item_code)} - ${escapeHtml(fullProject.division_code)}.${escapeHtml(fullProject.section_code)}.${escapeHtml(fullProject.detailed_section_code)}</div>
+                    ${tagsDisplay}
+                </div>
+            `;
+            selectedDisplay.classList.remove('hidden');
+        }
+
+        displayAttributeSearchFields(fullProject.attributes || []);
+        const attributePhase = document.getElementById('attribute-search-phase');
+        if (attributePhase) attributePhase.classList.remove('hidden');
+
+        await loadProjectScopedApprovedCodes(projectId);
         performAttributeBasedSearch();
-    }, 100);
+    } catch (error) {
+        console.error('Failed to load project for item-code search:', error);
+        alert('Unable to load project attributes. Please try again.');
+    }
 }
 
 // Display attribute search fields
